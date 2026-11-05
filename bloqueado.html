@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Site bloqueado</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;overflow-x:hidden;min-height:100vh;display:grid;place-items:center;background:#b71c1c;color:#fff;font-family:Arial,Helvetica,sans-serif;padding:24px}
+  main{max-width:760px;width:100%;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+  .tri{width:clamp(110px,22vh,190px);height:auto}
+  .pare{font-size:clamp(44px,min(13vh,19vw),110px);font-weight:900;letter-spacing:.14em;line-height:1;padding-left:.14em}
+  h1{margin:0;font-size:clamp(24px,3.8vh,34px);line-height:1.2}
+  #titulo:focus{outline:none}
+  .host{font:bold 20px monospace;background:rgba(0,0,0,.28);padding:10px 14px;border-radius:8px;overflow-wrap:anywhere}
+  p{margin:0;font-size:21px;line-height:1.5}
+  .caixa{width:100%;text-align:left;background:rgba(0,0,0,.28);border-radius:10px;padding:14px 18px}
+  ul{margin:0;padding-left:24px}
+  li{font-size:20px;line-height:1.5}
+  .botoes{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:6px}
+  button{font:20px Arial,sans-serif;padding:12px 22px;border-radius:8px;cursor:pointer;border:3px solid #fff;background:transparent;color:#fff}
+  #voltar{background:#fff;color:#b71c1c;font-weight:bold;font-size:22px;padding:14px 28px}
+  #continuar{font-size:16px;padding:8px 14px;border-width:2px}
+  button:focus-visible{outline:4px solid #ffeb3b;outline-offset:3px}
+</style>
+</head>
+<body>
+<main role="alertdialog" aria-labelledby="titulo">
+  <svg class="tri" viewBox="0 0 32 30" aria-hidden="true"><path d="M16 2.500L30 27.500H2z" fill="#fff" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><path d="M16 11v8M16 22.800v.4" stroke="#b71c1c" stroke-width="3" stroke-linecap="round" fill="none"/></svg>
+  <div class="pare" aria-hidden="true">PARE</div>
+  <h1 id="titulo" tabindex="-1">Este site foi bloqueado para a sua segurança</h1>
+  <div class="host" id="host"></div>
+  <p>Ele tem sinais fortes de golpe. Se você chegou aqui por uma mensagem, e-mail ou anúncio, apague-os e acesse o serviço digitando o endereço oficial.</p>
+  <div class="caixa"><ul id="motivos"></ul></div>
+  <div class="botoes">
+    <button id="voltar" type="button">Voltar para a segurança</button>
+    <button id="ouvir" type="button">Ouvir o aviso</button>
+    <button id="continuar" type="button">Continuar mesmo assim (não recomendado)</button>
+  </div>
+</main>
+<script src="bloqueado.js"></script>
+</body>
+</html>
