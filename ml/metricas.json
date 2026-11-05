@@ -1,0 +1,91 @@
+{
+ "teste_geral": {
+  "acuracia": 0.8099,
+  "precisao": 0.8763,
+  "recall": 0.7205,
+  "falsos_positivos": 0.1011,
+  "n": 23997,
+  "limiar": 0.5,
+  "auc": 0.8887
+ },
+ "teste_dificil_cauda": {
+  "acuracia": 0.7896,
+  "precisao": 0.9049,
+  "recall": 0.7205,
+  "falsos_positivos": 0.11,
+  "n": 20203,
+  "limiar": 0.5,
+  "auc": 0.8816
+ },
+ "somente_br": {
+  "acuracia": 0.7277,
+  "precisao": 0.8207,
+  "recall": 0.6711,
+  "falsos_positivos": 0.1964,
+  "n": 393,
+  "limiar": 0.5,
+  "auc": 0.8126
+ },
+ "limiar_fp_0.01": {
+  "acuracia": 0.7778,
+  "precisao": 0.9824,
+  "recall": 0.5644,
+  "falsos_positivos": 0.0101,
+  "n": 23997,
+  "limiar": 0.8244718421610217,
+  "auc": 0.8887
+ },
+ "limiar_fp_0.005": {
+  "acuracia": 0.7671,
+  "precisao": 0.9906,
+  "recall": 0.5378,
+  "falsos_positivos": 0.0051,
+  "n": 23997,
+  "limiar": 0.8756895870079489,
+  "auc": 0.8887
+ },
+ "precisao_com_1pct_de_golpes": 0.0672,
+ "precisao_com_5pct_de_golpes": 0.2728,
+ "sinais_mais_importantes": [
+  [
+   "n_sub",
+   0.317
+  ],
+  [
+   "tld_risco",
+   0.215
+  ],
+  [
+   "n_tokens",
+   0.198
+  ],
+  [
+   "len_host",
+   0.069
+  ],
+  [
+   "len_reg",
+   0.035
+  ],
+  [
+   "max_label",
+   0.03
+  ],
+  [
+   "len_sld",
+   0.021
+  ],
+  [
+   "dig_host",
+   0.021
+  ],
+  [
+   "kw",
+   0.016
+  ],
+  [
+   "tok_medio",
+   0.011
+  ]
+ ]
+}
