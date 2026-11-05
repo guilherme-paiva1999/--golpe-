@@ -1,3 +1,19 @@
+# Acerto real da extensão (medido)
+
+Golpes que **não** estão nas listas, testados com as regras reais de `background.js`
+(`node medir_extensao.js`). 11.963 golpes do Phishing.Database, sem contar sites normais:
+
+| O que | Resultado |
+|---|---|
+| Golpes que a extensão avisa (atenção ou perigo) | **3,7%** (444 de 11.963) |
+| Golpes bloqueados (nível perigo) | 0,02% (2) |
+| Golpes .br avisados | 1,8% (4 de 225) |
+| Golpes que já estão nas listas | ~100% (a lista contém o endereço) |
+| Falsos alertas em sites normais | 0,1% (17 de 12.034) |
+
+As regras quase não pegam golpe desconhecido: muitos golpes da lista são sites comuns invadidos,
+iguais a um site normal pelo nome. A proteção hoje vem das listas, que só conhecem golpes já denunciados.
+
 # Experimentos de aprendizado de máquina (não estão ligados à extensão)
 
 Meta pedida: acerto de pelo menos 94%. **Não foi atingida de forma honesta.** Abaixo, o que foi medido.
