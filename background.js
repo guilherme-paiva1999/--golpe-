@@ -51,6 +51,8 @@ const MARCAS = {
 // Sites que prometem espionar redes sociais/celular de outras pessoas (golpe ou programa-espião).
 const ESPIONAGEM = /(social|phone|mobile|cell|whats?app|insta(gram)?|face(book)?|tele(gram)?|tiktok|chat|follow|wech|msg|sms|track)\w*spy|spy\w*(app|phone|chat|social)|espion(ar|agem)\w*|(whats|zap|insta|celular|face)\w*espi[aã]o|espi[aã]o\w*(whats|zap|insta|celular|face)|spyware|stalker/i;
 
+const MOTIVO_PROCON = 'O Procon-SP recomenda evitar este site: ele teve reclamações de consumidores, não respondeu ou não foi encontrado.';
+
 const ENCURTADORES = ['bit.ly', 'tinyurl.com', 't.co', 'cutt.ly', 'is.gd', 'rb.gy'];
 const TLDS_RISCO = ['xyz', 'top', 'click', 'shop', 'site', 'online', 'icu', 'buzz', 'live', 'cfd'];
 const PALAVRAS_HOST = ['seguranca', 'atualizar', 'cadastro', 'login', 'acesso', 'verificar',
@@ -62,7 +64,9 @@ const FONTES_LISTAS = [
   { nome: 'phishing', url: 'https://raw.githubusercontent.com/mitchellkrogza/Phishing.Database/master/phishing-domains-ACTIVE.txt' },
   { nome: 'urlhaus', url: 'https://urlhaus.abuse.ch/downloads/hostfile/' },
   // Feed público do OpenPhish (golpes recentes, lista de endereços). Confira os termos de uso antes de publicar.
-  { nome: 'openphish', url: 'https://raw.githubusercontent.com/openphish/public_feed/main/feed.txt', minimo: 50, horas: 6 }
+  { nome: 'openphish', url: 'https://raw.githubusercontent.com/openphish/public_feed/main/feed.txt', minimo: 50, horas: 6 },
+  // Procon-SP, "Evite esses sites": reclamações de consumidores, notificados que não responderam ou não encontrados.
+  { nome: 'procon', url: 'https://sistemas.procon.sp.gov.br/evitesite/list/evitesite.php?action=list&jtStartIndex=0&jtPageSize=1000&jtSorting=strSite%20ASC', tipo: 'procon', minimo: 20 }
 ];
 
 const MARCAS_IA = ['trainedalgorithmicmedia', 'midjourney', 'dall-e', 'dall·e',
@@ -118,7 +122,7 @@ let dbPromise = null;
 function abrirDB() {
   if (!dbPromise) {
     dbPromise = new Promise((resolve, reject) => {
-      const rq = indexedDB.open('protetor', 2);
+      const rq = indexedDB.open('protetor', 3);
       rq.onupgradeneeded = () => {
         for (const f of FONTES_LISTAS) if (!rq.result.objectStoreNames.contains(f.nome)) rq.result.createObjectStore(f.nome);
       };
@@ -163,7 +167,7 @@ async function estaNaLista(host) {
         const st = tx.objectStore(f.nome);
         for (const c of candidatos) {
           const rq = st.count(c);
-          rq.onsuccess = () => { if (rq.result > 0) achou = true; };
+          rq.onsuccess = () => { if (rq.result > 0 && achou !== 'procon') achou = f.nome; };
         }
       }
       tx.oncomplete = () => resolve(achou);
@@ -189,6 +193,15 @@ function lerLista(texto) {
   return dominios;
 }
 
+function lerProcon(texto) {
+  const dominios = [];
+  for (const r of (JSON.parse(texto).Records || [])) {
+    const h = String(r.strSite || '').trim().toLowerCase().replace(/^https?:\/\//, '').split(/[\/?#\s]/)[0].replace(/^www\./, '');
+    if (h.includes('.') && /^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/.test(h)) dominios.push(h);
+  }
+  return dominios;
+}
+
 async function baixar(url) {
   const r = await fetch(url, { signal: AbortSignal.timeout(90000), credentials: 'omit' });
   if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -205,7 +218,8 @@ function atualizarListas(so) {
       let ok = 0;
       for (const fonte of FONTES_LISTAS.filter((f) => !so || so.includes(f.nome))) {
         try {
-          const dominios = lerLista(await baixar(fonte.url));
+          const texto = await baixar(fonte.url);
+          const dominios = fonte.tipo === 'procon' ? lerProcon(texto) : lerLista(texto);
           if (dominios.length < (fonte.minimo || 100)) throw new Error('lista suspeita (muito pequena)');
           await substituirFonte(fonte.nome, dominios); // só troca se esta fonte deu certo
           ok++;
@@ -315,7 +329,11 @@ async function permitir(host) {
 
 async function calcularBase(host, rapido) {
   const r = avaliarHost(host);
-  if (await estaNaLista(host)) {
+  const lista = await estaNaLista(host);
+  if (lista === 'procon') {
+    return { pontos: 50, dominio: r.dominio, motivos: [MOTIVO_PROCON, ...r.motivos] };
+  }
+  if (lista) {
     return {
       pontos: 100, dominio: r.dominio,
       motivos: ['Este site consta em listas públicas de golpes e vírus.', ...r.motivos]
@@ -448,6 +466,7 @@ async function avaliarPagina(host, protocolo, sinais) {
   if (pre.conhecido || pre.permitido || pre.pontos >= 100) return pre;     // provado, liberado ou já na lista
   const cfg = await lerConfig();
   const r = avaliarHost(host);
+  if (await estaNaLista(host) === 'procon') { r.pontos += 50; r.motivos.unshift(MOTIVO_PROCON); }
   const comercio = !!(sinais.pagamento || sinais.venda);
   // A idade só é consultada quando a página mostra venda, dinheiro, senha ou pressão (privacidade).
   const precisaIdade = comercio || sinais.senha || sinais.pressao || sinais.formExterno || cfg.consultaIdade;

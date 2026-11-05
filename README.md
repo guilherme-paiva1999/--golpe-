@@ -70,3 +70,10 @@ O `openphish.eu` não abre a partir deste ambiente, mas o feed público está es
 Medido em 273 sites de golpe recentes: as regras pegam 1,1%; só 2,6% já estavam no Phishing.Database;
 58,6% estão em hospedagem gratuita. Ou seja, o feed traz cobertura que as outras listas ainda não têm.
 Confira os termos de uso do OpenPhish antes de publicar a extensão.
+
+## Lista "Evite esses sites" do Procon-SP (v2.5)
+Fonte: https://sistemas.procon.sp.gov.br/evitesite/list/evitesites.php (83 sites, atualizada em 12/05/2026 segundo a página).
+A lista reúne sites com reclamações de consumidores, notificados que não responderam ou não encontrados, então
+**não é uma lista de golpe confirmado**: gera um aviso forte (nível atenção, 50 pontos), sem bloqueio direto.
+Nenhum dos 83 aparece no Phishing.Database nem no feed do OpenPhish: é cobertura brasileira nova.
+Confira os termos de uso do Procon-SP antes de publicar a extensão.
