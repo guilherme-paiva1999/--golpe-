@@ -1,7 +1,7 @@
 'use strict';
 
 const $ = (id) => document.getElementById(id);
-const PADRAO = { limite: 3, consultaIdade: false, imagens: false, modoSimples: false };
+const PADRAO = { limite: 3, consultaIdade: false, imagens: false, modoSimples: false, rigor: 'alto' };
 const TEXTO = { ok: 'Nenhum sinal forte de golpe', atencao: 'Atenção: confira antes de pagar', perigo: 'Provável golpe' };
 
 async function lerConfig() {
@@ -22,13 +22,31 @@ async function demo(nivel) {
   }
 }
 
+async function rotular(rotulo) {
+  try {
+    const [aba] = await chrome.tabs.query({ active: true, currentWindow: true });
+    let extra = {};
+    try { extra = await chrome.tabs.sendMessage(aba.id, { tipo: 'sinais' }) || {}; } catch (e) { /* página sem a extensão */ }
+    const r = await chrome.runtime.sendMessage({ tipo: 'rotular', url: aba.url, rotulo, sinais: extra.sinais, nota: extra.nota });
+    $('rotulosInfo').textContent = r ? 'Anotado como "' + (rotulo === 'golpe' ? 'golpe' : 'seguro') + '". Total: ' + r.total + '.' : 'Não foi possível anotar esta página.';
+  } catch (e) { $('rotulosInfo').textContent = 'Abra uma página comum (http ou https).'; }
+}
+
+async function baixar() {
+  const { rotulos = [] } = await chrome.storage.local.get('rotulos');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(rotulos, null, 1)], { type: 'application/json' }));
+  a.download = 'e-golpe-meus-dados.json';
+  a.click();
+}
+
 async function mostrarStatus() {
   try {
     const [aba] = await chrome.tabs.query({ active: true, currentWindow: true });
     const res = aba && aba.url ? await chrome.runtime.sendMessage({ tipo: 'status', url: aba.url }) : null;
     if (!res) { $('pill').textContent = 'Esta página não é analisada'; return; }
     $('pill').className = res.nivel;
-    $('pill').textContent = res.conhecido ? 'Site conhecido e confiável' : TEXTO[res.nivel];
+    $('pill').textContent = res.conhecido ? 'Site conhecido e confiável' : (res.nivel === 'ok' ? 'Não verificado: confira antes de pagar' : TEXTO[res.nivel]);
     $('host').firstChild.textContent = res.host;
     for (const m of res.motivos) {
       const li = document.createElement('li');
@@ -44,6 +62,11 @@ async function iniciar() {
   const cfg = await lerConfig();
   $('limite').value = String(cfg.limite);
   $('idade').checked = cfg.consultaIdade;
+  $('rigor').value = cfg.rigor;
+  $('rigor').addEventListener('change', () => salvar({ rigor: $('rigor').value }));
+  $('btnGolpe').addEventListener('click', () => rotular('golpe'));
+  $('btnSeguro').addEventListener('click', () => rotular('seguro'));
+  $('btnBaixar').addEventListener('click', baixar);
   $('simples').checked = cfg.modoSimples;
   $('simples').addEventListener('change', () => salvar({ modoSimples: $('simples').checked }));
   $('imagens').checked = cfg.imagens;

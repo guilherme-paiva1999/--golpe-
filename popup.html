@@ -29,9 +29,21 @@
     <option value="2">Mais proteção</option>
     <option value="1">Máxima</option>
   </select>
+  <label for="rigor">Rigor dos avisos</label>
+  <select id="rigor">
+    <option value="alto">Alto: todo site é suspeito até provar o contrário</option>
+    <option value="normal">Normal: só avisa com sinais mais fortes</option>
+  </select>
   <label for="simples"><input type="checkbox" id="simples"> Modo simples<br><small>Avisos com letras bem grandes, só o essencial e botão para ouvir.</small></label>
   <label for="idade"><input type="checkbox" id="idade"> Consultar a idade do site em qualquer página<br><small>Envia o domínio ao rdap.org. Desligado, só consulta quando já há suspeita.</small></label>
   <label for="imagens"><input type="checkbox" id="imagens"> Verificar imagens feitas por IA<br><small>Pede permissão para baixar o início das imagens.</small></label>
+</section>
+<section>
+  <label>Ajude o É Golpe? a aprender</label>
+  <button id="btnGolpe" type="button">É golpe</button>
+  <button id="btnSeguro" type="button">É seguro</button>
+  <button id="btnBaixar" type="button">Baixar meus dados (para treinar)</button>
+  <small id="rotulosInfo">Seus cliques ficam só neste computador.</small>
 </section>
 <section>
   <label>Testar os avisos nesta página</label>

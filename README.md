@@ -44,3 +44,13 @@ e abra `http://localhost:8000/`:
 
 ## Fontes de dados
 Phishing.Database e URLhaus (abuse.ch). Confira as licenças antes de publicar.
+
+## Presunção de golpe (v2.3)
+Todo site desconhecido começa suspeito e só deixa de ser quando prova o contrário. Sinais lidos na página
+(só verdadeiro/falso sai da página): pede pagamento, mensagem de pressão, desconto exagerado, formulário
+que envia a outro site, pede senha, sem CNPJ/contato. A **idade do domínio** (consultada só quando a
+página mostra dinheiro, senha ou pressão) pesa muito: menos de 30 dias soma 35 pontos; mais de 1 ano
+tira 20 e mais de 3 anos tira 30. Rigor "alto" (padrão) avisa a partir de 25 pontos e bloqueia a partir de 60.
+Selo no ícone: ✓ provado, ? não verificado, ! atenção, X perigo.
+Os botões "É golpe" e "É seguro" guardam os seus rótulos neste computador ("Baixar meus dados") para treinar um modelo depois.
+Os pesos foram definidos à mão, **não treinados**; `ml/testar_pontuacao.js` testa só a lógica.

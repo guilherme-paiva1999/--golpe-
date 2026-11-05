@@ -8,7 +8,7 @@
    ===================================================================== */
 
 // ---------- Configuração ----------
-const CONFIG_PADRAO = { limite: 3, consultaIdade: false, imagens: false };
+const CONFIG_PADRAO = { limite: 3, consultaIdade: false, imagens: false, modoSimples: false, rigor: 'alto' };
 const TTL_CACHE_MS = 6 * 3600 * 1000;
 const LIMITE_PERIGO = 70;
 const LIMITE_ATENCAO = 30;
@@ -340,6 +340,9 @@ function montar(base, protocolo, extra) {
 async function analisar(host, protocolo, { rapido = false } = {}) {
   const dominio = dominioRaiz(host);
   if (await estaPermitido(host)) return { nivel: 'ok', pontos: 0, motivos: [], dominio, conhecido: false, permitido: true };
+  const { confiaveis = [], meusGolpes = [] } = await chrome.storage.local.get(['confiaveis', 'meusGolpes']);
+  if (confiaveis.includes(host)) return { nivel: 'ok', pontos: 0, motivos: [], dominio, conhecido: true, usuario: true };
+  if (meusGolpes.includes(host)) return { nivel: 'perigo', pontos: 100, motivos: ['Você marcou este site como golpe.'], dominio, conhecido: false };
   if (ehConhecido(host)) return { nivel: 'ok', pontos: 0, motivos: [], dominio, conhecido: true };
 
   const chave = 'res:' + host;
@@ -351,6 +354,69 @@ async function analisar(host, protocolo, { rapido = false } = {}) {
     if (!rapido) await chrome.storage.session.set({ [chave]: { t: Date.now(), base } });
   }
   return montar(base, protocolo);
+}
+
+// ---------- Presunção de golpe: todo site é suspeito até provar o contrário ----------
+// Sinais da página chegam só como verdadeiro/falso (o texto da página nunca sai do computador).
+function pontuarPagina(basePontos, baseMotivos, sinais, dias, rigor) {
+  let pontos = basePontos;
+  const motivos = [...baseMotivos];
+  const alto = rigor !== 'normal';
+  const somar = (p, m) => { pontos += p; motivos.push(m); };
+  if (sinais.pagamento) somar(15, 'A página pede pagamento ou dados do cartão.');
+  if (sinais.pressao) somar(15, 'A página usa mensagens de pressão (tempo curto, poucas unidades).');
+  if (sinais.desconto) somar(15, 'A página promete descontos exagerados.');
+  if (sinais.formExterno) somar(25, 'O formulário envia os seus dados para outro site.');
+  if (sinais.senha) somar(10, 'A página pede senha e o site não é conhecido.');
+  if (sinais.semContato && sinais.pagamento) somar(10, 'Não achamos CNPJ nem contato claro na página.');
+  if (dias === null || dias === undefined) {
+    if (alto && (sinais.pagamento || sinais.senha)) somar(10, 'Não conseguimos confirmar há quanto tempo este site existe.');
+  } else if (dias < 30) {
+    somar(35, 'Este site foi criado há apenas ' + Math.max(1, Math.round(dias)) + ' dias.');
+  } else if (dias < 90) {
+    somar(20, 'Este site tem só ' + Math.round(dias) + ' dias de vida.');
+  } else if (dias < 180) {
+    somar(10, 'Este site tem menos de 6 meses.');
+  } else if (dias >= 1095) {
+    pontos -= 30;                     // prova: existe há mais de 3 anos
+  } else if (dias >= 365) {
+    pontos -= 20;                     // prova: existe há mais de 1 ano
+  }
+  return { pontos: Math.max(0, pontos), motivos };
+}
+
+function nivelPorRigor(pontos, rigor) {
+  const [atencao, perigo] = rigor === 'normal' ? [30, 70] : [25, 60];
+  return pontos >= perigo ? 'perigo' : pontos >= atencao ? 'atencao' : 'ok';
+}
+
+// Selo no ícone da extensão: ✓ provado, ? não verificado, ! atenção, X perigo.
+function selo(tabId, estado) {
+  const m = { ok: ['✓', '#17803f'], verificar: ['?', '#6b6b6b'], atencao: ['!', '#c77700'], perigo: ['X', '#c62828'] }[estado];
+  if (tabId == null || !m) return;
+  chrome.action.setBadgeText({ tabId, text: m[0] }).catch(() => {});
+  chrome.action.setBadgeBackgroundColor({ tabId, color: m[1] }).catch(() => {});
+}
+function estadoSelo(res) {
+  if (res.conhecido || res.permitido) return 'ok';
+  return res.nivel === 'ok' ? 'verificar' : res.nivel;
+}
+
+async function avaliarPagina(host, protocolo, sinais) {
+  const pre = await analisar(host, protocolo, { rapido: true });
+  if (pre.conhecido || pre.permitido || pre.pontos >= 100) return pre;     // provado, liberado ou já na lista
+  const cfg = await lerConfig();
+  const r = avaliarHost(host);
+  let pontos = r.pontos + (protocolo === 'http:' ? 10 : 0);
+  const motivos = [...r.motivos];
+  if (protocolo === 'http:') motivos.push('O site não usa conexão segura (sem cadeado).');
+  // A idade só é consultada quando a página mostra dinheiro, senha ou pressão (privacidade).
+  const precisaIdade = sinais.pagamento || sinais.senha || sinais.pressao || sinais.formExterno || cfg.consultaIdade;
+  const dias = (precisaIdade && !ehIPv4(r.dominio)) ? await idadeEmDias(r.dominio) : null;
+  const res = pontuarPagina(pontos, motivos, sinais, dias, cfg.rigor);
+  const nivel = nivelPorRigor(res.pontos, cfg.rigor);
+  const provado = nivel === 'ok' && dias !== null && dias >= 365;
+  return { nivel, pontos: res.pontos, motivos: res.motivos, dominio: r.dominio, conhecido: false, provado, dias };
 }
 
 // ---------- Bloqueio antes de a página abrir ----------
@@ -438,6 +504,7 @@ async function tratar(msg, sender) {
       if (!hostValido(msg.host) || !protocoloValido(msg.protocolo)) return null;
       const host = msg.host.toLowerCase();
       const res = await analisar(host, msg.protocolo);
+      if (sender.tab) selo(sender.tab.id, estadoSelo(res));
       if (res.nivel === 'perigo' && sender.tab && typeof msg.url === 'string') {
         try {
           const u = new URL(msg.url);
@@ -445,6 +512,35 @@ async function tratar(msg, sender) {
         } catch (e) { /* ignora */ }
       }
       return res;
+    }
+    case 'avaliar-pagina': {
+      if (!hostValido(msg.host) || !protocoloValido(msg.protocolo) || !msg.sinais) return null;
+      const sinais = {};
+      for (const k of ['pagamento', 'pressao', 'desconto', 'formExterno', 'senha', 'semContato']) sinais[k] = msg.sinais[k] === true;
+      const host = msg.host.toLowerCase();
+      const res = await avaliarPagina(host, msg.protocolo, sinais);
+      if (sender.tab) selo(sender.tab.id, res.provado ? 'ok' : estadoSelo(res));
+      if (res.nivel === 'perigo' && sender.tab && typeof msg.url === 'string') {
+        try { if (new URL(msg.url).hostname.toLowerCase() === host) bloquear(sender.tab.id, msg.url); } catch (e) { /* ignora */ }
+      }
+      return res;
+    }
+    case 'rotular': {                          // "é golpe" / "é seguro": forma o seu conjunto de treino
+      let u;
+      try { u = new URL(msg.url); } catch (e) { return null; }
+      if (!protocoloValido(u.protocol) || !['golpe', 'seguro'].includes(msg.rotulo)) return null;
+      const host = u.hostname.toLowerCase();
+      const lista = msg.rotulo === 'golpe' ? 'meusGolpes' : 'confiaveis';
+      const outra = msg.rotulo === 'golpe' ? 'confiaveis' : 'meusGolpes';
+      const dados = await chrome.storage.local.get([lista, outra, 'rotulos']);
+      const a = dados[lista] || [];
+      if (!a.includes(host)) a.push(host);
+      const sinais = {};
+      for (const k of ['pagamento', 'pressao', 'desconto', 'formExterno', 'senha', 'semContato']) sinais[k] = !!(msg.sinais && msg.sinais[k]);
+      const rotulos = (dados.rotulos || []).filter((x) => x.host !== host);
+      rotulos.push({ host, rotulo: msg.rotulo, sinais, nota: Number(msg.nota) || 0, em: new Date().toISOString() });
+      await chrome.storage.local.set({ [lista]: a, [outra]: (dados[outra] || []).filter((h) => h !== host), rotulos: rotulos.slice(-2000) });
+      return { ok: true, total: rotulos.length };
     }
     case 'status':
     case 'detalhes': {

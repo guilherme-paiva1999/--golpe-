@@ -223,15 +223,45 @@
   }
 
   // ---------- 2) Página pedindo pagamento ----------
-  // Sinais fortes quase só aparecem em golpes; fracos aparecem em qualquer loja.
-  const FORTES = [
-    /taxa\s+(de\s+)?(libera[cç][aã]o|desbloqueio)/i, /lucro\s+(garantido|certo|di[aá]rio)/i,
-    /investimento\s+garantido/i, /dobre\s+seu\s+dinheiro/i, /(fa[cç]a|mande|envie)\s+(um\s+)?pix\s+(para|de)\b/i
+  // Sinais da página. O texto fica no computador; só vai ao fundo verdadeiro/falso de cada sinal.
+  const PRESSAO = [
+    /[úu]ltimas?\s+(unidades?|pe[cç]as?|horas?|vagas?)/i, /restam\s+(apenas\s+)?\d+/i, /s[óo]\s+hoje/i,
+    /oferta\s+(termina|expira|acaba|por\s+tempo)/i, /por\s+tempo\s+limitado/i, /estoque\s+(limitado|acabando)/i,
+    /aproveite\s+(agora|j[áa])/i, /garanta\s+(j[áa]|agora)/i, /agora\s+ou\s+nunca/i, /[úu]ltima\s+chance/i,
+    /sua\s+conta\s+ser[áa]\s+(bloqueada|suspensa|cancelada)/i, /\d+\s+pessoas\s+(est[ãa]o|vendo|comprando)/i
   ];
-  const FRACOS = [/\bpix\b/i, /boleto/i, /transfer[eê]ncia/i, /whatsapp/i];
+  const PAGAMENTO = [
+    /chave\s+pix/i, /pague\s+(agora|com\s+pix)/i, /finalizar\s+(a\s+)?compra/i, /boleto\s+banc[áa]rio/i,
+    /n[úu]mero\s+do\s+cart[ãa]o/i, /c[óo]digo\s+de\s+seguran[çc]a|\bcvv\b/i, /pagamento\s+(via|por)\s+pix/i, /pix\s+copia\s+e\s+cola/i,
+    /taxa\s+(de\s+)?(libera[cç][aã]o|desbloqueio)/i
+  ];
+  const CNPJ = /\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}/;
+  const CONTATO = /fale\s+conosco|contato|atendimento|\bsac\b|quem\s+somos/i;
 
-  function temCampoSensivel() {
-    return !!document.querySelector('input[type="password"], input[autocomplete^="cc-"]');
+  function descontoExagerado(texto) {
+    const re = /(\d{2,3})\s*%\s*(off|de\s+desconto|desconto)|desconto\s+de\s+(\d{2,3})\s*%/gi;
+    let m;
+    while ((m = re.exec(texto))) { if (Number(m[1] || m[3]) >= 70) return true; }
+    return false;
+  }
+
+  function lerSinais() {
+    const texto = (document.body ? document.body.innerText : '').slice(0, 100000);
+    const campoCartao = !!document.querySelector('input[autocomplete^="cc-"], input[name*="card" i], input[name*="cartao" i], input[name*="cvv" i], input[id*="cvv" i]');
+    const senha = !!document.querySelector('input[type="password"]');
+    const pagamento = campoCartao || PAGAMENTO.some((p) => p.test(texto));
+    const contador = !!document.querySelector('[class*="countdown" i], [id*="countdown" i], [class*="timer" i], [id*="timer" i]');
+    const pressao = contador || PRESSAO.some((p) => p.test(texto));
+    let formExterno = false;
+    document.querySelectorAll('form[action]').forEach((f) => {
+      try {
+        const alvo = new URL(f.getAttribute('action'), location.href);
+        const sensivel = f.querySelector('input[type="password"], input[autocomplete^="cc-"], input[name*="card" i], input[name*="cpf" i], input[name*="senha" i]');
+        if (sensivel && /^https?:$/.test(alvo.protocol) && alvo.hostname !== location.hostname) formExterno = true;
+      } catch (e) { /* action inválida */ }
+    });
+    const temContato = CNPJ.test(texto) || CONTATO.test(texto) || !!document.querySelector('a[href^="mailto:"], a[href^="tel:"]');
+    return { pagamento, pressao, desconto: descontoExagerado(texto), formExterno, senha, semContato: pagamento && !temContato };
   }
 
   function mostrarAvisoPagamento() {
@@ -252,25 +282,16 @@
     document.documentElement.appendChild(host);
   }
 
-  function checarPagina() {
-    if (!ativo || rodadas++ >= 6) return;
-    const conhecido = !!(siteRes && siteRes.conhecido);
-
-    if (location.protocol === 'http:' && !avisoSite && temCampoSensivel()) {
-      mostrarAvisoSite({ nivel: 'atencao', dominio: location.hostname,
-        motivos: ['Esta página pede senha ou dados de cartão sem conexão segura (sem cadeado).'] });
-    }
-    if (avisouPagamento || conhecido || !document.body) return;
-
-    const texto = (document.body.innerText || '').slice(0, 100000);
-    const fortes = FORTES.filter((p) => p.test(texto)).length;
-    const fracos = FRACOS.filter((p) => p.test(texto)).length;
-    const risco = siteRes && siteRes.nivel !== 'ok';
-    const pontos = fortes * 2 + fracos;
-    if (pontos >= (risco ? 3 : 4) && (fortes >= 1 || risco)) {
-      avisouPagamento = true;            // fechou, não volta mais
-      mostrarAvisoPagamento();
-    }
+  let ultimoEnvio = '';
+  async function checarPagina() {
+    if (!ativo || rodadas++ >= 6 || !document.body) return;
+    if (siteRes && siteRes.conhecido) return;               // site provado: não incomoda
+    const sinais = lerSinais();
+    const chave = JSON.stringify(sinais);
+    if (!Object.values(sinais).some(Boolean) || chave === ultimoEnvio) return;
+    ultimoEnvio = chave;
+    const res = await enviar({ tipo: 'avaliar-pagina', host: location.hostname, protocolo: location.protocol, url: location.href, sinais });
+    if (res) { siteRes = res; if (res.nivel !== 'ok') mostrarAvisoSite(res); }
   }
 
   // ---------- 3) Posts, imagens e vídeos ----------
@@ -426,6 +447,10 @@
       mostrarAvisoSite({ nivel: msg.nivel, dominio: location.hostname, motivos: MOTIVOS_DEMO[msg.nivel] });
     }
     sendResponse({ ok: true });
+  });
+
+  chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    if (msg && msg.tipo === 'sinais') { sendResponse({ sinais: lerSinais(), nota: siteRes ? siteRes.pontos : 0 }); }
   });
 
   // ---------- Início ----------
