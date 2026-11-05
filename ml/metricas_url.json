@@ -1,0 +1,18 @@
+{
+ "B_com_consultas_de_rede": {
+  "acuracia": 0.9673,
+  "precisao": 0.9516,
+  "recall": 0.9549,
+  "falsos_positivos": 0.0261,
+  "auc": 0.9946,
+  "n": 17442
+ },
+ "A_so_estrutura_do_endereco": {
+  "acuracia": 0.9354,
+  "precisao": 0.9221,
+  "recall": 0.8906,
+  "falsos_positivos": 0.0405,
+  "auc": 0.9799,
+  "n": 17442
+ }
+}

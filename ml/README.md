@@ -1,23 +1,39 @@
-# Experimento de aprendizado de máquina (não está ligado à extensão)
+# Experimentos de aprendizado de máquina (não estão ligados à extensão)
 
-Treina um classificador **só com o nome do site** (host).
+Meta pedida: acerto de pelo menos 94%. **Não foi atingida de forma honesta.** Abaixo, o que foi medido.
 
-- Golpes: Phishing.Database (até 15 por domínio). Legítimos: sites do ranking Cisco Umbrella.
-- Separação treino/teste por domínio. O risco por final de domínio (.xyz etc.) usa só o treino.
-- Rodar: `python3 treinar.py PASTA_COM_phishing.txt_E_top-1m.csv` (precisa de scikit-learn).
+## 1) Só o nome do site (`treinar.py`)
+Golpes: Phishing.Database. Legítimos: ranking Cisco Umbrella. Teste com 24 mil sites nunca vistos,
+separados por domínio.
 
-## Resultado (teste com 24 mil sites que o modelo nunca viu)
-| Medida | Valor |
-|---|---|
-| Acurácia | 81% |
-| Golpes pegos (recall) | 72% |
-| Sites normais marcados como golpe | 10% |
-| Com limiar para 1% de falsos alertas | pega só 56% dos golpes |
-| Precisão se só 1% dos sites forem golpe | ~7% |
+| Acerto | Golpes pegos | Normais marcados como golpe |
+|---|---|---|
+| 81% | 72% | 10% |
 
-**Conclusão:** só o nome do site não chega a 94%. Muitos golpes da lista são sites comuns invadidos
-(`deckegroup.com`, `coralon.com`), indistinguíveis de um site normal pelo nome. Por isso o modelo
-não foi ligado à extensão: com tantos falsos alertas, ele faria mais mal que bem.
+Muitos golpes da lista são sites comuns invadidos (`deckegroup.com`), iguais a um site normal pelo nome.
 
-Para chegar perto de 94% é preciso olhar a **página** (campo de senha, formulário que envia para outro
-domínio, links, texto), e treinar com dados rotulados dessas páginas.
+## 2) Endereço completo, conjunto de Vrbančič (`treinar_url.py`, `avaliar_generalizacao.py`)
+88.647 endereços (30.497 de golpe, sem duplicatas).
+
+| Teste | Acerto | Golpes pegos | Normais marcados como golpe |
+|---|---|---|---|
+| Só estrutura do endereço, teste igual ao treino | 93,5% | 89% | 4% |
+| Com consultas de rede (idade do domínio etc.), teste igual ao treino | 96,7% | 95% | 2,6% |
+| Estrutura, só endereços **com** caminho | 88% | 92% | 21% |
+| Estrutura, **sem** caminho | 98% | **2%** | 0% |
+| Estrutura, aplicado a outra fonte (24 mil nomes de sites) | **54,5%** | 9% | 0,7% |
+| Com consultas de rede, só endereços com caminho | 95% | 97% | 10% |
+
+**Por que o 93–97% engana:** 80% dos sites normais do conjunto não têm caminho (só a página inicial) e
+97,6% dos golpes têm. O modelo aprende "tem caminho = golpe". Sem caminho ele pega 2% dos golpes; em
+outra fonte de dados o acerto cai para o nível de cara ou coroa. Ligado à extensão, ele marcaria como
+golpe qualquer notícia ou produto com endereço comprido.
+
+## Conclusão
+- Nenhum modelo aqui está pronto para decidir sozinho. Nada foi ligado à extensão.
+- A idade do domínio e outras consultas de rede ajudam de verdade (2,6% de falsos alertas contra 4%).
+- O que falta é um conjunto de **páginas** (senha, formulário para outro domínio, links, texto) de
+  golpes e de sites normais, de preferência do Brasil, coletado de forma equilibrada. Não foi possível
+  baixar um aqui.
+- Em uso real, golpes são raros. Mesmo com 2,6% de falsos alertas, a maioria dos alertas seria falsa.
+  Por isso as listas e as regras seguem como a decisão principal.
