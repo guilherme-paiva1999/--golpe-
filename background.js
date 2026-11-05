@@ -24,7 +24,9 @@ const HOSPEDAGEM = [
   'sites.google.com', 'docs.google.com', 'drive.google.com', 'forms.gle',
   'storage.googleapis.com', 'blogspot.com', 'github.io', 'netlify.app',
   'vercel.app', 'pages.dev', 'web.app', 'firebaseapp.com', 'herokuapp.com',
-  'wixsite.com', 'weebly.com', '000webhostapp.com'
+  'wixsite.com', 'weebly.com', '000webhostapp.com', 'glitch.me', 'onrender.com',
+  'repl.co', 'replit.app', 'myshopify.com', 'webflow.io', 'godaddysites.com',
+  'carrd.co', 'workers.dev', 'trycloudflare.com', 'infinityfreeapp.com', 'rf.gd'
 ];
 
 // marca -> domínios oficiais
@@ -58,7 +60,9 @@ const SUFIXOS_COMPOSTOS = ['com.br', 'net.br', 'org.br', 'gov.br', 'edu.br', 'mi
 
 const FONTES_LISTAS = [
   { nome: 'phishing', url: 'https://raw.githubusercontent.com/mitchellkrogza/Phishing.Database/master/phishing-domains-ACTIVE.txt' },
-  { nome: 'urlhaus', url: 'https://urlhaus.abuse.ch/downloads/hostfile/' }
+  { nome: 'urlhaus', url: 'https://urlhaus.abuse.ch/downloads/hostfile/' },
+  // Feed público do OpenPhish (golpes recentes, lista de endereços). Confira os termos de uso antes de publicar.
+  { nome: 'openphish', url: 'https://raw.githubusercontent.com/openphish/public_feed/main/feed.txt', minimo: 50, horas: 6 }
 ];
 
 const MARCAS_IA = ['trainedalgorithmicmedia', 'midjourney', 'dall-e', 'dall·e',
@@ -114,9 +118,9 @@ let dbPromise = null;
 function abrirDB() {
   if (!dbPromise) {
     dbPromise = new Promise((resolve, reject) => {
-      const rq = indexedDB.open('protetor', 1);
+      const rq = indexedDB.open('protetor', 2);
       rq.onupgradeneeded = () => {
-        for (const f of FONTES_LISTAS) rq.result.createObjectStore(f.nome);
+        for (const f of FONTES_LISTAS) if (!rq.result.objectStoreNames.contains(f.nome)) rq.result.createObjectStore(f.nome);
       };
       rq.onsuccess = () => resolve(rq.result);
       rq.onerror = () => { dbPromise = null; reject(rq.error); };
@@ -176,7 +180,8 @@ function lerLista(texto) {
     linha = linha.split('#')[0].trim().toLowerCase();
     if (!linha) continue;
     const partes = linha.split(/\s+/);
-    const d = partes[partes.length - 1];
+    let d = partes[partes.length - 1];
+    if (/^https?:\/\//.test(d)) { try { d = new URL(d).hostname; } catch (e) { continue; } }
     if (d === 'localhost' || !d.includes('.')) continue;
     if (!/^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/.test(d)) continue;
     dominios.push(d);
@@ -191,24 +196,24 @@ async function baixar(url) {
 }
 
 let atualizando = null;
-function atualizarListas() {
+function atualizarListas(so) {
   if (atualizando) return atualizando;
   atualizando = (async () => {
     // Evita o service worker dormir durante o download longo.
     const ping = setInterval(() => chrome.runtime.getPlatformInfo(), 20000);
     try {
       let ok = 0;
-      for (const fonte of FONTES_LISTAS) {
+      for (const fonte of FONTES_LISTAS.filter((f) => !so || so.includes(f.nome))) {
         try {
           const dominios = lerLista(await baixar(fonte.url));
-          if (dominios.length < 100) throw new Error('lista suspeita (muito pequena)');
+          if (dominios.length < (fonte.minimo || 100)) throw new Error('lista suspeita (muito pequena)');
           await substituirFonte(fonte.nome, dominios); // só troca se esta fonte deu certo
           ok++;
         } catch (e) {
           console.warn('Falha ao atualizar', fonte.nome, e.message);
         }
       }
-      if (ok) await chrome.storage.local.set({ atualizadoEm: Date.now() });
+      if (ok && !so) await chrome.storage.local.set({ atualizadoEm: Date.now() });
     } finally {
       clearInterval(ping);
       atualizando = null;
@@ -220,10 +225,15 @@ function atualizarListas() {
 async function garantirAlarme() {
   const a = await chrome.alarms.get('atualizar');
   if (!a) chrome.alarms.create('atualizar', { periodInMinutes: 1440, delayInMinutes: 1440 });
+  const f = await chrome.alarms.get('feed');
+  if (!f) chrome.alarms.create('feed', { periodInMinutes: 360, delayInMinutes: 360 });
 }
 chrome.runtime.onInstalled.addListener(() => { garantirAlarme(); atualizarListas(); });
 chrome.runtime.onStartup.addListener(garantirAlarme);
-chrome.alarms.onAlarm.addListener((a) => { if (a.name === 'atualizar') atualizarListas(); });
+chrome.alarms.onAlarm.addListener((a) => {
+  if (a.name === 'atualizar') atualizarListas();
+  if (a.name === 'feed') atualizarListas(['openphish']);   // golpes novos entram em horas, não em dias
+});
 garantirAlarme();
 
 // ---------- Sinais do endereço (sem rede) ----------
@@ -315,7 +325,7 @@ async function calcularBase(host, rapido) {
   if (!rapido) {
     const cfg = await lerConfig();
     // Privacidade: só pergunta ao RDAP quando já há suspeita (ou se o usuário ativou).
-    if ((pontos >= 15 || cfg.consultaIdade) && !ehIPv4(r.dominio)) {
+    if ((pontos >= 15 || cfg.consultaIdade) && !ehIPv4(r.dominio) && !sufixo(host, HOSPEDAGEM)) {
       const dias = await idadeEmDias(r.dominio);
       if (dias !== null && dias < 30) {
         pontos += 30; motivos = [...motivos, 'Este site foi criado há apenas ' + Math.max(1, Math.round(dias)) + ' dias.'];
@@ -402,21 +412,63 @@ function estadoSelo(res) {
   return res.nivel === 'ok' ? 'verificar' : res.nivel;
 }
 
+const SINAIS_CHAVES = ['pagamento', 'pressao', 'desconto', 'formExterno', 'senha', 'semContato',
+  'venda', 'cnpjValido', 'cnpjInvalido', 'contato', 'emailMesmoDominio', 'politicas', 'gateway'];
+
+// Loja (venda ou pedido de pagamento): começa com 0 e precisa PROVAR confiança, com mais de 75 de 100.
+// Provas somam; sinais ruins tiram. O que faltou vira o aviso.
+function pontuarConfianca(sinais, dias, protocolo, pontosDoEndereco, gratuito) {
+  const alertas = [], faltou = [];
+  let c = 0;
+  if (gratuito) { c -= 15; faltou.push('A loja está em hospedagem gratuita, onde qualquer pessoa cria páginas. A idade do serviço não prova a idade da loja.'); }
+  else if (dias === null || dias === undefined) faltou.push('Não conseguimos provar há quanto tempo esta loja existe.');
+  else if (dias >= 1095) c += 35;
+  else if (dias >= 365) c += 25;
+  else if (dias >= 180) { c += 10; faltou.push('Esta loja tem menos de 1 ano de vida.'); }
+  else if (dias >= 90) faltou.push('Esta loja tem menos de 6 meses de vida.');
+  else if (dias >= 30) { c -= 25; faltou.push('Esta loja tem só ' + Math.round(dias) + ' dias de vida.'); }
+  else { c -= 40; faltou.push('Esta loja foi criada há apenas ' + Math.max(1, Math.round(dias)) + ' dias.'); }
+  if (protocolo === 'https:') c += 10; else faltou.push('O site não usa conexão segura (sem cadeado).');
+  if (sinais.cnpjValido) c += 10; else faltou.push(sinais.cnpjInvalido ? 'O CNPJ que aparece na página é inválido.' : 'Não achamos CNPJ na página.');
+  if (sinais.contato) c += 10; else faltou.push('Não achamos contato claro (e-mail, telefone ou endereço).');
+  if (sinais.emailMesmoDominio) c += 5;
+  if (sinais.politicas) c += 15; else faltou.push('Não achamos política de trocas, privacidade ou entrega.');
+  if (sinais.gateway) c += 10;
+  if (sinais.formExterno) { c -= 20; alertas.push('O formulário envia os seus dados para outro site.'); }
+  if (sinais.pressao) { c -= 15; alertas.push('A página usa mensagens de pressão (tempo curto, poucas unidades).'); }
+  if (sinais.desconto) { c -= 15; alertas.push('A página promete descontos exagerados.'); }
+  if (pontosDoEndereco > 0) c -= Math.min(pontosDoEndereco, 40);
+  return { confianca: Math.max(0, Math.min(100, c)), motivos: [...alertas, ...faltou] };
+}
+
+function limiteConfianca(rigor) { return rigor === 'normal' ? 60 : 75; }
+
 async function avaliarPagina(host, protocolo, sinais) {
   const pre = await analisar(host, protocolo, { rapido: true });
   if (pre.conhecido || pre.permitido || pre.pontos >= 100) return pre;     // provado, liberado ou já na lista
   const cfg = await lerConfig();
   const r = avaliarHost(host);
+  const comercio = !!(sinais.pagamento || sinais.venda);
+  // A idade só é consultada quando a página mostra venda, dinheiro, senha ou pressão (privacidade).
+  const precisaIdade = comercio || sinais.senha || sinais.pressao || sinais.formExterno || cfg.consultaIdade;
+  const gratuito = sufixo(host, HOSPEDAGEM);                  // subdomínio grátis: a idade é do serviço, não da loja
+  const dias = (precisaIdade && !gratuito && !ehIPv4(r.dominio)) ? await idadeEmDias(r.dominio) : null;
+
+  if (comercio) {
+    const limite = limiteConfianca(cfg.rigor);
+    const c = pontuarConfianca(sinais, dias, protocolo, r.pontos, gratuito);
+    const motivos = [...r.motivos, ...c.motivos];
+    const nivel = c.confianca > limite ? 'ok' : (c.confianca < 30 ? 'perigo' : 'atencao');
+    return { nivel, pontos: 100 - c.confianca, confianca: c.confianca, limite, comercio: true,
+      motivos, dominio: r.dominio, conhecido: false, provado: nivel === 'ok', dias };
+  }
   let pontos = r.pontos + (protocolo === 'http:' ? 10 : 0);
   const motivos = [...r.motivos];
   if (protocolo === 'http:') motivos.push('O site não usa conexão segura (sem cadeado).');
-  // A idade só é consultada quando a página mostra dinheiro, senha ou pressão (privacidade).
-  const precisaIdade = sinais.pagamento || sinais.senha || sinais.pressao || sinais.formExterno || cfg.consultaIdade;
-  const dias = (precisaIdade && !ehIPv4(r.dominio)) ? await idadeEmDias(r.dominio) : null;
   const res = pontuarPagina(pontos, motivos, sinais, dias, cfg.rigor);
   const nivel = nivelPorRigor(res.pontos, cfg.rigor);
-  const provado = nivel === 'ok' && dias !== null && dias >= 365;
-  return { nivel, pontos: res.pontos, motivos: res.motivos, dominio: r.dominio, conhecido: false, provado, dias };
+  return { nivel, pontos: res.pontos, motivos: res.motivos, dominio: r.dominio, conhecido: false,
+    provado: nivel === 'ok' && dias !== null && dias >= 365, dias };
 }
 
 // ---------- Bloqueio antes de a página abrir ----------
@@ -516,7 +568,7 @@ async function tratar(msg, sender) {
     case 'avaliar-pagina': {
       if (!hostValido(msg.host) || !protocoloValido(msg.protocolo) || !msg.sinais) return null;
       const sinais = {};
-      for (const k of ['pagamento', 'pressao', 'desconto', 'formExterno', 'senha', 'semContato']) sinais[k] = msg.sinais[k] === true;
+      for (const k of SINAIS_CHAVES) sinais[k] = msg.sinais[k] === true;
       const host = msg.host.toLowerCase();
       const res = await avaliarPagina(host, msg.protocolo, sinais);
       if (sender.tab) selo(sender.tab.id, res.provado ? 'ok' : estadoSelo(res));
@@ -536,7 +588,7 @@ async function tratar(msg, sender) {
       const a = dados[lista] || [];
       if (!a.includes(host)) a.push(host);
       const sinais = {};
-      for (const k of ['pagamento', 'pressao', 'desconto', 'formExterno', 'senha', 'semContato']) sinais[k] = !!(msg.sinais && msg.sinais[k]);
+      for (const k of SINAIS_CHAVES) sinais[k] = !!(msg.sinais && msg.sinais[k]);
       const rotulos = (dados.rotulos || []).filter((x) => x.host !== host);
       rotulos.push({ host, rotulo: msg.rotulo, sinais, nota: Number(msg.nota) || 0, em: new Date().toISOString() });
       await chrome.storage.local.set({ [lista]: a, [outra]: (dados[outra] || []).filter((h) => h !== host), rotulos: rotulos.slice(-2000) });

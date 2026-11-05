@@ -173,7 +173,9 @@
     const nivel = perigo ? 'perigo' : 'atencao';
     const simples = !!config.modoSimples;
     const motivos = res.motivos.slice(0, simples ? 2 : 4);
-    const titulo = perigo ? 'Este site pode ser um golpe' : 'Este site é suspeito';
+    const titulo = res.comercio
+      ? (perigo ? 'Esta loja tem cara de golpe' : 'Esta loja ainda não provou ser confiável')
+      : (perigo ? 'Este site pode ser um golpe' : 'Este site é suspeito');
 
     const { host, root } = criarCaixa({
       position: 'fixed', inset: '0', 'z-index': '2147483647', display: 'block'
@@ -213,6 +215,7 @@
       triangulo(),
       el('div', { class: 'pare', 'aria-hidden': 'true' }, 'PARE'),
       el('div', { class: 'tit', id: 'pg-tit' }, titulo),
+      ...(res.confianca === undefined ? [] : [el('div', { class: 'tit' }, 'Confiança: ' + res.confianca + ' de 100. Lojas precisam de mais de ' + res.limite + '.')]),
       el('div', { class: 'caixa' }, el('b', {}, 'O que encontramos:'), el('ul', {}, ...motivos.map((m) => el('li', {}, m)))),
       el('div', { class: 'passo' }, el('b', {}, 'O que fazer: '), PASSOS[nivel]),
       botoes);
@@ -245,23 +248,53 @@
     return false;
   }
 
+  const POLITICAS = [
+    /pol[íi]tica\s+de\s+privacidade|privacidade/i, /termos\s+(de\s+)?(uso|servi[cç]o|compra)/i,
+    /troca[s]?\s+e\s+devolu[cç][õo]es|pol[íi]tica\s+de\s+troca|devolu[cç][ãa]o/i,
+    /prazo\s+de\s+entrega|pol[íi]tica\s+de\s+entrega|\bfrete\b/i
+  ];
+  const GATEWAYS = ['mercadopago.com', 'mercadopago.com.br', 'pagseguro.uol.com.br', 'pagbank.com.br', 'stripe.com',
+    'paypal.com', 'pagar.me', 'cielo.com.br', 'stone.com.br', 'ebanx.com', 'hotmart.com', 'pix.bcb.gov.br'];
+  const ENDERECO = /\b(rua|av\.?|avenida|alameda|rodovia|travessa)\s+[^,\n]{3,40},?\s*\d+/i;
+
+  function cnpjOk(d) {
+    if (d.length !== 14 || /^(\d)\1+$/.test(d)) return false;
+    const calc = (n) => { let s = 0, p = n - 7; for (let i = 0; i < n; i++) { s += Number(d[i]) * p--; if (p < 2) p = 9; } const r = s % 11; return r < 2 ? 0 : 11 - r; };
+    return calc(12) === Number(d[12]) && calc(13) === Number(d[13]);
+  }
+  function hostEm(host, lista) { return lista.some((g) => host === g || host.endsWith('.' + g)); }
+
   function lerSinais() {
     const texto = (document.body ? document.body.innerText : '').slice(0, 100000);
     const campoCartao = !!document.querySelector('input[autocomplete^="cc-"], input[name*="card" i], input[name*="cartao" i], input[name*="cvv" i], input[id*="cvv" i]');
     const senha = !!document.querySelector('input[type="password"]');
     const pagamento = campoCartao || PAGAMENTO.some((p) => p.test(texto));
+    const preco = (texto.match(/R\$\s?\d/g) || []).length;
+    const venda = preco >= 1 && /adicionar\s+ao\s+carrinho|comprar\s+agora|\bcomprar\b|carrinho\s+de\s+compras|finalizar\s+compra/i.test(texto);
     const contador = !!document.querySelector('[class*="countdown" i], [id*="countdown" i], [class*="timer" i], [id*="timer" i]');
     const pressao = contador || PRESSAO.some((p) => p.test(texto));
-    let formExterno = false;
-    document.querySelectorAll('form[action]').forEach((f) => {
+    let formExterno = false, gateway = false;
+    document.querySelectorAll('form[action], iframe[src]').forEach((f) => {
       try {
-        const alvo = new URL(f.getAttribute('action'), location.href);
-        const sensivel = f.querySelector('input[type="password"], input[autocomplete^="cc-"], input[name*="card" i], input[name*="cpf" i], input[name*="senha" i]');
-        if (sensivel && /^https?:$/.test(alvo.protocol) && alvo.hostname !== location.hostname) formExterno = true;
-      } catch (e) { /* action inválida */ }
+        const url = new URL(f.getAttribute('action') || f.getAttribute('src'), location.href);
+        if (!/^https?:$/.test(url.protocol) || url.hostname === location.hostname) return;
+        if (hostEm(url.hostname, GATEWAYS)) { gateway = true; return; }
+        if (f.tagName === 'FORM' && f.querySelector('input[type="password"], input[autocomplete^="cc-"], input[name*="card" i], input[name*="cpf" i], input[name*="senha" i]')) formExterno = true;
+      } catch (e) { /* endereço inválido */ }
     });
-    const temContato = CNPJ.test(texto) || CONTATO.test(texto) || !!document.querySelector('a[href^="mailto:"], a[href^="tel:"]');
-    return { pagamento, pressao, desconto: descontoExagerado(texto), formExterno, senha, semContato: pagamento && !temContato };
+    let cnpjValido = false, cnpjInvalido = false;
+    for (const m of texto.matchAll(new RegExp(CNPJ.source, 'g'))) {
+      if (cnpjOk(m[0].replace(/\D/g, ''))) cnpjValido = true; else cnpjInvalido = true;
+    }
+    if (cnpjValido) cnpjInvalido = false;
+    const raiz = location.hostname.replace(/^www\./, '');
+    const emails = [...texto.matchAll(/[\w.+-]+@([\w.-]+\.[a-z]{2,})/gi)].map((m) => m[1].toLowerCase());
+    document.querySelectorAll('a[href^="mailto:"]').forEach((a) => { const m = a.getAttribute('href').match(/@([\w.-]+)/); if (m) emails.push(m[1].toLowerCase()); });
+    const emailMesmoDominio = emails.some((d) => d === raiz || d.endsWith('.' + raiz) || raiz.endsWith('.' + d));
+    const contato = CONTATO.test(texto) || ENDERECO.test(texto) || emails.length > 0 || !!document.querySelector('a[href^="tel:"]');
+    const politicas = POLITICAS.filter((p) => p.test(texto)).length >= 2;
+    return { pagamento, pressao, desconto: descontoExagerado(texto), formExterno, senha, venda,
+      semContato: pagamento && !(CNPJ.test(texto) || contato), cnpjValido, cnpjInvalido, contato, emailMesmoDominio, politicas, gateway };
   }
 
   function mostrarAvisoPagamento() {
@@ -288,7 +321,8 @@
     if (siteRes && siteRes.conhecido) return;               // site provado: não incomoda
     const sinais = lerSinais();
     const chave = JSON.stringify(sinais);
-    if (!Object.values(sinais).some(Boolean) || chave === ultimoEnvio) return;
+    const gatilho = sinais.pagamento || sinais.venda || sinais.pressao || sinais.desconto || sinais.formExterno || sinais.senha;
+    if (!gatilho || chave === ultimoEnvio) return;
     ultimoEnvio = chave;
     const res = await enviar({ tipo: 'avaliar-pagina', host: location.hostname, protocolo: location.protocol, url: location.href, sinais });
     if (res) { siteRes = res; if (res.nivel !== 'ok') mostrarAvisoSite(res); }

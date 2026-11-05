@@ -54,3 +54,19 @@ tira 20 e mais de 3 anos tira 30. Rigor "alto" (padrão) avisa a partir de 25 po
 Selo no ícone: ✓ provado, ? não verificado, ! atenção, X perigo.
 Os botões "É golpe" e "É seguro" guardam os seus rótulos neste computador ("Baixar meus dados") para treinar um modelo depois.
 Os pesos foram definidos à mão, **não treinados**; `ml/testar_pontuacao.js` testa só a lógica.
+
+## Lojas precisam provar mais de 75 de 100 (v2.4)
+Se a página vende ou pede pagamento, ela começa com 0 de confiança e precisa passar de **75**.
+Provas: idade do domínio (3 anos +35, 1 ano +25, 6 meses +10), https +10, CNPJ com dígitos válidos +10,
+contato +10 (+5 se o e-mail é do próprio site), políticas de trocas/privacidade/entrega +15, gateway de
+pagamento conhecido +10. Sinais ruins tiram: site de menos de 30 dias −40, pressão −15, desconto exagerado −15,
+formulário para outro site −20, hospedagem gratuita −15. Menos de 30 de confiança bloqueia; de 30 a 75 avisa.
+**Hospedagem gratuita** (`vercel.app`, `blogspot.com`...) não prova idade: a idade seria a do serviço.
+Os pesos foram definidos à mão. `ml/testar_confianca.js` testa só a lógica.
+
+## Feed do OpenPhish
+O `openphish.eu` não abre a partir deste ambiente, mas o feed público está espelhado no GitHub
+(`openphish/public_feed`). Foi adicionado como fonte de golpes, atualizada a cada 6 horas.
+Medido em 273 sites de golpe recentes: as regras pegam 1,1%; só 2,6% já estavam no Phishing.Database;
+58,6% estão em hospedagem gratuita. Ou seja, o feed traz cobertura que as outras listas ainda não têm.
+Confira os termos de uso do OpenPhish antes de publicar a extensão.
