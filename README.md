@@ -87,3 +87,13 @@ Confira os termos de uso do Procon-SP antes de publicar a extensão.
   (muitos ataques usam sites invadidos). Botões "Entrar com Google" não contam.
 - A tela de bloqueio mostra os motivos que vieram da página.
 - Testes de lógica: `node ml/testar_gov_marca.js`. Páginas de teste em `teste/`.
+
+## Reclame Aqui (v2.7)
+O Reclame Aqui não tem API pública, bloqueia consultas automáticas (Cloudflare) e o `robots.txt` proíbe robôs
+na busca e no detector. Por isso a extensão **não consulta o Reclame Aqui sozinha**. Ela:
+- mostra o botão **"Verificar no Reclame Aqui"** (no alerta e no popup), que abre o Detector de Site Confiável
+  oficial e copia o endereço do site;
+- deixa a pessoa registrar no popup **o que o Reclame Aqui mostrou**. Esse registro entra na pontuação:
+  em lojas soma na confiança (Verificado +20, Ótimo +15, Bom +10, Regular 0, Ruim −20, Não recomendado −40,
+  Sem cadastro −5); nos demais sites, o contrário nos pontos de risco.
+Testes de lógica: `node ml/testar_reclameaqui.js`.

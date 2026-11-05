@@ -204,10 +204,19 @@
       }
     }, 'Continuar mesmo assim (não recomendado)');
 
+    const dominioRA = (res.dominio || location.hostname).replace(/^www\./, '');
+    const ra = el('button', {
+      type: 'button',
+      onclick: () => {
+        try { navigator.clipboard.writeText(dominioRA).catch(() => {}); } catch (e) { /* sem área de transferência */ }
+        window.open('https://www.reclameaqui.com.br/detector-site-confiavel/', '_blank', 'noopener');
+        ra.textContent = 'Endereço copiado: cole no Reclame Aqui';
+      }
+    }, 'Verificar no Reclame Aqui');
     const botoes = el('div', { class: 'botoes' }, voltar);
     const ouvir = botaoOuvir('Pare. ' + titulo + '. ' + motivos.join(' ') + ' O que fazer: ' + PASSOS[nivel]);
     if (ouvir) botoes.append(ouvir);
-    botoes.append(continuar);
+    botoes.append(ra, continuar);
 
     const tela = el('div', {
       class: 'tela' + (simples ? ' grande' : ''), role: 'alertdialog', 'aria-modal': 'true', 'aria-labelledby': 'pg-tit'

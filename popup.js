@@ -40,6 +40,29 @@ async function baixar() {
   a.click();
 }
 
+async function abaAtual() {
+  const [aba] = await chrome.tabs.query({ active: true, currentWindow: true });
+  return aba;
+}
+
+async function prepararRA() {
+  const aba = await abaAtual();
+  let host = '';
+  try { host = new URL(aba.url).hostname.replace(/^www\./, ''); } catch (e) { /* página especial */ }
+  if (!/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(host)) { $('notaRA').disabled = true; $('btnRA').disabled = true; return; }
+  const { reclameAqui = {} } = await chrome.storage.local.get('reclameAqui');
+  const chave = Object.keys(reclameAqui).find((d) => host === d || host.endsWith('.' + d));
+  if (chave) $('notaRA').value = reclameAqui[chave].nota;
+  $('btnRA').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(host); } catch (e) { /* sem área de transferência */ }
+    chrome.tabs.create({ url: 'https://www.reclameaqui.com.br/detector-site-confiavel/' });
+  });
+  $('notaRA').addEventListener('change', async () => {
+    const r = await chrome.runtime.sendMessage({ tipo: 'ra', url: aba.url, nota: $('notaRA').value });
+    $('raInfo').textContent = r ? 'Anotado para ' + r.dominio + '. Recarregue a página para ver o efeito.' : 'Não foi possível anotar.';
+  });
+}
+
 async function mostrarStatus() {
   try {
     const [aba] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -99,6 +122,7 @@ async function iniciar() {
   });
   mostrarData();
   mostrarStatus();
+  prepararRA();
 }
 
 async function mostrarData() {

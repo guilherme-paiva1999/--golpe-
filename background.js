@@ -507,6 +507,25 @@ function marcaFalsaNaPagina(host, marcas, sinais) {
   return null;
 }
 
+// Reclame Aqui: não há API pública e o site bloqueia consultas automáticas. A pessoa verifica no
+// Detector oficial e registra o resultado no popup; ele entra na pontuação (só soma, não troca nada).
+const NOTAS_RA = {
+  verificado: ['RA Verificado / Confiável', 20, -20], otimo: ['Ótimo / RA1000', 15, -15], bom: ['Bom', 10, -10],
+  regular: ['Regular', 0, 0], ruim: ['Ruim', -20, 20], nao_recomendado: ['Não recomendado', -40, 40],
+  sem_cadastro: ['Sem cadastro', -5, 5]
+};
+async function notaRA(dominio) {
+  const { reclameAqui = {} } = await chrome.storage.local.get('reclameAqui');
+  return reclameAqui[dominio] || null;
+}
+// comercio: soma na confiança (0 a 100). Senão: soma nos pontos de risco.
+function aplicarRA(registro, comercio, valor, motivos) {
+  if (!registro || !NOTAS_RA[registro.nota]) return valor;
+  const [nome, deltaConfianca, deltaRisco] = NOTAS_RA[registro.nota];
+  motivos.push('Reclame Aqui: ' + nome + ' (registrado por você).');
+  return comercio ? Math.max(0, Math.min(100, valor + deltaConfianca)) : Math.max(0, valor + deltaRisco);
+}
+
 function limiteConfianca(rigor) { return rigor === 'normal' ? 60 : 75; }
 
 async function avaliarPagina(host, protocolo, sinais) {
@@ -527,6 +546,7 @@ async function avaliarPagina(host, protocolo, sinais) {
     const limite = limiteConfianca(cfg.rigor);
     const c = pontuarConfianca(sinais, dias, protocolo, r.pontos, gratuito);
     const motivos = [...r.motivos, ...c.motivos];
+    c.confianca = aplicarRA(await notaRA(r.dominio), true, c.confianca, motivos);
     let nivel = c.confianca > limite ? 'ok' : (c.confianca < 30 ? 'perigo' : 'atencao');
     if (falsa) nivel = 'perigo';                       // marca falsa é decisiva, mesmo em site antigo
     return { nivel, pontos: 100 - c.confianca, confianca: c.confianca, limite, comercio: true,
@@ -536,6 +556,7 @@ async function avaliarPagina(host, protocolo, sinais) {
   const motivos = [...r.motivos];
   if (protocolo === 'http:') motivos.push('O site não usa conexão segura (sem cadeado).');
   const res = pontuarPagina(pontos, motivos, sinais, dias, cfg.rigor);
+  res.pontos = aplicarRA(await notaRA(r.dominio), false, res.pontos, res.motivos);
   if (falsa) res.pontos = Math.max(res.pontos, 70);  // marca falsa é decisiva, mesmo em site antigo (invadido)
   const nivel = nivelPorRigor(res.pontos, cfg.rigor);
   return { nivel, pontos: res.pontos, motivos: res.motivos, dominio: r.dominio, conhecido: false,
@@ -667,6 +688,17 @@ async function tratar(msg, sender) {
       rotulos.push({ host, rotulo: msg.rotulo, sinais, nota: Number(msg.nota) || 0, em: new Date().toISOString() });
       await chrome.storage.local.set({ [lista]: a, [outra]: (dados[outra] || []).filter((h) => h !== host), rotulos: rotulos.slice(-2000) });
       return { ok: true, total: rotulos.length };
+    }
+    case 'ra': {
+      let u;
+      try { u = new URL(msg.url); } catch (e) { return null; }
+      if (!protocoloValido(u.protocol)) return null;
+      const dominio = dominioRaiz(u.hostname.toLowerCase());
+      const { reclameAqui = {} } = await chrome.storage.local.get('reclameAqui');
+      if (msg.nota && NOTAS_RA[msg.nota]) reclameAqui[dominio] = { nota: msg.nota, em: new Date().toISOString() };
+      else if (msg.nota === '') delete reclameAqui[dominio];
+      await chrome.storage.local.set({ reclameAqui });
+      return { ok: true, dominio, registro: reclameAqui[dominio] || null };
     }
     case 'status':
     case 'detalhes': {

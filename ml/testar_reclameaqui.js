@@ -1,0 +1,21 @@
+// Testa só a lógica de como a nota do Reclame Aqui (registrada pela pessoa) muda a pontuação.
+const fs=require('fs'),vm=require('vm'),path=require('path');
+const noop=()=>{},ev={addListener:noop};
+const chrome={runtime:{onInstalled:ev,onStartup:ev,onMessage:ev,id:'x',getPlatformInfo:noop},alarms:{get:async()=>({}),create:noop,onAlarm:ev},webNavigation:{onBeforeNavigate:ev},storage:{local:{get:async()=>({}),set:async()=>{}},session:{get:async()=>({}),set:async()=>{}}},action:{}};
+const ctx={chrome,console,AbortSignal,URL,TextDecoder,fetch:async()=>{throw 0}};vm.createContext(ctx);
+vm.runInContext(fs.readFileSync(path.join(__dirname,'../background.js'),'utf8')+';this.T={pontuarConfianca,aplicarRA,limiteConfianca,nivelPorRigor}',ctx);
+const T=ctx.T,S=(o)=>Object.assign({pagamento:true,venda:true,cnpjValido:true,contato:true,politicas:true},o);
+let ok=0,n=0;const t=(nome,v,e)=>{n++;const b=v===e;ok+=b;console.log((b?'OK  ':'ERRO'),nome.padEnd(58),v);};
+const loja=(s,d,nota)=>{const c=T.pontuarConfianca(s,d,'https:',0,false);const m=[];return T.aplicarRA(nota?{nota}:null,true,c.confianca,m)>75?'passa':'não passa';};
+t('loja 4 anos com provas, sem nota do RA',loja(S({}),1460,null),'passa');
+t('loja 4 anos com provas + RA "Não recomendado"',loja(S({}),1460,'nao_recomendado'),'não passa');
+t('loja 4 anos com provas + RA "Ruim"',loja(S({}),1460,'ruim'),'não passa');
+t('loja 1 ano sem gateway (70) + RA "Verificado"',loja(S({}),400,'verificado'),'passa');
+t('loja 1 ano sem gateway (70) + RA "Bom"',loja(S({}),400,'bom'),'passa');
+t('loja 1 ano sem gateway (70) + RA "Regular"',loja(S({}),400,'regular'),'não passa');
+t('loja NOVA (10 dias) + RA "Verificado" (site novo pesa mais)',loja(S({}),10,'verificado'),'não passa');
+const site=(p,nota)=>T.nivelPorRigor(T.aplicarRA(nota?{nota}:null,false,p,[]),'alto');
+t('site comum (15 pontos) + RA "Não recomendado"',site(15,'nao_recomendado'),'atencao');
+t('site comum (30 pontos) + RA "Ótimo"',site(30,'otimo'),'ok');
+t('nota inválida não muda nada',T.aplicarRA({nota:'xyz'},true,50,[]),50);
+console.log(ok+'/'+n+' como esperado');
