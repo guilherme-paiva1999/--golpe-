@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "É Golpe?",
-  "version": "2.7.0",
+  "version": "2.8.0",
   "description": "Avisa sobre sites suspeitos, golpes e conteúdo feito por IA, com explicações simples.",
   "minimum_chrome_version": "110",
   "icons": { "16": "icons/16.png", "48": "icons/48.png", "128": "icons/128.png" },
@@ -11,7 +11,8 @@
     "https://rdap.org/*",
     "https://raw.githubusercontent.com/*",
     "https://urlhaus.abuse.ch/*",
-    "https://sistemas.procon.sp.gov.br/*"
+    "https://sistemas.procon.sp.gov.br/*",
+    "https://brasilapi.com.br/*"
   ],
   "optional_host_permissions": ["https://*/*"],
   "background": { "service_worker": "background.js" },

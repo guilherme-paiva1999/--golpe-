@@ -1,0 +1,23 @@
+// Testa só a lógica de Receita Federal (BrasilAPI) e consumidor.gov.br na pontuação.
+const fs=require('fs'),vm=require('vm'),path=require('path');
+const noop=()=>{},ev={addListener:noop};
+const chrome={runtime:{onInstalled:ev,onStartup:ev,onMessage:ev,id:'x',getPlatformInfo:noop},alarms:{get:async()=>({}),create:noop,onAlarm:ev},webNavigation:{onBeforeNavigate:ev},storage:{local:{get:async()=>({}),set:async()=>{}},session:{get:async()=>({}),set:async()=>{}}},action:{}};
+const ctx={chrome,console,AbortSignal,URL,TextDecoder,fetch:async()=>{throw 0},Date};vm.createContext(ctx);
+vm.runInContext(fs.readFileSync(path.join(__dirname,'../background.js'),'utf8')+';this.T={aplicarEmpresa,aplicarConsumidor,normalizarNome,pontuarConfianca}',ctx);
+const T=ctx.T;let ok=0,n=0;const t=(nome,v,e)=>{n++;const b=JSON.stringify(v)===JSON.stringify(e);ok+=b;console.log((b?'OK  ':'ERRO'),nome.padEnd(60),JSON.stringify(v));};
+t('normaliza "Magazine Luiza S/A"',T.normalizarNome('Magazine Luiza S/A'),'magazineluizasa');
+t('normaliza "Pão de Açúcar"',T.normalizarNome('Pão de Açúcar'),'paodeacucar');
+const ativa={existe:true,ativa:true,situacao:'ATIVA',fantasia:'Loja X',abertura:'2015-03-01'};
+t('loja (80) + CNPJ ativo',T.aplicarEmpresa(ativa,true,80,[]),90);
+t('loja (80) + CNPJ inexistente',T.aplicarEmpresa({existe:false},true,80,[]),55);
+t('loja (80) + CNPJ baixado',T.aplicarEmpresa({existe:true,ativa:false,situacao:'BAIXADA'},true,80,[]),55);
+t('loja (80) + CNPJ ativo aberto há 2 meses',T.aplicarEmpresa(Object.assign({},ativa,{abertura:new Date(Date.now()-60*86400000).toISOString().slice(0,10)}),true,80,[]),75);
+t('loja (80) + BrasilAPI sem resposta',T.aplicarEmpresa(null,true,80,[]),80);
+t('site (risco 20) + CNPJ inexistente',T.aplicarEmpresa({existe:false},false,20,[]),45);
+const bom={periodo:'x',dados:['Boa',500,99,75,4.1]}, ruim={periodo:'x',dados:['Ruim',500,70,20,1.5]};
+t('loja (70) + consumidor.gov.br bom (+15)',T.aplicarConsumidor(bom,true,70,[]),85);
+t('loja (70) + consumidor.gov.br ruim (−10)',T.aplicarConsumidor(ruim,true,70,[]),60);
+t('loja (70) sem cadastro no consumidor.gov.br',T.aplicarConsumidor(null,true,70,[]),70);
+const m=[];T.aplicarConsumidor({periodo:'2026-04 a 2026-09',dados:['Mercado Livre',44276,100,70,3.4]},true,70,m);
+t('texto do motivo',m[0],'A favor: consumidor.gov.br (2026-04 a 2026-09): Mercado Livre, 44.276 reclamações, 100% respondidas, 70% resolvidas, nota 3,4 de 5.');
+console.log(ok+'/'+n+' como esperado');

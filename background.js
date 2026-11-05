@@ -526,6 +526,80 @@ function aplicarRA(registro, comercio, valor, motivos) {
   return comercio ? Math.max(0, Math.min(100, valor + deltaConfianca)) : Math.max(0, valor + deltaRisco);
 }
 
+// ---------- Receita Federal (BrasilAPI) e consumidor.gov.br ----------
+function normalizarNome(s) {
+  return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+async function consultarCnpj(cnpj) {
+  const { cnpjs = {} } = await chrome.storage.local.get('cnpjs');
+  const c = cnpjs[cnpj];
+  if (c && Date.now() - c.t < 7 * 86400000) return c.info;
+  let info = null;
+  try {
+    const r = await fetch('https://brasilapi.com.br/api/cnpj/v1/' + cnpj, { signal: AbortSignal.timeout(6000), credentials: 'omit' });
+    if (r.status === 404) info = { existe: false };
+    else if (r.ok) {
+      const j = await r.json();
+      info = { existe: true, ativa: /^ATIVA$/i.test(String(j.descricao_situacao_cadastral || '').trim()),
+        situacao: j.descricao_situacao_cadastral || '', razao: j.razao_social || '', fantasia: j.nome_fantasia || '',
+        abertura: j.data_inicio_atividade || '' };
+    }
+  } catch (e) { /* sem resposta: não conta nem a favor nem contra */ }
+  if (info) {
+    if (Object.keys(cnpjs).length > 500) for (const k of Object.keys(cnpjs)) delete cnpjs[k];
+    cnpjs[cnpj] = { t: Date.now(), info };
+    await chrome.storage.local.set({ cnpjs });
+  }
+  return info;
+}
+
+// comercio: soma na confiança (0 a 100). Senão: o contrário nos pontos de risco.
+function aplicarDelta(delta, comercio, valor) {
+  return comercio ? Math.max(0, Math.min(100, valor + delta)) : Math.max(0, valor - delta);
+}
+
+function aplicarEmpresa(info, comercio, valor, motivos) {
+  if (!info) return valor;
+  let d;
+  if (info.existe === false) { d = -25; motivos.push('O CNPJ mostrado na página não existe na Receita Federal.'); }
+  else if (!info.ativa) { d = -25; motivos.push('O CNPJ da página está com situação "' + (info.situacao || 'irregular') + '" na Receita Federal.'); }
+  else {
+    d = 10;
+    const ano = String(info.abertura || '').slice(0, 4);
+    motivos.push('A favor: empresa ativa na Receita Federal (' + (info.fantasia || info.razao || 'sem nome') + (ano ? ', aberta em ' + ano : '') + ').');
+    const dias = (Date.now() - new Date(info.abertura).getTime()) / 86400000;
+    if (dias >= 0 && dias < 180) { d -= 15; motivos.push('A empresa foi aberta há menos de 6 meses.'); }
+  }
+  return aplicarDelta(d, comercio, valor);
+}
+
+let consumidorCache = null;
+async function buscarConsumidor(nomes) {
+  if (!consumidorCache) {
+    try { consumidorCache = await (await fetch(chrome.runtime.getURL('dados/consumidor.json'))).json(); }
+    catch (e) { consumidorCache = { empresas: {} }; }
+  }
+  for (const n of nomes) {
+    const k = normalizarNome(n);
+    if (k.length >= 3 && consumidorCache.empresas[k]) return { periodo: consumidorCache.periodo, dados: consumidorCache.empresas[k] };
+  }
+  return null;
+}
+
+function aplicarConsumidor(reg, comercio, valor, motivos) {
+  if (!reg) return valor;
+  const [nome, total, resp, resol, nota] = reg.dados;
+  let d = 5;                                  // está cadastrada (com CNPJ) e recebe reclamações pela plataforma oficial
+  if (resp >= 95) d += 5;
+  if (resol !== null && resol >= 60) d += 5; else if (resol !== null && resol < 30) d -= 10;
+  if (nota !== null && nota < 2) d -= 5;
+  motivos.push((d > 0 ? 'A favor: ' : d < 0 ? 'Contra: ' : '') + 'consumidor.gov.br (' + reg.periodo + '): ' + nome + ', ' +
+    total.toLocaleString('pt-BR') + ' reclamações, ' + resp + '% respondidas, ' + (resol === null ? '?' : resol) +
+    '% resolvidas, nota ' + (nota === null ? '?' : String(nota).replace('.', ',')) + ' de 5.');
+  return aplicarDelta(d, comercio, valor);
+}
+
 function limiteConfianca(rigor) { return rigor === 'normal' ? 60 : 75; }
 
 async function avaliarPagina(host, protocolo, sinais) {
@@ -539,6 +613,8 @@ async function avaliarPagina(host, protocolo, sinais) {
   const comercio = !!(sinais.pagamento || sinais.venda);
   // A idade só é consultada quando a página mostra venda, dinheiro, senha ou pressão (privacidade).
   const precisaIdade = comercio || sinais.senha || sinais.pressao || sinais.formExterno || cfg.consultaIdade;
+  const empresa = /^\d{14}$/.test(sinais.cnpj || '') ? await consultarCnpj(sinais.cnpj) : null;
+  const consumidor = await buscarConsumidor([r.dominio.split('.')[0], empresa && empresa.fantasia, empresa && empresa.razao].filter(Boolean));
   const gratuito = sufixo(host, HOSPEDAGEM);                  // subdomínio grátis: a idade é do serviço, não da loja
   const dias = (precisaIdade && !gratuito && !ehIPv4(r.dominio)) ? await idadeEmDias(r.dominio) : null;
 
@@ -547,6 +623,8 @@ async function avaliarPagina(host, protocolo, sinais) {
     const c = pontuarConfianca(sinais, dias, protocolo, r.pontos, gratuito);
     const motivos = [...r.motivos, ...c.motivos];
     c.confianca = aplicarRA(await notaRA(r.dominio), true, c.confianca, motivos);
+    c.confianca = aplicarEmpresa(empresa, true, c.confianca, motivos);
+    c.confianca = aplicarConsumidor(consumidor, true, c.confianca, motivos);
     let nivel = c.confianca > limite ? 'ok' : (c.confianca < 30 ? 'perigo' : 'atencao');
     if (falsa) nivel = 'perigo';                       // marca falsa é decisiva, mesmo em site antigo
     return { nivel, pontos: 100 - c.confianca, confianca: c.confianca, limite, comercio: true,
@@ -557,6 +635,8 @@ async function avaliarPagina(host, protocolo, sinais) {
   if (protocolo === 'http:') motivos.push('O site não usa conexão segura (sem cadeado).');
   const res = pontuarPagina(pontos, motivos, sinais, dias, cfg.rigor);
   res.pontos = aplicarRA(await notaRA(r.dominio), false, res.pontos, res.motivos);
+  res.pontos = aplicarEmpresa(empresa, false, res.pontos, res.motivos);
+  res.pontos = aplicarConsumidor(consumidor, false, res.pontos, res.motivos);
   if (falsa) res.pontos = Math.max(res.pontos, 70);  // marca falsa é decisiva, mesmo em site antigo (invadido)
   const nivel = nivelPorRigor(res.pontos, cfg.rigor);
   return { nivel, pontos: res.pontos, motivos: res.motivos, dominio: r.dominio, conhecido: false,
@@ -663,6 +743,7 @@ async function tratar(msg, sender) {
       if (!hostValido(msg.host) || !protocoloValido(msg.protocolo) || !msg.sinais) return null;
       const sinais = {};
       for (const k of SINAIS_CHAVES) sinais[k] = msg.sinais[k] === true;
+      sinais.cnpj = /^\d{14}$/.test(String(msg.sinais.cnpj || '')) ? String(msg.sinais.cnpj) : '';
       sinais.marcas = Array.isArray(msg.sinais.marcas) ? msg.sinais.marcas.filter((k) => Object.hasOwn(OFICIAIS_PAGINA, k)).slice(0, 5) : [];
       const host = msg.host.toLowerCase();
       const res = await avaliarPagina(host, msg.protocolo, sinais);

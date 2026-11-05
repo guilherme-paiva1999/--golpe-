@@ -97,3 +97,14 @@ na busca e no detector. Por isso a extensão **não consulta o Reclame Aqui sozi
   em lojas soma na confiança (Verificado +20, Ótimo +15, Bom +10, Regular 0, Ruim −20, Não recomendado −40,
   Sem cadastro −5); nos demais sites, o contrário nos pontos de risco.
 Testes de lógica: `node ml/testar_reclameaqui.js`.
+
+## Receita Federal (BrasilAPI) e consumidor.gov.br (v2.8)
+- **BrasilAPI** (gratuita, código aberto): se a página mostra um CNPJ, a extensão consulta a situação na Receita.
+  Ativo +10 de confiança; aberto há menos de 6 meses −15; **inexistente, baixado ou inapto −25**. Sem resposta, não conta.
+  Só o CNPJ (dado público da empresa) é enviado; o resultado fica guardado por 7 dias.
+- **consumidor.gov.br** (dados abertos oficiais): resumo de abril a setembro de 2026 de 1.053 empresas com 20+ reclamações
+  (1,94 milhão de reclamações), em `dados/consumidor.json`. Liga ao site pelo nome exato (do domínio ou da Receita).
+  Cadastrada +5; responde 95%+ +5; resolve 60%+ +5; resolve menos de 30% −10; nota abaixo de 2 −5.
+  Não estar cadastrada não conta contra (o cadastro é voluntário). Só números por empresa; nenhum dado de quem reclamou.
+  Para atualizar: baixar os "Dados – Mês/Ano" em consumidor.gov.br (Dados Abertos) e rodar `python3 ml/consumidor.py dados/consumidor.json arquivos.zip`.
+- Testes de lógica: `node ml/testar_empresa.js`.

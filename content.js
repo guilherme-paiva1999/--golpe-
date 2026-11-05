@@ -305,9 +305,10 @@
         if (f.tagName === 'FORM' && f.querySelector('input[type="password"], input[autocomplete^="cc-"], input[name*="card" i], input[name*="cpf" i], input[name*="senha" i]')) formExterno = true;
       } catch (e) { /* endereço inválido */ }
     });
-    let cnpjValido = false, cnpjInvalido = false;
+    let cnpjValido = false, cnpjInvalido = false, cnpj = '';
     for (const m of texto.matchAll(new RegExp(CNPJ.source, 'g'))) {
-      if (cnpjOk(m[0].replace(/\D/g, ''))) cnpjValido = true; else cnpjInvalido = true;
+      const d = m[0].replace(/\D/g, '');
+      if (cnpjOk(d)) { cnpjValido = true; if (!cnpj) cnpj = d; } else cnpjInvalido = true;
     }
     if (cnpjValido) cnpjInvalido = false;
     const raiz = location.hostname.replace(/^www\./, '');
@@ -318,7 +319,7 @@
     const politicas = POLITICAS.filter((p) => p.test(texto)).length >= 2;
     return { pagamento, pressao, desconto: descontoExagerado(texto), formExterno, senha, venda,
       semContato: pagamento && !(CNPJ.test(texto) || contato), cnpjValido, cnpjInvalido, contato, emailMesmoDominio, politicas, gateway,
-      marcas: (senha || pagamento) ? marcasDaPagina() : [] };
+      marcas: (senha || pagamento) ? marcasDaPagina() : [], cnpj };
   }
 
   function mostrarAvisoPagamento() {
