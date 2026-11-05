@@ -77,3 +77,13 @@ A lista reúne sites com reclamações de consumidores, notificados que não res
 **não é uma lista de golpe confirmado**: gera um aviso forte (nível atenção, 50 pontos), sem bloqueio direto.
 Nenhum dos 83 aparece no Phishing.Database nem no feed do OpenPhish: é cobertura brasileira nova.
 Confira os termos de uso do Procon-SP antes de publicar a extensão.
+
+## Imitação do governo e marca falsa na página (v2.6)
+- **Gov.br:** endereço com "gov", "inss", "detran", "receitafederal" etc. que **não** termina em `.gov.br` soma 60 pontos
+  (governos de outros países, como `gov.uk`, ficam de fora). "Restituição", "FGTS", "IRPF" sozinhos somam 20; com
+  "resgate", "valores", "consulta" etc., 60. Ex.: `resgate-valores-gov.me` é bloqueado antes de abrir.
+- **Marca falsa (AiTM):** se o título ou os cabeçalhos da página dizem ser Microsoft, Google, gov.br, um banco etc.,
+  e a página pede senha ou pagamento num endereço que não é o oficial, o resultado é **perigo**, mesmo em site antigo
+  (muitos ataques usam sites invadidos). Botões "Entrar com Google" não contam.
+- A tela de bloqueio mostra os motivos que vieram da página.
+- Testes de lógica: `node ml/testar_gov_marca.js`. Páginas de teste em `teste/`.

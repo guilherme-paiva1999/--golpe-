@@ -257,6 +257,20 @@
     'paypal.com', 'pagar.me', 'cielo.com.br', 'stone.com.br', 'ebanx.com', 'hotmart.com', 'pix.bcb.gov.br'];
   const ENDERECO = /\b(rua|av\.?|avenida|alameda|rodovia|travessa)\s+[^,\n]{3,40},?\s*\d+/i;
 
+  // Só título e cabeçalhos: um botão "Entrar com Google" num site legítimo não conta.
+  const MARCAS_PAGINA = {
+    microsoft: /\b(microsoft|outlook|office\s*365|onedrive|sharepoint)\b/i, google: /\b(google|gmail)\b/i,
+    govbr: /\bgov\.?br\b|receita\s+federal|\bmeu\s+inss\b|\binss\b/i, nubank: /\bnubank\b/i, itau: /\bita[uú]\b/i,
+    bradesco: /\bbradesco\b/i, caixa: /caixa\s+econ[oô]mica|\bcaixa\s+tem\b/i, santander: /\bsantander\b/i,
+    bb: /banco\s+do\s+brasil/i, correios: /\bcorreios\b/i, mercadolivre: /mercado\s*livre/i, paypal: /\bpaypal\b/i,
+    apple: /\bapple\s*id\b|\bicloud\b/i, netflix: /\bnetflix\b/i, instagram: /\binstagram\b/i,
+    facebook: /\bfacebook\b/i, whatsapp: /\bwhatsapp\b/i
+  };
+  function marcasDaPagina() {
+    const cab = [document.title, ...[...document.querySelectorAll('h1, h2')].slice(0, 6).map((e) => e.textContent)].join(' \n ');
+    return Object.keys(MARCAS_PAGINA).filter((k) => MARCAS_PAGINA[k].test(cab));
+  }
+
   function cnpjOk(d) {
     if (d.length !== 14 || /^(\d)\1+$/.test(d)) return false;
     const calc = (n) => { let s = 0, p = n - 7; for (let i = 0; i < n; i++) { s += Number(d[i]) * p--; if (p < 2) p = 9; } const r = s % 11; return r < 2 ? 0 : 11 - r; };
@@ -294,7 +308,8 @@
     const contato = CONTATO.test(texto) || ENDERECO.test(texto) || emails.length > 0 || !!document.querySelector('a[href^="tel:"]');
     const politicas = POLITICAS.filter((p) => p.test(texto)).length >= 2;
     return { pagamento, pressao, desconto: descontoExagerado(texto), formExterno, senha, venda,
-      semContato: pagamento && !(CNPJ.test(texto) || contato), cnpjValido, cnpjInvalido, contato, emailMesmoDominio, politicas, gateway };
+      semContato: pagamento && !(CNPJ.test(texto) || contato), cnpjValido, cnpjInvalido, contato, emailMesmoDominio, politicas, gateway,
+      marcas: (senha || pagamento) ? marcasDaPagina() : [] };
   }
 
   function mostrarAvisoPagamento() {

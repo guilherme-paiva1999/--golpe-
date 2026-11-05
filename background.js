@@ -53,6 +53,24 @@ const ESPIONAGEM = /(social|phone|mobile|cell|whats?app|insta(gram)?|face(book)?
 
 const MOTIVO_PROCON = 'O Procon-SP recomenda evitar este site: ele teve reclamações de consumidores, não respondeu ou não foi encontrado.';
 
+// Sites do governo brasileiro terminam em .gov.br. Nomes que imitam o governo fora disso são suspeitos.
+const GOV_FORTE = ['gov', 'govbr', 'governo', 'governofederal', 'receitafederal', 'inss', 'meuinss', 'detran',
+  'cadunico', 'valoresareceber', 'sefaz', 'serpro', 'denatran', 'sisbr'];
+const GOV_FRACO = ['restituicao', 'irpf', 'fgts', 'beneficio', 'beneficios', 'auxilio', 'bolsafamilia', 'seguro-desemprego'];
+const GOV_ISCA = ['resgate', 'resgatar', 'valores', 'consulta', 'consultar', 'liberado', 'liberacao', 'saque', 'receber', 'regularizar', 'pendente'];
+
+function imitaGoverno(host) {
+  if (host === 'gov.br' || host.endsWith('.gov.br')) return 0;
+  if (/(^|\.)gov(\.[a-z]{2})?$/.test(host) || /\.(gob|gouv)\.[a-z]{2}$/.test(host)) return 0;   // governo de outro país
+  const plano = host.replace(/[.-]/g, ' ');
+  const tokens = host.split(/[.-]/).filter(Boolean);
+  const forte = tokens.some((t) => GOV_FORTE.includes(t) || /gov(br)?$/.test(t) || /^govbr/.test(t)) || /receita ?federal/.test(plano);
+  if (forte) return 60;
+  const fraco = tokens.some((t) => GOV_FRACO.includes(t));
+  const isca = tokens.some((t) => GOV_ISCA.includes(t));
+  return fraco ? (isca ? 60 : 20) : 0;
+}
+
 const ENCURTADORES = ['bit.ly', 'tinyurl.com', 't.co', 'cutt.ly', 'is.gd', 'rb.gy'];
 const TLDS_RISCO = ['xyz', 'top', 'click', 'shop', 'site', 'online', 'icu', 'buzz', 'live', 'cfd'];
 const PALAVRAS_HOST = ['seguranca', 'atualizar', 'cadastro', 'login', 'acesso', 'verificar',
@@ -286,6 +304,10 @@ function avaliarHost(host) {
   if (host.split('.').length - dominio.split('.').length >= 3) somar(10, 'O endereço tem muitos subdomínios, o que pode esconder o site real.');
   if (ENCURTADORES.includes(dominio)) somar(20, 'Link encurtado esconde o destino real.');
   if (PALAVRAS_HOST.some((p) => host.includes(p))) somar(10, 'O endereço tem palavras de pressão ou de acesso a conta.');
+  const gov = ehIPv4(host) ? 0 : imitaGoverno(host);
+  if (gov) somar(gov, gov >= 60
+    ? 'O endereço imita um site do governo, mas os sites do governo terminam em .gov.br.'
+    : 'O endereço usa termos de serviços do governo (restituição, FGTS...), mas não termina em .gov.br.');
   if (ESPIONAGEM.test(host)) somar(30, 'O nome do site promete espiar contas ou mensagens de outras pessoas. Esse tipo de serviço costuma ser golpe ou instalar programas que roubam dados.');
   if (sufixo(host, HOSPEDAGEM)) somar(10, 'O site está em hospedagem gratuita, que golpistas também usam.');
 
@@ -459,6 +481,32 @@ function pontuarConfianca(sinais, dias, protocolo, pontosDoEndereco, gratuito) {
   return { confianca: Math.max(0, Math.min(100, c)), motivos: [...alertas, ...faltou] };
 }
 
+const OFICIAIS_PAGINA = {
+  microsoft: ['Microsoft', ['microsoft.com', 'live.com', 'office.com', 'microsoftonline.com', 'outlook.com', 'office365.com', 'microsoft365.com', 'sharepoint.com', 'onedrive.com']],
+  google: ['Google', ['google.com', 'google.com.br', 'gmail.com', 'youtube.com']],
+  govbr: ['Gov.br', ['gov.br']],
+  nubank: ['Nubank', ['nubank.com.br']], itau: ['Itaú', ['itau.com.br', 'itau.com']], bradesco: ['Bradesco', ['bradesco.com.br']],
+  caixa: ['Caixa', ['caixa.gov.br']], santander: ['Santander', ['santander.com.br']], bb: ['Banco do Brasil', ['bb.com.br']],
+  correios: ['Correios', ['correios.com.br']], mercadolivre: ['Mercado Livre', ['mercadolivre.com.br', 'mercadolivre.com', 'mercadopago.com.br']],
+  paypal: ['PayPal', ['paypal.com']], apple: ['Apple', ['apple.com', 'icloud.com']], netflix: ['Netflix', ['netflix.com']],
+  instagram: ['Instagram', ['instagram.com']], facebook: ['Facebook', ['facebook.com']], whatsapp: ['WhatsApp', ['whatsapp.com']]
+};
+
+// Pega o ataque "no meio do caminho" (AiTM): a página se apresenta como a marca e pede senha ou pagamento,
+// mas o endereço não é o da marca.
+function marcaFalsaNaPagina(host, marcas, sinais) {
+  if (!(sinais.senha || sinais.pagamento)) return null;
+  for (const k of marcas) {
+    const [nome, oficiais] = OFICIAIS_PAGINA[k];
+    if (!oficiais.some((d) => host === d || host.endsWith('.' + d))) {
+      const oque = sinais.senha ? 'pede a sua senha' : 'pede pagamento';
+      if (k === 'govbr') return 'A página diz ser do governo (gov.br) e ' + oque + ', mas os sites do governo terminam em .gov.br.';
+      return 'A página diz ser ' + nome + ' e ' + oque + ', mas o endereço oficial de ' + nome + ' é ' + oficiais[0] + '.';
+    }
+  }
+  return null;
+}
+
 function limiteConfianca(rigor) { return rigor === 'normal' ? 60 : 75; }
 
 async function avaliarPagina(host, protocolo, sinais) {
@@ -467,6 +515,8 @@ async function avaliarPagina(host, protocolo, sinais) {
   const cfg = await lerConfig();
   const r = avaliarHost(host);
   if (await estaNaLista(host) === 'procon') { r.pontos += 50; r.motivos.unshift(MOTIVO_PROCON); }
+  const falsa = marcaFalsaNaPagina(host, sinais.marcas || [], sinais);
+  if (falsa) { r.pontos += 50; r.motivos.unshift(falsa); }
   const comercio = !!(sinais.pagamento || sinais.venda);
   // A idade só é consultada quando a página mostra venda, dinheiro, senha ou pressão (privacidade).
   const precisaIdade = comercio || sinais.senha || sinais.pressao || sinais.formExterno || cfg.consultaIdade;
@@ -477,7 +527,8 @@ async function avaliarPagina(host, protocolo, sinais) {
     const limite = limiteConfianca(cfg.rigor);
     const c = pontuarConfianca(sinais, dias, protocolo, r.pontos, gratuito);
     const motivos = [...r.motivos, ...c.motivos];
-    const nivel = c.confianca > limite ? 'ok' : (c.confianca < 30 ? 'perigo' : 'atencao');
+    let nivel = c.confianca > limite ? 'ok' : (c.confianca < 30 ? 'perigo' : 'atencao');
+    if (falsa) nivel = 'perigo';                       // marca falsa é decisiva, mesmo em site antigo
     return { nivel, pontos: 100 - c.confianca, confianca: c.confianca, limite, comercio: true,
       motivos, dominio: r.dominio, conhecido: false, provado: nivel === 'ok', dias };
   }
@@ -485,13 +536,16 @@ async function avaliarPagina(host, protocolo, sinais) {
   const motivos = [...r.motivos];
   if (protocolo === 'http:') motivos.push('O site não usa conexão segura (sem cadeado).');
   const res = pontuarPagina(pontos, motivos, sinais, dias, cfg.rigor);
+  if (falsa) res.pontos = Math.max(res.pontos, 70);  // marca falsa é decisiva, mesmo em site antigo (invadido)
   const nivel = nivelPorRigor(res.pontos, cfg.rigor);
   return { nivel, pontos: res.pontos, motivos: res.motivos, dominio: r.dominio, conhecido: false,
     provado: nivel === 'ok' && dias !== null && dias >= 365, dias };
 }
 
 // ---------- Bloqueio antes de a página abrir ----------
-function bloquear(tabId, url) {
+function bloquear(tabId, url, motivos) {
+  // guarda os motivos para a tela de bloqueio (alguns vêm da página, não só do endereço)
+  if (motivos && motivos.length) chrome.storage.session.set({ ['motivos:' + url]: motivos.slice(0, 6) }).catch(() => {});
   const alvo = chrome.runtime.getURL('bloqueado.html') + '?u=' + encodeURIComponent(url);
   return chrome.tabs.update(tabId, { url: alvo }).catch(() => {});
 }
@@ -502,7 +556,7 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (d) => {
   try { u = new URL(d.url); } catch (e) { return; }
   if (u.protocol !== 'http:' && u.protocol !== 'https:') return;
   const res = await analisar(u.hostname.toLowerCase(), u.protocol, { rapido: true });
-  if (res.nivel === 'perigo') bloquear(d.tabId, d.url);
+  if (res.nivel === 'perigo') bloquear(d.tabId, d.url, res.motivos);
 }, { url: [{ schemes: ['http', 'https'] }] });
 
 // ---------- Metadados de imagem (opcional, precisa de permissão) ----------
@@ -579,7 +633,7 @@ async function tratar(msg, sender) {
       if (res.nivel === 'perigo' && sender.tab && typeof msg.url === 'string') {
         try {
           const u = new URL(msg.url);
-          if (u.hostname.toLowerCase() === host) bloquear(sender.tab.id, msg.url);
+          if (u.hostname.toLowerCase() === host) bloquear(sender.tab.id, msg.url, res.motivos);
         } catch (e) { /* ignora */ }
       }
       return res;
@@ -588,11 +642,12 @@ async function tratar(msg, sender) {
       if (!hostValido(msg.host) || !protocoloValido(msg.protocolo) || !msg.sinais) return null;
       const sinais = {};
       for (const k of SINAIS_CHAVES) sinais[k] = msg.sinais[k] === true;
+      sinais.marcas = Array.isArray(msg.sinais.marcas) ? msg.sinais.marcas.filter((k) => Object.hasOwn(OFICIAIS_PAGINA, k)).slice(0, 5) : [];
       const host = msg.host.toLowerCase();
       const res = await avaliarPagina(host, msg.protocolo, sinais);
       if (sender.tab) selo(sender.tab.id, res.provado ? 'ok' : estadoSelo(res));
       if (res.nivel === 'perigo' && sender.tab && typeof msg.url === 'string') {
-        try { if (new URL(msg.url).hostname.toLowerCase() === host) bloquear(sender.tab.id, msg.url); } catch (e) { /* ignora */ }
+        try { if (new URL(msg.url).hostname.toLowerCase() === host) bloquear(sender.tab.id, msg.url, res.motivos); } catch (e) { /* ignora */ }
       }
       return res;
     }
@@ -618,7 +673,12 @@ async function tratar(msg, sender) {
       let u;
       try { u = new URL(msg.url); } catch (e) { return null; }
       if (!protocoloValido(u.protocol)) return null;
-      return { ...(await analisar(u.hostname.toLowerCase(), u.protocol)), host: u.hostname };
+      const res = { ...(await analisar(u.hostname.toLowerCase(), u.protocol)), host: u.hostname };
+      if (msg.tipo === 'detalhes') {
+        const guardados = (await chrome.storage.session.get('motivos:' + u.href))['motivos:' + u.href];
+        if (guardados && guardados.length) res.motivos = [...new Set([...guardados, ...res.motivos])];
+      }
+      return res;
     }
     case 'permitir':
       if (!hostValido(msg.host)) return null;

@@ -15,7 +15,9 @@ if (!url) {
   $('host').textContent = url.hostname;
   chrome.runtime.sendMessage({ tipo: 'detalhes', url: url.href }).then((res) => {
     const lista = $('motivos');
-    for (const m of (res && res.motivos) || []) {
+    const lista_ = (res && res.motivos) || [];
+    if (!lista_.length) document.querySelector('.caixa').hidden = true;
+    for (const m of lista_) {
       const li = document.createElement('li');
       li.textContent = m;
       lista.appendChild(li);
