@@ -11,7 +11,7 @@ Essa dúvida tem motivo. Segundo o Anuário Brasileiro de Segurança Pública, o
 
 Quem mais sofre? Segundo a Fundação Seade, 82% das pessoas com 60 anos ou mais em São Paulo já sofreram tentativas de golpe pela internet.
 
-E a desconfiança machuca também quem vende de verdade. Na indústria criativa, o patrimônio é a marca, e é exatamente a marca que o golpista copia: a loja com fotos roubadas, o ingresso falso, o curso clonado.
+E a desconfiança machuca também quem vende de verdade. Na indústria criativa, o patrimônio é a marca, e é exatamente a marca que o golpista copia: a loja com as fotos roubadas de uma estilista, o ingresso falso de um show, o curso clonado de um professor.
 
 ## Slide 2 · Feira do Empreendedor
 E foi pensando nessas pessoas que este projeto nasceu, aqui na Feira do Empreendedor.
