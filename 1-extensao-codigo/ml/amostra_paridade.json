@@ -1,0 +1,154 @@
+[
+ {
+  "host": "google.com",
+  "p": 0.13655854412479268
+ },
+ {
+  "host": "www.nubank.com.br",
+  "p": 0.9968978804082266
+ },
+ {
+  "host": "nubank-atualizar-cadastro.xyz",
+  "p": 0.9953977089032018
+ },
+ {
+  "host": "reclameaqui.com.br",
+  "p": 0.45972470325694564
+ },
+ {
+  "host": "g1.globo.com",
+  "p": 0.9940309124026747
+ },
+ {
+  "host": "mercadolivre.com.br",
+  "p": 0.4914739567055889
+ },
+ {
+  "host": "secure-login-itau.top",
+  "p": 0.9852152051307491
+ },
+ {
+  "host": "magazineluiza.com.br",
+  "p": 0.5229633394983194
+ },
+ {
+  "host": "magaziineluiza.com",
+  "p": 0.9226693263495452
+ },
+ {
+  "host": "resgate-valores-gov.me",
+  "p": 0.8748466491521605
+ },
+ {
+  "host": "paypal.com.verify-account.info",
+  "p": 0.9988829039141206
+ },
+ {
+  "host": "login.microsoftonline.com",
+  "p": 0.9981393396255965
+ },
+ {
+  "host": "microsoft-office365-login.web.app",
+  "p": 0.999308098574791
+ },
+ {
+  "host": "deckegroup.com",
+  "p": 0.23898332694062704
+ },
+ {
+  "host": "www.americanas.com.br",
+  "p": 0.9950026380273814
+ },
+ {
+  "host": "americanas-ofertas.shop",
+  "p": 0.9918113609803751
+ },
+ {
+  "host": "kabum.com.br",
+  "p": 0.1866863216509517
+ },
+ {
+  "host": "shopee.com.br",
+  "p": 0.27475592818324396
+ },
+ {
+  "host": "shopee-promo-relampago.online",
+  "p": 0.990441676355841
+ },
+ {
+  "host": "192.168.0.10",
+  "p": 0.996917266930353
+ },
+ {
+  "host": "xn--nbank-wva.com",
+  "p": 0.9683521170265658
+ },
+ {
+  "host": "wa-spy-app.net",
+  "p": 0.26344857306418107
+ },
+ {
+  "host": "loja-ceramica-artesanal.com.br",
+  "p": 0.8589722238075526
+ },
+ {
+  "host": "casasbahia-black-friday.top",
+  "p": 0.9813585194392673
+ },
+ {
+  "host": "bit.ly",
+  "p": 0.08897971192448881
+ },
+ {
+  "host": "banco-do-brasil-2via-boleto.com",
+  "p": 0.9936661393118619
+ },
+ {
+  "host": "uol.com.br",
+  "p": 0.15654333150749206
+ },
+ {
+  "host": "estadao.com.br",
+  "p": 0.4011847971194704
+ },
+ {
+  "host": "correios-rastreio-taxa.site",
+  "p": 0.9622455028695961
+ },
+ {
+  "host": "meu-inss-beneficio.com",
+  "p": 0.8009394690225027
+ },
+ {
+  "host": "github.io",
+  "p": 0.0258296990546445
+ },
+ {
+  "host": "mitchellkrogza.github.io",
+  "p": 0.9979866480361839
+ },
+ {
+  "host": "abc123xyz987.tk",
+  "p": 0.8692203279640447
+ },
+ {
+  "host": "santander.com.br",
+  "p": 0.33122544273081206
+ },
+ {
+  "host": "a.b.c.d.e.f.example.com",
+  "p": 0.9985704755863194
+ },
+ {
+  "host": "detran-sp-multas.org",
+  "p": 0.5392937613536329
+ },
+ {
+  "host": "apple-id-unlock.icloud-support.co",
+  "p": 0.9987726060149258
+ },
+ {
+  "host": "netflx.com",
+  "p": 0.42838631853387577
+ }
+]

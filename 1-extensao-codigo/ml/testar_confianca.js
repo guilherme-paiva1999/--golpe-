@@ -18,6 +18,6 @@ const casos=[ // nome, sinais, dias, protocolo, esperado(alto)
  ['loja em vercel.app (hospedagem grátis) com todas as provas', S({__gratuito:true}),null,'https:','nao'],
  ['golpe: sem provas, formulário externo, 3 dias', {pagamento:true,venda:true,formExterno:true,pressao:true,desconto:true},3,'http:','nao'],
 ];
-let ok=0;for(const [n,s,d,pr,esp] of casos){const r=T.pontuarConfianca(s,d,pr,0,!!(s&&s.__gratuito));const passa=r.confianca>75;const bom=(esp==='ok')===passa;ok+=bom;
- console.log((bom?'OK  ':'ERRO'),n.padEnd(52),String(r.confianca).padStart(3),passa?'passa (>75)':'NÃO passa');}
+let ok=0;for(const [n,s,d,pr,esp] of casos){const r=T.pontuarConfianca(s,d,pr,0,!!(s&&s.__gratuito));const passa=r.confianca>=T.limiteConfianca('alto');const bom=(esp==='ok')===passa;ok+=bom;
+ console.log((bom?'OK  ':'ERRO'),n.padEnd(52),String(r.confianca).padStart(3),passa?'passa (>=80)':'NÃO passa');}
 console.log(ok+'/'+casos.length+' como esperado');

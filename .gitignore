@@ -1,4 +1,21 @@
-entrega/
-*.zip
+# Nunca versionar segredos, bancos de dados ou dados pessoais
+.env
+.env.*
+*.pem
+*.key
+*.db
+*.sqlite
+.secret_key
+iniciar.bat
+
+# Lixo de sistema e de Python
 .DS_Store
+Thumbs.db
+desktop.ini
 __pycache__/
+node_modules/
+
+# Pacotes: só o ZIP pronto para instalar entra
+*.zip
+!2-extensao-pronta-para-instalar/e-golpe-extensao.zip
+entrega/

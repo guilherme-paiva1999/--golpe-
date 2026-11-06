@@ -7,8 +7,12 @@
    - Consulta de idade do domínio só quando já existe suspeita local
    ===================================================================== */
 
+// Modelo de aprendizado de máquina (nome do site). Nos testes em Node, o modelo.js é carregado à parte.
+if (typeof importScripts === 'function') importScripts('modelo.js');
+
 // ---------- Configuração ----------
-const CONFIG_PADRAO = { limite: 3, consultaIdade: false, imagens: false, modoSimples: false, rigor: 'alto' };
+const CONFIG_PADRAO = { limite: 3, consultaIdade: false, imagens: false, modoSimples: false, rigor: 'alto',
+  perfis: [], vozAutomatica: false, daltonico: false };
 const TTL_CACHE_MS = 6 * 3600 * 1000;
 const LIMITE_PERIGO = 70;
 const LIMITE_ATENCAO = 30;
@@ -78,11 +82,13 @@ const PALAVRAS_HOST = ['seguranca', 'atualizar', 'cadastro', 'login', 'acesso', 
 const SUFIXOS_COMPOSTOS = ['com.br', 'net.br', 'org.br', 'gov.br', 'edu.br', 'mil.br',
   'co.uk', 'org.uk', 'com.au', 'com.ar', 'com.pt', 'com.mx', 'co.za'];
 
+// Só fontes abertas, que permitem uso comercial. O feed público do OpenPhish foi retirado na v3.0:
+// os termos dele não permitem uso comercial (só o feed pago).
 const FONTES_LISTAS = [
+  // Phishing.Database (código aberto, licença MIT)
   { nome: 'phishing', url: 'https://raw.githubusercontent.com/mitchellkrogza/Phishing.Database/master/phishing-domains-ACTIVE.txt' },
+  // URLhaus, abuse.ch (dados CC0, domínio público)
   { nome: 'urlhaus', url: 'https://urlhaus.abuse.ch/downloads/hostfile/' },
-  // Feed público do OpenPhish (golpes recentes, lista de endereços). Confira os termos de uso antes de publicar.
-  { nome: 'openphish', url: 'https://raw.githubusercontent.com/openphish/public_feed/main/feed.txt', minimo: 50, horas: 6 },
   // Procon-SP, "Evite esses sites": reclamações de consumidores, notificados que não responderam ou não encontrados.
   { nome: 'procon', url: 'https://sistemas.procon.sp.gov.br/evitesite/list/evitesite.php?action=list&jtStartIndex=0&jtPageSize=1000&jtSorting=strSite%20ASC', tipo: 'procon', minimo: 20 }
 ];
@@ -140,9 +146,11 @@ let dbPromise = null;
 function abrirDB() {
   if (!dbPromise) {
     dbPromise = new Promise((resolve, reject) => {
-      const rq = indexedDB.open('protetor', 3);
+      const rq = indexedDB.open('protetor', 4);
       rq.onupgradeneeded = () => {
-        for (const f of FONTES_LISTAS) if (!rq.result.objectStoreNames.contains(f.nome)) rq.result.createObjectStore(f.nome);
+        const db = rq.result;
+        for (const f of FONTES_LISTAS) if (!db.objectStoreNames.contains(f.nome)) db.createObjectStore(f.nome);
+        if (db.objectStoreNames.contains('openphish')) db.deleteObjectStore('openphish');   // fonte retirada (licença)
       };
       rq.onsuccess = () => resolve(rq.result);
       rq.onerror = () => { dbPromise = null; reject(rq.error); };
@@ -260,11 +268,15 @@ async function garantirAlarme() {
   const f = await chrome.alarms.get('feed');
   if (!f) chrome.alarms.create('feed', { periodInMinutes: 360, delayInMinutes: 360 });
 }
-chrome.runtime.onInstalled.addListener(() => { garantirAlarme(); atualizarListas(); });
+chrome.runtime.onInstalled.addListener((d) => {
+  garantirAlarme(); atualizarListas();
+  // Primeira instalação: a pessoa escolhe a acessibilidade e (se quiser) uma pessoa de confiança.
+  if (d && d.reason === 'install') chrome.tabs.create({ url: chrome.runtime.getURL('boas-vindas.html') }).catch(() => {});
+});
 chrome.runtime.onStartup.addListener(garantirAlarme);
 chrome.alarms.onAlarm.addListener((a) => {
   if (a.name === 'atualizar') atualizarListas();
-  if (a.name === 'feed') atualizarListas(['openphish']);   // golpes novos entram em horas, não em dias
+  if (a.name === 'feed') atualizarListas(['phishing', 'urlhaus']);   // golpes novos entram em horas, não em dias
 });
 garantirAlarme();
 
@@ -314,28 +326,73 @@ function avaliarHost(host) {
   return { pontos, motivos, dominio };
 }
 
-// ---------- Idade do domínio (RDAP) ----------
-async function idadeEmDias(dominio) {
+// ---------- Idade e responsável pelo domínio (RDAP, protocolo aberto dos registros de domínio) ----------
+// Para sites .br, o registro.br informa se o dono é empresa (CNPJ) ou pessoa física. O número de CPF
+// nunca é guardado: só a informação "pessoa física".
+function lerRdap(j) {
+  const ev = (j.events || []).find((e) => e.eventAction === 'registration');
+  const t = ev ? new Date(ev.eventDate).getTime() : NaN;
+  let cnpj = null, pf = false;
+  for (const ent of j.entities || []) {
+    if (!(ent.roles || []).includes('registrant')) continue;
+    for (const id of ent.publicIds || []) {
+      const tipo = String(id.type || '').toLowerCase();
+      const num = String(id.identifier || '').replace(/\D/g, '');
+      if (tipo === 'cnpj' && num.length === 14) cnpj = num;
+      if (tipo === 'cpf') pf = true;
+    }
+  }
+  return { r: isNaN(t) ? null : t, cnpj, pf };
+}
+
+async function consultarRdap(dominio) {
   const { idades = {} } = await chrome.storage.local.get('idades');
   const c = idades[dominio];
   if (c && (c.r !== null || Date.now() - c.t < 86400000)) {
-    return c.r === null ? null : (Date.now() - c.r) / 86400000;
+    return { dias: c.r === null ? null : (Date.now() - c.r) / 86400000, cnpj: c.cnpj || null, pf: !!c.pf };
   }
-  let registro = null;
+  let info = { r: null, cnpj: null, pf: false };
   try {
-    const r = await fetch('https://rdap.org/domain/' + encodeURIComponent(dominio),
-      { signal: AbortSignal.timeout(3000), credentials: 'omit' });
-    if (r.ok) {
-      const j = await r.json();
-      const ev = (j.events || []).find((e) => e.eventAction === 'registration');
-      const t = ev ? new Date(ev.eventDate).getTime() : NaN;
-      if (!isNaN(t)) registro = t;
-    }
+    const base = dominio.endsWith('.br') ? 'https://rdap.registro.br/domain/' : 'https://rdap.org/domain/';
+    const r = await fetch(base + encodeURIComponent(dominio), { signal: AbortSignal.timeout(4000), credentials: 'omit' });
+    if (r.ok) info = lerRdap(await r.json());
   } catch (e) { /* sem rede ou lento: segue sem a idade */ }
   if (Object.keys(idades).length > 1500) for (const k of Object.keys(idades)) delete idades[k];
-  idades[dominio] = { r: registro, t: Date.now() };
+  idades[dominio] = { r: info.r, t: Date.now(), cnpj: info.cnpj, pf: info.pf };
   await chrome.storage.local.set({ idades });
-  return registro === null ? null : (Date.now() - registro) / 86400000;
+  return { dias: info.r === null ? null : (Date.now() - info.r) / 86400000, cnpj: info.cnpj, pf: info.pf };
+}
+
+async function idadeEmDias(dominio) {
+  return (await consultarRdap(dominio)).dias;
+}
+
+// ---------- Aprendizado de máquina (nome do site) ----------
+// Medido em 40 mil sites do ranking Tranco e 40 mil golpes do Phishing.Database (aplicado ao domínio principal):
+// a partir de 0,876 pega ~10% dos golpes com ~1% de falsos alertas (0% nos .br); a partir de 0,95, ~6% com 0,2%.
+// Por isso o modelo SOMA pontos e nunca decide sozinho. Ele olha só o domínio principal: subdomínios
+// (www., g1.) confundem o modelo, porque os sites normais do treino quase não tinham subdomínio.
+const ML_LIMIAR = 0.8757, ML_LIMIAR_FORTE = 0.95;
+let modeloCarregando = null;
+function garantirModelo() {
+  if (typeof carregarModelo !== 'function') return Promise.resolve(false);
+  if (modeloPronto()) return Promise.resolve(true);
+  if (!modeloCarregando) {
+    modeloCarregando = fetch(chrome.runtime.getURL('ml/modelo.json')).then((r) => r.json())
+      .then((j) => { carregarModelo(j); return true; })
+      .catch(() => { modeloCarregando = null; return false; });
+  }
+  return modeloCarregando;
+}
+
+async function sinalML(dominio) {
+  if (ehIPv4(dominio) || !(await garantirModelo())) return null;
+  const p = probGolpe(dominio);
+  if (p === null) return null;
+  const pct = Math.round(p * 100);
+  if (p >= ML_LIMIAR_FORTE) return { p, pontos: 25, motivo: 'Nossa inteligência artificial (aprendizado de máquina) achou o nome deste site muito parecido com nomes de golpes conhecidos (' + pct + '%).' };
+  if (p >= ML_LIMIAR) return { p, pontos: 15, motivo: 'Nossa inteligência artificial (aprendizado de máquina) achou o nome deste site parecido com nomes de golpes (' + pct + '%).' };
+  return { p, pontos: 0, motivo: null };
 }
 
 // ---------- Análise completa ----------
@@ -362,6 +419,10 @@ async function calcularBase(host, rapido) {
     };
   }
   let { pontos, motivos } = r;
+  if (!sufixo(host, HOSPEDAGEM)) {
+    const ml = await sinalML(r.dominio);
+    if (ml && ml.pontos) { pontos += ml.pontos; motivos = [...motivos, ml.motivo]; }
+  }
   if (!rapido) {
     const cfg = await lerConfig();
     // Privacidade: só pergunta ao RDAP quando já há suspeita (ou se o usuário ativou).
@@ -441,11 +502,16 @@ function nivelPorRigor(pontos, rigor) {
 }
 
 // Selo no ícone da extensão: ✓ provado, ? não verificado, ! atenção, X perigo.
-function selo(tabId, estado) {
-  const m = { ok: ['✓', '#17803f'], verificar: ['?', '#6b6b6b'], atencao: ['!', '#c77700'], perigo: ['X', '#c62828'] }[estado];
+// Daltonismo: azul (seguro), laranja (atenção) e preto (perigo), sempre com símbolo, em vez de verde e vermelho.
+async function selo(tabId, estado) {
+  const cfg = await lerConfig();
+  const cores = cfg.daltonico
+    ? { ok: '#0072b2', verificar: '#6b6b6b', atencao: '#e69f00', perigo: '#000000' }
+    : { ok: '#17803f', verificar: '#6b6b6b', atencao: '#c77700', perigo: '#c62828' };
+  const m = { ok: '✓', verificar: '?', atencao: '!', perigo: 'X' }[estado];
   if (tabId == null || !m) return;
-  chrome.action.setBadgeText({ tabId, text: m[0] }).catch(() => {});
-  chrome.action.setBadgeBackgroundColor({ tabId, color: m[1] }).catch(() => {});
+  chrome.action.setBadgeText({ tabId, text: m }).catch(() => {});
+  chrome.action.setBadgeBackgroundColor({ tabId, color: cores[estado] }).catch(() => {});
 }
 function estadoSelo(res) {
   if (res.conhecido || res.permitido) return 'ok';
@@ -455,7 +521,7 @@ function estadoSelo(res) {
 const SINAIS_CHAVES = ['pagamento', 'pressao', 'desconto', 'formExterno', 'senha', 'semContato',
   'venda', 'cnpjValido', 'cnpjInvalido', 'contato', 'emailMesmoDominio', 'politicas', 'gateway'];
 
-// Loja (venda ou pedido de pagamento): começa com 0 e precisa PROVAR confiança, com mais de 75 de 100.
+// Loja (venda ou pedido de pagamento): começa com 0 e precisa PROVAR confiança, com pelo menos 80%.
 // Provas somam; sinais ruins tiram. O que faltou vira o aviso.
 function pontuarConfianca(sinais, dias, protocolo, pontosDoEndereco, gratuito) {
   const alertas = [], faltou = [];
@@ -562,8 +628,9 @@ function aplicarDelta(delta, comercio, valor) {
 function aplicarEmpresa(info, comercio, valor, motivos) {
   if (!info) return valor;
   let d;
-  if (info.existe === false) { d = -25; motivos.push('O CNPJ mostrado na página não existe na Receita Federal.'); }
-  else if (!info.ativa) { d = -25; motivos.push('O CNPJ da página está com situação "' + (info.situacao || 'irregular') + '" na Receita Federal.'); }
+  const origem = info.doRegistro ? 'do responsável pelo domínio (registro.br)' : 'mostrado na página';
+  if (info.existe === false) { d = -25; motivos.push('O CNPJ ' + origem + ' não existe na Receita Federal.'); }
+  else if (!info.ativa) { d = -25; motivos.push('O CNPJ ' + origem + ' está com situação "' + (info.situacao || 'irregular') + '" na Receita Federal.'); }
   else {
     d = 10;
     const ano = String(info.abertura || '').slice(0, 4);
@@ -600,7 +667,8 @@ function aplicarConsumidor(reg, comercio, valor, motivos) {
   return aplicarDelta(d, comercio, valor);
 }
 
-function limiteConfianca(rigor) { return rigor === 'normal' ? 60 : 75; }
+// Lojas precisam de pelo menos 80% de confiança (rigor alto) ou 60% (normal).
+function limiteConfianca(rigor) { return rigor === 'normal' ? 60 : 80; }
 
 async function avaliarPagina(host, protocolo, sinais) {
   const pre = await analisar(host, protocolo, { rapido: true });
@@ -613,10 +681,16 @@ async function avaliarPagina(host, protocolo, sinais) {
   const comercio = !!(sinais.pagamento || sinais.venda);
   // A idade só é consultada quando a página mostra venda, dinheiro, senha ou pressão (privacidade).
   const precisaIdade = comercio || sinais.senha || sinais.pressao || sinais.formExterno || cfg.consultaIdade;
-  const empresa = /^\d{14}$/.test(sinais.cnpj || '') ? await consultarCnpj(sinais.cnpj) : null;
-  const consumidor = await buscarConsumidor([r.dominio.split('.')[0], empresa && empresa.fantasia, empresa && empresa.razao].filter(Boolean));
   const gratuito = sufixo(host, HOSPEDAGEM);                  // subdomínio grátis: a idade é do serviço, não da loja
-  const dias = (precisaIdade && !gratuito && !ehIPv4(r.dominio)) ? await idadeEmDias(r.dominio) : null;
+  const ml = gratuito ? null : await sinalML(r.dominio);
+  if (ml && ml.pontos) { r.pontos += ml.pontos; r.motivos.push(ml.motivo); }
+  const rdap = (precisaIdade && !gratuito && !ehIPv4(r.dominio)) ? await consultarRdap(r.dominio) : null;
+  const dias = rdap ? rdap.dias : null;
+  // CNPJ: o da página; se a página não mostra, o do responsável pelo domínio (registro.br).
+  const cnpjUsado = /^\d{14}$/.test(sinais.cnpj || '') ? sinais.cnpj : (rdap && rdap.cnpj) || '';
+  const empresa = cnpjUsado ? await consultarCnpj(cnpjUsado) : null;
+  if (empresa && !sinais.cnpj) empresa.doRegistro = true;
+  const consumidor = await buscarConsumidor([r.dominio.split('.')[0], empresa && empresa.fantasia, empresa && empresa.razao].filter(Boolean));
 
   if (comercio) {
     const limite = limiteConfianca(cfg.rigor);
@@ -625,7 +699,7 @@ async function avaliarPagina(host, protocolo, sinais) {
     c.confianca = aplicarRA(await notaRA(r.dominio), true, c.confianca, motivos);
     c.confianca = aplicarEmpresa(empresa, true, c.confianca, motivos);
     c.confianca = aplicarConsumidor(consumidor, true, c.confianca, motivos);
-    let nivel = c.confianca > limite ? 'ok' : (c.confianca < 30 ? 'perigo' : 'atencao');
+    let nivel = c.confianca >= limite ? 'ok' : (c.confianca < 30 ? 'perigo' : 'atencao');
     if (falsa) nivel = 'perigo';                       // marca falsa é decisiva, mesmo em site antigo
     return { nivel, pontos: 100 - c.confianca, confianca: c.confianca, limite, comercio: true,
       motivos, dominio: r.dominio, conhecido: false, provado: nivel === 'ok', dias };
@@ -641,6 +715,102 @@ async function avaliarPagina(host, protocolo, sinais) {
   const nivel = nivelPorRigor(res.pontos, cfg.rigor);
   return { nivel, pontos: res.pontos, motivos: res.motivos, dominio: r.dominio, conhecido: false,
     provado: nivel === 'ok' && dias !== null && dias >= 365, dias };
+}
+
+// ---------- Verificação completa (tela de bloqueio) ----------
+// Olha as mesmas coisas que o Detector de Site Confiável do Reclame Aqui: listas de golpes, idade do domínio,
+// cadeado, quem é o responsável (CNPJ), situação na Receita e reclamações. Cada prova ruim DIMINUI a confiança.
+// Só consulta serviços abertos (RDAP, BrasilAPI) e dados locais; o site bloqueado nunca é aberto.
+const NOMES_LISTAS = { phishing: 'Phishing.Database', urlhaus: 'URLhaus (abuse.ch)', procon: 'Procon-SP "Evite esses sites"' };
+
+function confiancaDaVerificacao(base, prova) {
+  const itens = [];
+  const item = (efeito, titulo, texto) => itens.push({ efeito, titulo, texto });
+  let c = base.confianca;
+  const somar = (d) => { c = Math.max(0, Math.min(100, c + d)); };
+
+  if (prova.lista) item('contra', 'Listas de golpes', prova.lista === 'usuario' ? 'Você marcou este site como golpe.' : 'Consta na lista ' + (NOMES_LISTAS[prova.lista] || prova.lista) + '.');
+  else item('neutro', 'Listas de golpes', 'Não consta nas listas abertas (Phishing.Database, URLhaus, Procon-SP). Golpes novos ainda não estão nelas.');
+
+  const d = prova.dias;
+  if (prova.gratuito) { somar(-15); item('contra', 'Idade do site', 'Está em hospedagem gratuita: qualquer pessoa cria uma página ali, e não dá para saber a idade.'); }
+  else if (d === null || d === undefined) { somar(-10); item('contra', 'Idade do site', 'Não conseguimos confirmar há quanto tempo o site existe.'); }
+  else if (d < 30) { somar(-40); item('contra', 'Idade do site', 'Criado há apenas ' + Math.max(1, Math.round(d)) + ' dias. Golpes costumam usar sites novos.'); }
+  else if (d < 90) { somar(-25); item('contra', 'Idade do site', 'Criado há só ' + Math.round(d) + ' dias.'); }
+  else if (d < 180) { somar(-10); item('contra', 'Idade do site', 'Tem menos de 6 meses.'); }
+  else if (d >= 1095) { somar(20); item('favor', 'Idade do site', 'Existe há mais de ' + Math.floor(d / 365) + ' anos.'); }
+  else if (d >= 365) { somar(10); item('favor', 'Idade do site', 'Existe há mais de 1 ano.'); }
+  else item('neutro', 'Idade do site', 'Existe há ' + Math.round(d / 30) + ' meses.');
+
+  if (prova.protocolo === 'https:') item('neutro', 'Cadeado (conexão segura)', 'Usa https. Atenção: golpes também usam cadeado, então isso sozinho não prova nada.');
+  else { somar(-10); item('contra', 'Cadeado (conexão segura)', 'Não usa conexão segura (sem cadeado).'); }
+
+  const e = prova.empresa;
+  if (e && e.existe === false) { somar(-25); item('contra', 'Empresa responsável', 'O CNPJ do responsável pelo domínio não existe na Receita Federal.'); }
+  else if (e && !e.ativa) { somar(-25); item('contra', 'Empresa responsável', 'O CNPJ do responsável está "' + (e.situacao || 'irregular') + '" na Receita Federal.'); }
+  else if (e) {
+    let dd = 10;
+    const ano = String(e.abertura || '').slice(0, 4);
+    let t = 'Empresa ativa na Receita Federal: ' + (e.fantasia || e.razao || 'sem nome') + (ano ? ', aberta em ' + ano : '') + '.';
+    const dias = (Date.now() - new Date(e.abertura).getTime()) / 86400000;
+    if (dias >= 0 && dias < 180) { dd -= 15; t += ' Mas foi aberta há menos de 6 meses.'; }
+    somar(dd); item(dd > 0 ? 'favor' : 'contra', 'Empresa responsável', t);
+  } else if (prova.pf) { somar(-5); item('contra', 'Empresa responsável', 'O site está registrado em nome de uma pessoa física, não de uma empresa (CNPJ).'); }
+  else item('neutro', 'Empresa responsável', prova.br ? 'Não conseguimos ver quem é o responsável pelo domínio.' : 'Sites fora do .br não mostram quem é o dono. Procure o CNPJ no rodapé, sem digitar seus dados.');
+
+  const reg = prova.consumidor;
+  if (reg) {
+    const [nome, total, resp, resol, nota] = reg.dados;
+    let dd = 5;
+    if (resp >= 95) dd += 5;
+    if (resol !== null && resol >= 60) dd += 5; else if (resol !== null && resol < 30) dd -= 10;
+    if (nota !== null && nota < 2) dd -= 5;
+    somar(dd);
+    item(dd > 0 ? 'favor' : 'contra', 'Reclamações (consumidor.gov.br)', nome + ': ' + total.toLocaleString('pt-BR') + ' reclamações, ' + resp + '% respondidas, ' +
+      (resol === null ? '?' : resol) + '% resolvidas, nota ' + (nota === null ? '?' : String(nota).replace('.', ',')) + ' de 5 (' + reg.periodo + ').');
+  } else item('neutro', 'Reclamações (consumidor.gov.br)', 'A empresa não aparece no consumidor.gov.br (o cadastro é voluntário).');
+
+  if (prova.ra && NOTAS_RA[prova.ra.nota]) {
+    const [nome, delta] = NOTAS_RA[prova.ra.nota];
+    somar(delta);
+    item(delta > 0 ? 'favor' : delta < 0 ? 'contra' : 'neutro', 'Reclame Aqui', 'Você registrou: ' + nome + '.');
+  } else item('neutro', 'Reclame Aqui', 'Ainda não verificado. Use o botão "Verificar no Reclame Aqui".');
+
+  if (prova.ml) {
+    const pct = Math.round(prova.ml.p * 100);
+    if (prova.ml.pontos) item('contra', 'Inteligência artificial', 'O nome do site parece com nomes de golpes (' + pct + '%).');
+    else item('neutro', 'Inteligência artificial', 'O nome do site não parece com nomes de golpes conhecidos (' + pct + '%).');
+  }
+  if (prova.lista && prova.lista !== 'procon') c = 0;      // golpe confirmado em lista: confiança zero
+  return { confianca: Math.round(c), itens };
+}
+
+async function investigar(urlTexto) {
+  let u;
+  try { u = new URL(urlTexto); } catch (e) { return null; }
+  if (!protocoloValido(u.protocol)) return null;
+  const host = u.hostname.toLowerCase();
+  const r = avaliarHost(host);
+  const { meusGolpes = [] } = await chrome.storage.local.get('meusGolpes');
+  const lista = meusGolpes.includes(host) ? 'usuario' : await estaNaLista(host);
+  const gratuito = sufixo(host, HOSPEDAGEM);
+  const ml = gratuito ? null : await sinalML(r.dominio);
+  const rdap = (gratuito || ehIPv4(r.dominio)) ? { dias: null, cnpj: null, pf: false } : await consultarRdap(r.dominio);
+  const empresa = rdap.cnpj ? await consultarCnpj(rdap.cnpj) : null;
+  const consumidor = await buscarConsumidor([r.dominio.split('.')[0], empresa && empresa.fantasia, empresa && empresa.razao].filter(Boolean));
+  // Ponto de partida: o que bloqueou (sinais do endereço e da página). Site bloqueado começa com no máximo 30%.
+  const risco = Math.max(70, r.pontos + (ml ? ml.pontos : 0) + (u.protocol === 'http:' ? 10 : 0));
+  const base = { confianca: Math.max(0, 100 - risco) };
+  const res = confiancaDaVerificacao(base, { lista, dias: rdap.dias, gratuito, protocolo: u.protocol, empresa, pf: rdap.pf,
+    br: r.dominio.endsWith('.br'), consumidor, ra: await notaRA(r.dominio), ml });
+  const cfg = await lerConfig();
+  return { ...res, host, dominio: r.dominio, limite: limiteConfianca(cfg.rigor) };
+}
+
+// ---------- Voz (chrome.tts funciona mesmo sem clique, ao contrário da voz da página) ----------
+function falar(texto) {
+  if (!chrome.tts || typeof texto !== 'string' || !texto) return;
+  chrome.tts.speak(texto.slice(0, 1500), { lang: 'pt-BR', rate: 0.9 });
 }
 
 // ---------- Bloqueio antes de a página abrir ----------
@@ -793,6 +963,14 @@ async function tratar(msg, sender) {
       }
       return res;
     }
+    case 'investigar':
+      return investigar(String(msg.url || ''));
+    case 'falar':
+      falar(String(msg.texto || ''));
+      return { ok: true };
+    case 'parar-fala':
+      if (chrome.tts) chrome.tts.stop();
+      return { ok: true };
     case 'permitir':
       if (!hostValido(msg.host)) return null;
       await permitir(msg.host.toLowerCase());

@@ -1,0 +1,528 @@
+<title>É Golpe?</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: cabeçalho, demo (navegador + popup da extensão), pipeline, explicação do modelo, arquitetura, roadmap */
+:root{
+  --bg:#F2F5F3; --surface:#FFFFFF; --surface2:#E9EEEB; --ink:#10201C; --muted:#586964; --line:#D3DCD8;
+  --accent:#0B6E5B; --accent-ink:#FFFFFF;
+  --safe:#17803F; --safe-bg:#E3F3E9; --warn:#9A6208; --warn-bg:#FBF0D8; --danger:#B42323; --danger-bg:#FBE4E1;
+  --f-display:'Bricolage Grotesque','Trebuchet MS',sans-serif;
+  --f-body:'IBM Plex Sans','Segoe UI',system-ui,sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0C1412; --surface:#142019; --surface2:#1B2923; --ink:#E5EEEA; --muted:#93A59F; --line:#27372F;
+  --accent:#3CC5A5; --accent-ink:#06231C;
+  --safe:#52CF86; --safe-bg:#12301F; --warn:#E6B04A; --warn-bg:#35280E; --danger:#F2776B; --danger-bg:#3A1714; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0C1412; --surface:#142019; --surface2:#1B2923; --ink:#E5EEEA; --muted:#93A59F; --line:#27372F;
+  --accent:#3CC5A5; --accent-ink:#06231C;
+  --safe:#52CF86; --safe-bg:#12301F; --warn:#E6B04A; --warn-bg:#35280E; --danger:#F2776B; --danger-bg:#3A1714; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;
+  padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:56px}
+h1,h2,h3{font-family:var(--f-display);line-height:1.1;margin:0;text-wrap:balance}
+h1{font-size:clamp(34px,6vw,56px);font-weight:800;letter-spacing:-.02em}
+h2{font-size:clamp(24px,3.4vw,32px);font-weight:700;letter-spacing:-.01em}
+h3{font-size:17px;font-weight:700}
+p{margin:0}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.lede{font-size:18px;color:var(--muted);max-width:62ch}
+.mono{font-family:var(--f-mono)}
+section{display:flex;flex-direction:column;gap:20px;min-width:0}
+.sec-head{display:flex;flex-direction:column;gap:8px;max-width:70ch}
+.sec-head p{color:var(--muted)}
+
+/* header */
+.top{display:flex;flex-direction:column;gap:18px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.top-row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--f-display);font-weight:800;font-size:18px}
+.brand svg{width:28px;height:28px}
+.tag{font-family:var(--f-mono);font-size:12px;padding:4px 10px;border:1px solid var(--line);border-radius:99px;color:var(--muted);background:var(--surface)}
+.top h1 em{font-style:normal;color:var(--accent)}
+.notice{font-size:13px;color:var(--muted);background:var(--surface2);border-radius:8px;padding:10px 14px;max-width:80ch}
+
+/* demo */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:7px 12px;border-radius:99px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.chip:hover{border-color:var(--accent)}
+.chip:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.dot.s{background:var(--safe)}.dot.w{background:var(--warn)}.dot.d{background:var(--danger)}
+.demo{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:860px){.demo{grid-template-columns:minmax(0,1fr)}}
+
+.browser{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:0}
+.bar{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border-bottom:1px solid var(--line)}
+.lights{display:flex;gap:6px}.lights i{width:10px;height:10px;border-radius:50%;background:var(--line)}
+form.addr{flex:1;display:flex;gap:8px;min-width:0}
+.addr-box{flex:1;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:0 12px;min-width:0}
+.addr-box:focus-within{border-color:var(--accent)}
+.addr-box svg{width:14px;height:14px;flex:none;color:var(--muted)}
+.addr-box.insecure svg{color:var(--danger)}
+.addr-box input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:13px var(--f-mono);padding:8px 0;outline:none}
+.go{border:0;background:var(--accent);color:var(--accent-ink);font:600 13px var(--f-body);padding:0 14px;border-radius:99px;cursor:pointer}
+.ext-btn{position:relative;width:32px;height:32px;display:grid;place-items:center;border-radius:8px;border:1px solid var(--line);background:var(--surface);flex:none}
+.ext-btn svg{width:18px;height:18px}
+.badge{position:absolute;right:-6px;top:-7px;min-width:20px;height:18px;border-radius:9px;font:600 10px var(--f-mono);display:grid;place-items:center;padding:0 4px;color:#fff;background:var(--muted)}
+.badge.s{background:var(--safe)}.badge.w{background:var(--warn)}.badge.d{background:var(--danger)}
+.viewport{position:relative;min-height:380px;padding:26px;background:var(--surface)}
+.wf{max-width:360px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.wf .logo{height:34px;width:120px;border-radius:6px;background:var(--surface2)}
+.wf .h{font-family:var(--f-display);font-weight:700;font-size:20px}
+.wf .field{height:38px;border:1px solid var(--line);border-radius:6px;padding:9px 12px;font:13px var(--f-mono);color:var(--muted)}
+.wf .btn{height:40px;border-radius:6px;background:var(--surface2);display:grid;place-items:center;font-weight:600;color:var(--muted)}
+.wf .lines{display:flex;flex-direction:column;gap:7px}.wf .lines i{height:8px;border-radius:4px;background:var(--surface2)}
+.wf .lines i:nth-child(2){width:80%}.wf .lines i:nth-child(3){width:55%}
+.overlay{position:absolute;inset:0;display:none;flex-direction:column;gap:12px;align-items:center;justify-content:center;text-align:center;padding:24px;background:var(--danger-bg);color:var(--ink)}
+.overlay.on{display:flex}
+.overlay svg{width:46px;height:46px;color:var(--danger)}
+.overlay h3{font-size:22px;color:var(--danger)}
+.overlay p{max-width:44ch;font-size:14px}
+.overlay .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:4px}
+.btn2{font:600 13px var(--f-body);padding:9px 14px;border-radius:8px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.btn2.primary{background:var(--danger);border-color:var(--danger);color:#fff}
+.banner{display:none;margin:-26px -26px 18px;padding:10px 26px;font-size:13px;font-weight:500}
+.banner.on{display:block}
+.banner.w{background:var(--warn-bg);color:var(--warn)}
+.banner.s{background:var(--safe-bg);color:var(--safe)}
+
+/* popup */
+.popup{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 32px -18px rgba(0,0,0,.35);overflow:hidden;min-width:0}
+.pop-h{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);font-family:var(--f-display);font-weight:700}
+.pop-h span{font:12px var(--f-mono);color:var(--muted);font-weight:400}
+.pop-b{padding:16px;display:flex;flex-direction:column;gap:14px}
+.gauge{position:relative;width:200px;margin:0 auto}
+.gauge svg{display:block;width:100%}
+.gauge .num{position:absolute;left:0;right:0;bottom:2px;text-align:center;font-family:var(--f-display);font-weight:800;font-size:38px;line-height:1}
+.gauge .num small{display:block;font:11px var(--f-mono);color:var(--muted);font-weight:400;margin-top:3px;letter-spacing:.04em}
+.track{stroke:var(--surface2)}
+#arc{transition:stroke-dasharray .7s cubic-bezier(.2,.8,.2,1),stroke .3s}
+.verdict{text-align:center;font-family:var(--f-display);font-weight:800;font-size:20px;padding:8px;border-radius:8px}
+.verdict.s{background:var(--safe-bg);color:var(--safe)}.verdict.w{background:var(--warn-bg);color:var(--warn)}.verdict.d{background:var(--danger-bg);color:var(--danger)}.verdict.idle{background:var(--surface2);color:var(--muted)}
+dl.facts{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13px}
+dl.facts dt{color:var(--muted)}dl.facts dd{margin:0;text-align:right;font-family:var(--f-mono);font-size:12px;overflow-wrap:anywhere}
+ul.why{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px;font-size:13px}
+ul.why li{display:flex;gap:8px;align-items:flex-start}
+ul.why li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--danger);margin-top:7px;flex:none}
+ul.why li.ok::before{background:var(--safe)}
+.advice{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
+.pop-f{display:flex;gap:8px}.pop-f .btn2{flex:1;font-size:12px}
+.teach{display:flex;flex-direction:column;gap:8px;border-top:1px dashed var(--line);padding-top:12px}
+.teach .btn2.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+
+/* pipeline */
+.pipe{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+@media (max-width:900px){.pipe{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.pipe li{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:4px;min-width:0;transition:border-color .2s,background .2s}
+.pipe .n{font:11px var(--f-mono);color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.pipe b{font-family:var(--f-display);font-size:15px}
+.pipe .out{font:12px var(--f-mono);color:var(--muted);min-height:2.6em;overflow-wrap:anywhere}
+.pipe li.run{border-color:var(--accent);background:var(--surface2)}
+.pipe li.done{border-color:var(--accent)}
+.pipe li.done .n{color:var(--accent)}
+
+/* explicação */
+.cols{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:860px){.cols{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.feat{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) 54px;gap:12px;align-items:center;font-size:13px;padding-block:8px;border-bottom:1px solid var(--line)}
+.feat:last-child{border-bottom:0}
+.feat b{font-weight:600;display:block}
+.feat small{color:var(--muted);display:block;line-height:1.35}
+.meter{position:relative;height:10px;background:var(--surface2);border-radius:5px}
+.meter::after{content:"";position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--line)}
+.meter i{position:absolute;top:0;bottom:0;border-radius:5px}
+.meter i.pos{left:50%;background:var(--danger)}.meter i.neg{right:50%;background:var(--safe)}
+.feat .c{font:500 13px var(--f-mono);text-align:right}
+.feat .c.pos{color:var(--danger)}.feat .c.neg{color:var(--safe)}
+.formula{font:13px var(--f-mono);background:var(--surface2);padding:12px;border-radius:8px;overflow-x:auto;white-space:pre}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.empty{color:var(--muted);font-size:14px;padding:8px 0}
+
+/* arquitetura */
+.mm{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;overflow-x:auto}
+.mm pre{margin:0}
+.layers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:860px){.layers{grid-template-columns:minmax(0,1fr)}}
+.layers .panel p{color:var(--muted);font-size:14px}
+.layers ul{margin:0;padding-left:18px;font-size:14px;color:var(--muted)}
+
+/* roadmap */
+.road{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:900px){.road{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.road{grid-template-columns:minmax(0,1fr)}}
+.road li{border-top:3px solid var(--accent);background:var(--surface);padding:14px;border-radius:0 0 10px 10px;display:flex;flex-direction:column;gap:6px}
+.road .w{font:12px var(--f-mono);color:var(--accent);letter-spacing:.04em}
+.road p{font-size:13px;color:var(--muted)}
+.road li:nth-child(n+3){border-top-color:var(--line)}
+.foot{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:18px;max-width:80ch}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <div class="top-row">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 3l11 4v8c0 7-4.6 12.4-11 14C9.6 27.400 5 22 5 15V7l11-4z" fill="var(--accent)"/><circle cx="16" cy="15" r="5" stroke="var(--accent-ink)" stroke-width="2"/><path d="M16 15l4-4" stroke="var(--accent-ink)" stroke-width="2" stroke-linecap="round"/></svg>
+      É Golpe?
+    </div>
+    <span class="tag">Protótipo v0.1 · extensão Chrome</span>
+  </div>
+  <div class="eyebrow">Demonstração interativa</div>
+  <h1>Descubra se um site é <em>golpe</em> antes de digitar a senha.</h1>
+  <p class="lede">A extensão lê o endereço da página, consulta listas públicas e dados do domínio, e um modelo de machine learning devolve uma nota de risco de 0 a 100 com os motivos.</p>
+  <p class="notice"><b>Sobre os dados deste protótipo:</b> a lista de bloqueio, o ranking de sites conhecidos e a idade dos domínios são tabelas locais de exemplo, e os pesos do modelo são ilustrativos. A versão real troca isso por PhishTank, URLhaus, Tranco e RDAP, e pesos treinados com dataset público.</p>
+</header>
+
+<section id="demo">
+  <div class="sec-head">
+    <div class="eyebrow">1 · Como o usuário vê</div>
+    <h2>Escolha um cenário ou digite um endereço</h2>
+    <p>Cada exemplo mostra um tipo de situação que a extensão encontraria. Digite qualquer endereço para ver as regras funcionando de verdade.</p>
+  </div>
+  <div class="chips" id="chips" role="group" aria-label="Cenários de exemplo"></div>
+
+  <div class="demo">
+    <div class="browser">
+      <div class="bar">
+        <div class="lights" aria-hidden="true"><i></i><i></i><i></i></div>
+        <form class="addr" id="form">
+          <label class="addr-box" id="addrBox">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path id="lockShackle" d="M5.500 7V5a2.500 2.500 0 015 0v2"/></svg>
+            <input id="url" type="text" autocomplete="off" spellcheck="false" aria-label="Endereço do site" placeholder="Digite um endereço e pressione Enter">
+          </label>
+          <button class="go" type="submit">Analisar</button>
+        </form>
+        <div class="ext-btn" title="É Golpe?">
+          <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 3l11 4v8c0 7-4.6 12.4-11 14C9.6 27 5 22 5 15V7l11-4z" fill="var(--accent)"/></svg>
+          <span class="badge" id="badge">–</span>
+        </div>
+      </div>
+      <div class="viewport" id="viewport">
+        <div class="banner" id="banner"></div>
+        <div class="wf" aria-label="Esquema ilustrativo da página aberta">
+          <div class="logo"></div>
+          <div class="h" id="wfTitle">Acesse sua conta</div>
+          <div class="field">CPF</div>
+          <div class="field">Senha</div>
+          <div class="btn">Entrar</div>
+          <div class="lines"><i></i><i></i><i></i></div>
+        </div>
+        <div class="overlay" id="overlay" role="alertdialog" aria-labelledby="ovT">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M24 5L4 41h40L24 5z"/><path d="M24 19v10M24 35v.5"/></svg>
+          <h3 id="ovT">Site bloqueado pelo Radar</h3>
+          <p id="ovP"></p>
+          <div class="row"><button class="btn2 primary" id="ovBack" type="button">Voltar para segurança</button><button class="btn2" id="ovGo" type="button">Continuar mesmo assim</button></div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="popup" aria-live="polite">
+      <div class="pop-h">É Golpe? <span id="popHost">aguardando</span></div>
+      <div class="pop-b">
+        <div class="gauge">
+          <svg viewBox="0 0 120 68" aria-hidden="true">
+            <path class="track" d="M10 62 A50 50 0 0 1 110 62" pathLength="100" fill="none" stroke-width="11" stroke-linecap="round"/>
+            <path id="arc" d="M10 62 A50 50 0 0 1 110 62" pathLength="100" fill="none" stroke="var(--muted)" stroke-width="11" stroke-linecap="round" stroke-dasharray="0 100"/>
+          </svg>
+          <div class="num"><span id="score">–</span><small>RISCO DE GOLPE</small></div>
+        </div>
+        <div class="verdict idle" id="verdict">Sem análise</div>
+        <dl class="facts">
+          <dt>Domínio</dt><dd id="fDom">–</dd>
+          <dt>Idade (RDAP)</dt><dd id="fAge">–</dd>
+          <dt>Ranking Tranco</dt><dd id="fRank">–</dd>
+          <dt>Lista de phishing</dt><dd id="fList">–</dd>
+        </dl>
+        <ul class="why" id="why"><li class="ok">Escolha um cenário para começar.</li></ul>
+        <p class="advice" id="advice">A nota aparece aqui em menos de 1 segundo depois que a página abre.</p>
+        <div class="pop-f"><button class="btn2" type="button" id="btnReport">Denunciar este site</button><button class="btn2" type="button" id="btnDetails">Ver detalhes</button></div>
+        <div class="teach">
+          <div class="pop-f"><button class="btn2 primary" type="button" id="btnTeach">Ensinar ao modelo: é golpe</button><button class="btn2" type="button" id="btnReset">Zerar treino</button></div>
+          <p class="small muted" id="teachNote">Ajusta os pesos do modelo com este site como exemplo de golpe (rótulo = 1). Depois, teste outros endereços para ver o efeito.</p>
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<section id="pipeline">
+  <div class="sec-head">
+    <div class="eyebrow">2 · O que acontece por trás</div>
+    <h2>Seis etapas em menos de um segundo</h2>
+    <p>As etapas acendem durante a análise e mostram o resultado de cada uma.</p>
+  </div>
+  <ol class="pipe" id="pipe"></ol>
+</section>
+
+<section id="details">
+  <div class="sec-head">
+    <div class="eyebrow">3 · Por que essa nota</div>
+    <h2>O modelo mostra o que pesou na decisão</h2>
+    <p>Cada sinal vira um número (feature). O modelo soma os pesos e converte o total em probabilidade. Barras vermelhas empurram para golpe e verdes empurram para seguro.</p>
+  </div>
+  <div class="cols">
+    <div class="panel">
+      <h3>Contribuição de cada sinal</h3>
+      <div id="feats"><p class="empty">Rode uma análise para ver os sinais.</p></div>
+    </div>
+    <div class="panel">
+      <h3>Como a nota é calculada</h3>
+      <div class="formula" id="formula">z = viés + Σ (peso × sinal)
+p = 1 / (1 + e^-z)
+nota = p × 100</div>
+      <p class="small muted">Este é o formato de uma regressão logística, o modelo mais simples e explicável para começar. Na versão treinada, os pesos saem de um dataset como PhishTank, UCI Phishing Websites e coletas próprias com sites brasileiros.</p>
+      <p class="small muted">Trocar por Random Forest ou XGBoost melhora a precisão, mas exige gerar a explicação por outros meios (por exemplo, SHAP).</p>
+    </div>
+  </div>
+</section>
+
+<section id="arch">
+  <div class="sec-head">
+    <div class="eyebrow">4 · Arquitetura proposta</div>
+    <h2>Da página aberta ao alerta</h2>
+    <p>O cache local evita consultas repetidas. O modelo pode rodar dentro da extensão (privacidade máxima) ou numa API própria (mais poder).</p>
+  </div>
+  <div class="mm">
+<pre class="mermaid">
+flowchart LR
+  A[Usuário abre uma página] --> B[Content script lê URL e conteúdo]
+  B --> C[Service worker da extensão]
+  C --> D{Cache local?}
+  D -- sim --> H[Veredito]
+  D -- não --> E[Listas: PhishTank e URLhaus]
+  C --> F[RDAP: idade do domínio]
+  C --> T[Ranking Tranco]
+  E --> G[Modelo de ML]
+  F --> G
+  T --> G
+  G --> H
+  H --> I[Alerta na página e selo no ícone]
+  I --> J[Denúncia do usuário]
+  J --> K[(Dataset para retreino)]
+</pre>
+  </div>
+  <div class="layers">
+    <div class="panel"><h3>Extensão (Manifest V3)</h3><p>Interface, leitura da página e cache.</p><ul><li>content script + service worker</li><li>popup com a nota e os motivos</li><li>permissões mínimas para a loja aprovar</li></ul></div>
+    <div class="panel"><h3>Dados abertos</h3><p>Fontes públicas que alimentam o modelo.</p><ul><li>PhishTank, OpenPhish, URLhaus</li><li>RDAP para idade do domínio</li><li>Tranco para ranking de sites legítimos</li></ul></div>
+    <div class="panel"><h3>Machine learning</h3><p>Do simples ao sofisticado.</p><ul><li>Fase 1: regras + regressão logística</li><li>Fase 2: XGBoost com features de URL e domínio</li><li>Fase 3: NLP em português para o texto da página</li></ul></div>
+  </div>
+</section>
+
+<section id="roadmap">
+  <div class="sec-head">
+    <div class="eyebrow">5 · Próximos passos</div>
+    <h2>Do protótipo ao produto</h2>
+  </div>
+  <ol class="road">
+    <li><span class="w">SEMANA 1</span><h3>Extensão com listas</h3><p>Popup real que consulta PhishTank e URLhaus e alerta na página.</p></li>
+    <li><span class="w">SEMANAS 2 e 3</span><h3>Heurísticas e RDAP</h3><p>Idade do domínio, parecidos com marcas e ranking Tranco no cálculo da nota.</p></li>
+    <li><span class="w">SEMANAS 4 a 6</span><h3>Primeiro modelo treinado</h3><p>Dataset público, validação e ajuste do limiar para reduzir falsos positivos.</p></li>
+    <li><span class="w">DEPOIS</span><h3>Texto e aplicativo</h3><p>Análise de e-mails e mensagens, denúncias da comunidade e app para celular.</p></li>
+  </ol>
+</section>
+
+<p class="foot"><b>Limites a discutir na apresentação:</b> falsos positivos derrubam a confiança, então o limiar precisa de calibração; o histórico de navegação é dado sensível pela LGPD, por isso o desenho prioriza análise local; e golpes mudam rápido, o que exige atualização frequente das listas e retreino do modelo.</p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>
+(function(){
+  try{ if(window.mermaid){ mermaid.initialize({startOnLoad:false,securityLevel:'loose',theme:(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'default'}); mermaid.run({querySelector:'.mermaid'}); } }catch(e){}
+})();
+
+/* ---------- dados de exemplo (simulados) ---------- */
+var BRANDS={nubank:'nubank.com.br',itau:'itau.com.br',bradesco:'bradesco.com.br',caixa:'caixa.gov.br',mercadolivre:'mercadolivre.com.br',correios:'correios.com.br',santander:'santander.com.br',magalu:'magazineluiza.com.br'};
+var TOP=['nubank.com.br','itau.com.br','bradesco.com.br','caixa.gov.br','mercadolivre.com.br','correios.com.br','santander.com.br','magazineluiza.com.br','amazon.com.br','google.com','gov.br','wikipedia.org','github.com'];
+var RANK={'google.com':1,'wikipedia.org':12,'github.com':38,'amazon.com.br':210,'mercadolivre.com.br':260,'gov.br':420,'magazineluiza.com.br':900,'nubank.com.br':1400,'itau.com.br':1700,'bradesco.com.br':2100,'caixa.gov.br':2500,'correios.com.br':3200,'santander.com.br':3900};
+var BLOCK=['nubank-atualizar-cadastro.xyz','correios-taxa-pendente.top'];
+var AGE={'nubank-atualizar-cadastro.xyz':3,'correios-taxa-pendente.top':5,'iphone15-oferta-relampago.shop':2,'bradesc0.com.br':11,'casa-do-tenis.com.br':90};
+var SHORT=['bit.ly','tinyurl.com','t.co','cutt.ly','is.gd','rb.gy'];
+var BADTLD=['xyz','top','click','shop','site','online','icu','buzz','live','cfd'];
+var KW=['login','verificar','atualizar','cadastro','cpf','senha','boleto','pix','segunda-via','taxa','promo','oferta','relampago','premio','urgente','bloqueio','desconto','queima'];
+var BIAS0=-2.5,BIAS=BIAS0,WT={},lastR=null;
+
+var SCENARIOS=[
+ {n:'Banco falso (na lista)',u:'https://nubank-atualizar-cadastro.xyz/login?cpf=',k:'d'},
+ {n:'Falsa taxa dos Correios',u:'http://correios-taxa-pendente.top/segunda-via/boleto',k:'d'},
+ {n:'Loja relâmpago',u:'http://iphone15-oferta-relampago.shop/produto/promo',k:'d'},
+ {n:'Banco com letra trocada',u:'https://www.bradesc0.com.br/acesso',k:'d'},
+ {n:'Loja nova sem reputação',u:'https://casa-do-tenis.com.br/promo-queima',k:'w'},
+ {n:'Banco verdadeiro',u:'https://www.nubank.com.br/',k:'s'},
+ {n:'Marketplace conhecido',u:'https://www.mercadolivre.com.br/',k:'s'},
+ {n:'Denunciado: sppy.site',u:'https://www.sppy.site/',k:'d'}
+];
+
+/* ---------- utilidades ---------- */
+function $(id){return document.getElementById(id)}
+function lev(a,b){var m=[],i,j;for(i=0;i<=a.length;i++){m[i]=[i]}for(j=0;j<=b.length;j++){m[0][j]=j}
+  for(i=1;i<=a.length;i++)for(j=1;j<=b.length;j++){m[i][j]=Math.min(m[i-1][j]+1,m[i][j-1]+1,m[i-1][j-1]+(a[i-1]===b[j-1]?0:1))}return m[a.length][b.length]}
+function hash(s){var h=0;for(var i=0;i<s.length;i++){h=(h*31+s.charCodeAt(i))>>>0}return h}
+function parse(raw){var s=(raw||'').trim();if(!s)return null;var had=/^[a-z][a-z0-9+.-]*:\/\//i.test(s);if(!had)s='https://'+s;
+  try{var u=new URL(s);if(!u.hostname||u.hostname.indexOf('.')<0&&!/^\d+$/.test(u.hostname))return null;return {url:u,raw:raw.trim(),assumed:!had}}catch(e){return null}}
+function regDomain(host){var l=host.split('.');if(l.length<=2)return host;var sl=['com','gov','org','net','edu'];
+  if(l[l.length-1].length===2&&sl.indexOf(l[l.length-2])>-1)return l.slice(-3).join('.');return l.slice(-2).join('.')}
+function brandHit(host,reg){var tokens=host.split(/[.\-]/);
+  for(var b in BRANDS){for(var i=0;i<tokens.length;i++){var t=tokens[i];
+    if(t===b||t.indexOf(b)>-1||(b.length>=5&&t.length>=5&&lev(t,b)===1)){if(reg!==BRANDS[b])return b}}}return null}
+function ageText(d){if(d<30)return d+' dias';if(d<365)return Math.round(d/30)+' meses';return (d/365).toFixed(1).replace('.',',')+' anos'}
+
+/* ---------- modelo ---------- */
+function analyze(p){
+  var u=p.url,host=u.hostname.toLowerCase(),reg=regDomain(host),full=(host+u.pathname+u.search).toLowerCase();
+  var labels=host.split('.'),regLabels=reg.split('.'),tld=labels[labels.length-1];
+  var isIp=/^\d{1,3}(\.\d{1,3}){3}$/.test(host);
+  var inTop=TOP.indexOf(reg)>-1,inList=BLOCK.indexOf(reg)>-1;
+  var age,ageSim=false;
+  if(AGE[reg]!=null){age=AGE[reg]}else if(inTop){age=3000+hash(reg)%4000}else{age=5+hash(reg)%1500;ageSim=true}
+  var hy=(reg.match(/-/g)||[]).length;
+  var kws=KW.filter(function(k){return full.indexOf(k)>-1});
+  var brand=isIp?null:brandHit(host,reg);
+  var F=[
+   {id:'list',l:'Consta em lista de phishing',s:'Endereço já denunciado em base pública.',v:inList?1:0,w:4.0},
+   {id:'brand',l:'Imita uma marca conhecida',s:brand?('Parece com “'+brand+'” mas o domínio oficial é '+BRANDS[brand]+'.'):'Nome da marca em domínio que não é o oficial.',v:brand?1:0,w:3.2},
+   {id:'ip',l:'Usa número IP em vez de nome',s:'Sites sérios quase nunca usam IP.',v:isIp?1:0,w:2.5},
+   {id:'at',l:'Contém “@” no endereço',s:'Truque para esconder o destino real.',v:p.raw.indexOf('@')>-1?1:0,w:2.0},
+   {id:'new',l:'Domínio com menos de 30 dias',s:'Golpes costumam usar sites criados há pouco tempo.',v:age<30?1:0,w:2.2},
+   {id:'recent',l:'Domínio com menos de 6 meses',s:'Idade baixa é um sinal fraco, mas conta.',v:(age>=30&&age<180)?1:0,w:0.8},
+   {id:'http',l:'Sem HTTPS',s:'A conexão não é criptografada.',v:u.protocol==='http:'?1:0,w:1.4},
+   {id:'tld',l:'Final de domínio de risco (.'+tld+')',s:'Terminações baratas muito usadas em golpes.',v:BADTLD.indexOf(tld)>-1?1:0,w:1.5},
+   {id:'short',l:'Link encurtado',s:'Esconde o destino final.',v:SHORT.indexOf(reg)>-1?1:0,w:1.6},
+   {id:'puny',l:'Letras disfarçadas (punycode)',s:'Caracteres parecidos de outros alfabetos.',v:host.indexOf('xn--')>-1?1:0,w:1.8},
+   {id:'hy',l:'Vários hifens no domínio',s:'Ex.: banco-atualizar-cadastro.',v:hy>=2?1:0,w:0.8},
+   {id:'sub',l:'Muitos subdomínios',s:'Ex.: conta.seguro.banco.exemplo.com.',v:(labels.length-regLabels.length)>=3?1:0,w:0.9},
+   {id:'kw',l:'Palavras de pressão ou dados',s:kws.length?('Encontradas: '+kws.slice(0,4).join(', ')+'.'):'Login, boleto, taxa, oferta…',v:Math.min(kws.length,4),w:0.6},
+   {id:'long',l:'Endereço muito longo',s:'Mais de 75 caracteres.',v:u.href.length>75?1:0,w:0.6},
+   {id:'unk',l:'Fora do ranking de sites conhecidos',s:'Sem histórico de popularidade.',v:inTop?0:1,w:0.7},
+   {id:'top',l:'Está entre os sites mais acessados',s:'Ranking Tranco confirma que o site é conhecido.',v:inTop?1:0,w:-3.0}
+  ];
+  var z=BIAS;F.forEach(function(f){if(WT[f.id]!=null)f.w=WT[f.id];f.c=f.v*f.w;z+=f.c});
+  var pr=1/(1+Math.exp(-z)),score=Math.round(pr*100);
+  var verdict=score<30?'s':score<65?'w':'d';
+  return {p:p,host:host,reg:reg,age:age,ageSim:ageSim,inTop:inTop,inList:inList,F:F,z:z,pr:pr,score:score,verdict:verdict,brand:brand,rank:RANK[reg]||null,kws:kws};
+}
+
+/* ---------- interface ---------- */
+var LABEL={s:'Parece seguro',w:'Suspeito',d:'Provável golpe'};
+var COLOR={s:'var(--safe)',w:'var(--warn)',d:'var(--danger)'};
+var ADVICE={
+ s:'Nenhum sinal forte de golpe. Mesmo assim, desconfie de pedidos inesperados de senha ou pagamento.',
+ w:'Há sinais de alerta. Procure o CNPJ e avaliações em fontes independentes antes de comprar ou informar dados.',
+ d:'Não informe senha, CPF ou cartão. Se chegou por mensagem, apague e acesse o serviço digitando o endereço oficial.'};
+var STEPS=[
+ {t:'Captura',d:'Lê a URL da aba'},
+ {t:'Listas',d:'PhishTank · URLhaus'},
+ {t:'Domínio',d:'RDAP e Tranco'},
+ {t:'Sinais',d:'Extrai 16 features'},
+ {t:'Modelo',d:'Soma pesos'},
+ {t:'Veredito',d:'Alerta na página'}];
+var pipe=$('pipe');
+pipe.innerHTML=STEPS.map(function(s,i){return '<li id="st'+i+'"><span class="n">Etapa '+(i+1)+'</span><b>'+s.t+'</b><span class="out" id="so'+i+'">'+s.d+'</span></li>'}).join('');
+
+var chips=$('chips');
+chips.innerHTML=SCENARIOS.map(function(s,i){return '<button class="chip" type="button" data-i="'+i+'"><span class="dot '+s.k+'"></span>'+s.n+'</button>'}).join('');
+chips.addEventListener('click',function(e){var b=e.target.closest('.chip');if(!b)return;var s=SCENARIOS[+b.dataset.i];$('url').value=s.u;run(s.u)});
+$('form').addEventListener('submit',function(e){e.preventDefault();run($('url').value)});
+
+var token=0;
+var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+function wait(ms){return new Promise(function(r){setTimeout(r,reduce?0:ms)})}
+
+function resetView(){
+  $('overlay').classList.remove('on');var b=$('banner');b.className='banner';b.textContent='';
+  for(var i=0;i<6;i++){$('st'+i).className='';$('so'+i).textContent=STEPS[i].d}
+}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+
+async function run(raw){
+  var my=++token;resetView();
+  var p=parse(raw);
+  if(!p){$('verdict').className='verdict idle';$('verdict').textContent='Endereço inválido';$('why').innerHTML='<li>Digite algo como exemplo.com.br/pagina</li>';return}
+  var addr=$('addrBox');addr.classList.toggle('insecure',p.url.protocol==='http:');
+  $('lockShackle').setAttribute('d',p.url.protocol==='http:'?'M5.500 7V5a2.500 2.500 0 014.800-1':'M5.500 7V5a2.500 2.500 0 015 0v2');
+  $('popHost').textContent='analisando…';$('verdict').className='verdict idle';$('verdict').textContent='Analisando…';
+  $('score').textContent='…';$('badge').className='badge';$('badge').textContent='…';$('arc').setAttribute('stroke-dasharray','0 100');
+  var r=analyze(p);
+  var outs=[
+    p.url.hostname,
+    r.inList?'ENCONTRADO na lista':'não consta',
+    (r.ageSim?'~':'')+ageText(r.age)+' · '+(r.rank?'rank #'+r.rank:'fora do top'),
+    r.F.filter(function(f){return f.v>0}).length+' de 16 sinais ativos',
+    'z = '+r.z.toFixed(2).replace('.',','),
+    LABEL[r.verdict]+' ('+r.score+')'];
+  for(var i=0;i<6;i++){
+    $('st'+i).className='run';await wait(260);if(my!==token)return;
+    $('st'+i).className='done';$('so'+i).textContent=outs[i];
+  }
+  show(r);
+}
+
+function show(r){
+  lastR=r;
+  var v=r.verdict;
+  $('score').textContent=r.score;
+  $('arc').setAttribute('stroke',COLOR[v]);$('arc').setAttribute('stroke-dasharray',r.score+' 100');
+  $('verdict').className='verdict '+v;$('verdict').textContent=LABEL[v];
+  $('popHost').textContent=r.reg;
+  $('badge').className='badge '+v;$('badge').textContent=r.score;
+  $('fDom').textContent=r.host;
+  $('fAge').textContent=(r.ageSim?'~':'')+ageText(r.age)+(r.ageSim?' (simulado)':'');
+  $('fRank').textContent=r.rank?'#'+r.rank:'fora do top 1M';
+  $('fList').textContent=r.inList?'consta':'não consta';
+  $('fList').style.color=r.inList?'var(--danger)':'';
+  var pos=r.F.filter(function(f){return f.c>0}).sort(function(a,b){return b.c-a.c}).slice(0,3);
+  var neg=r.F.filter(function(f){return f.c<0});
+  var items=pos.map(function(f){return '<li>'+esc(f.l)+'</li>'}).concat(neg.map(function(f){return '<li class="ok">'+esc(f.l)+'</li>'}));
+  $('why').innerHTML=items.length?items.join(''):'<li class="ok">Nenhum sinal de risco encontrado.</li>';
+  $('advice').textContent=ADVICE[v];
+
+  var b=$('banner'),ov=$('overlay');
+  $('wfTitle').textContent=r.p.url.pathname.indexOf('login')>-1||v==='d'?'Acesse sua conta':'Página inicial';
+  if(v==='d'){ov.classList.add('on');$('ovP').textContent='Este endereço tem '+r.score+'% de chance de ser golpe. '+(r.brand?'Ele imita “'+r.brand+'”, mas não é o site oficial.':'Vários sinais de fraude foram encontrados.')}
+  else if(v==='w'){b.className='banner on w';b.textContent='Atenção: este site tem sinais de risco ('+r.score+'/100). Confira o CNPJ antes de comprar.'}
+  else{b.className='banner on s';b.textContent='Radar: nenhum sinal forte de golpe encontrado ('+r.score+'/100).'}
+
+  var max=4.5;
+  var rows=r.F.filter(function(f){return f.v>0}).sort(function(a,b){return b.c-a.c});
+  $('feats').innerHTML=rows.length?rows.map(function(f){
+    var w=Math.min(Math.abs(f.c)/max,1)*50;var cls=f.c>=0?'pos':'neg';
+    var val=f.id==='kw'?' ×'+f.v:'';
+    return '<div class="feat"><div><b>'+esc(f.l)+esc(val)+'</b><small>'+esc(f.s)+'</small></div><div class="meter"><i class="'+cls+'" style="width:'+w+'%"></i></div><div class="c '+cls+'">'+(f.c>=0?'+':'−')+Math.abs(f.c).toFixed(1).replace('.',',')+'</div></div>'}).join('')
+    :'<p class="empty">Nenhum sinal ativo.</p>';
+  var sum=r.F.reduce(function(a,f){return a+f.c},0);
+  $('formula').textContent='z = viés ('+BIAS.toFixed(1)+') + Σ sinais ('+(sum>=0?'+':'')+sum.toFixed(1)+')\n  = '+r.z.toFixed(2)+'\np = 1 / (1 + e^'+(-r.z).toFixed(2)+') = '+(r.pr*100).toFixed(1).replace('.',',')+'%\nnota = '+r.score+'  →  '+LABEL[v];
+}
+
+$('ovBack').addEventListener('click',function(){$('overlay').classList.remove('on');var b=$('banner');b.className='banner on w';b.textContent='Você voltou para um lugar seguro. A página foi bloqueada.'});
+$('ovGo').addEventListener('click',function(){$('overlay').classList.remove('on');var b=$('banner');b.className='banner on w';b.textContent='Você ignorou o alerta. Não digite senha ou dados de pagamento neste site.'});
+$('btnReport').addEventListener('click',function(){this.textContent='Denúncia registrada (exemplo)';this.disabled=true;setTimeout(function(){var b=$('btnReport');b.textContent='Denunciar este site';b.disabled=false},2200)});
+$('btnDetails').addEventListener('click',function(){$('details').scrollIntoView({behavior:reduce?'auto':'smooth'})});
+
+/* aprendizado: passos de gradiente da regressão logística com rótulo = golpe */
+$('btnTeach').addEventListener('click',function(){
+  if(!lastR)return;var r=lastR,before=r.score,lr=0.6,s;
+  for(s=0;s<8;s++){
+    var z=BIAS;r.F.forEach(function(f){z+=f.v*(WT[f.id]!=null?WT[f.id]:f.w)});
+    var err=1-1/(1+Math.exp(-z));
+    r.F.forEach(function(f){if(f.v>0)WT[f.id]=(WT[f.id]!=null?WT[f.id]:f.w)+lr*err*f.v});
+    BIAS+=lr*err;
+  }
+  var a=analyze(r.p);show(a);
+  var ch=a.F.filter(function(f){return f.v>0&&f.c>0&&f.id!=='list'}).map(function(f){return f.l}).slice(0,3).join('; ');
+  $('teachNote').textContent='Modelo atualizado: nota de '+before+' para '+a.score+'. Pesos que subiram: '+ch+'. Agora outros sites com esses sinais também pontuam mais alto.';
+  $('st4').className='done';$('so4').textContent='z = '+a.z.toFixed(2).replace('.',',')+' (retreinado)';
+});
+$('btnReset').addEventListener('click',function(){
+  WT={};BIAS=BIAS0;$('teachNote').textContent='Pesos originais restaurados.';
+  if(lastR)run(lastR.p.raw);
+});
+
+/* estado inicial: já mostra um exemplo */
+$('url').value=SCENARIOS[3].u;run(SCENARIOS[3].u);
+</script>

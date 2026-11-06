@@ -6,7 +6,7 @@ const ctx={chrome,console,AbortSignal,URL,TextDecoder,fetch:async()=>{throw 0}};
 vm.runInContext(fs.readFileSync(path.join(__dirname,'../background.js'),'utf8')+';this.T={pontuarConfianca,aplicarRA,limiteConfianca,nivelPorRigor}',ctx);
 const T=ctx.T,S=(o)=>Object.assign({pagamento:true,venda:true,cnpjValido:true,contato:true,politicas:true},o);
 let ok=0,n=0;const t=(nome,v,e)=>{n++;const b=v===e;ok+=b;console.log((b?'OK  ':'ERRO'),nome.padEnd(58),v);};
-const loja=(s,d,nota)=>{const c=T.pontuarConfianca(s,d,'https:',0,false);const m=[];return T.aplicarRA(nota?{nota}:null,true,c.confianca,m)>75?'passa':'não passa';};
+const loja=(s,d,nota)=>{const c=T.pontuarConfianca(s,d,'https:',0,false);const m=[];return T.aplicarRA(nota?{nota}:null,true,c.confianca,m)>=T.limiteConfianca('alto')?'passa':'não passa';};
 t('loja 4 anos com provas, sem nota do RA',loja(S({}),1460,null),'passa');
 t('loja 4 anos com provas + RA "Não recomendado"',loja(S({}),1460,'nao_recomendado'),'não passa');
 t('loja 4 anos com provas + RA "Ruim"',loja(S({}),1460,'ruim'),'não passa');

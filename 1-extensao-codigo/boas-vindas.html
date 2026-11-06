@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>É Golpe? · Boas-vindas</title>
+<style>
+  *{box-sizing:border-box}
+  :root{--verde:#0b6e5b;--texto:#10201c;--fraco:#44534f;--borda:#8a9a95;--fundo:#f4f7f6;--foco:#1565c0;--alerta:#8a5a07}
+  body{margin:0;background:var(--fundo);color:var(--texto);font:20px/1.5 Arial,Helvetica,sans-serif}
+  body.grande{font-size:24px}
+  header{background:var(--verde);color:#fff;padding:18px 20px}
+  header .marca{font-size:28px;font-weight:bold}
+  main{max-width:760px;margin:0 auto;padding:20px 16px 60px}
+  h1{font-size:1.5em;line-height:1.2;margin:8px 0 6px}
+  h1:focus{outline:none}
+  .passo-num{color:var(--fraco);font-weight:bold;font-size:.8em;letter-spacing:.05em}
+  p{margin:8px 0}
+  fieldset{border:0;padding:0;margin:16px 0}
+  legend{font-weight:bold;margin-bottom:10px}
+  .opcao{display:flex;gap:14px;align-items:flex-start;background:#fff;border:3px solid var(--borda);border-radius:12px;padding:14px 16px;margin:0 0 12px;cursor:pointer}
+  .opcao:has(input:checked){border-color:var(--verde);background:#e3f3e9}
+  .opcao input{width:30px;height:30px;flex:none;margin:2px 0 0;accent-color:var(--verde)}
+  .opcao b{display:block}
+  .opcao small{display:block;color:var(--fraco);font-size:.8em}
+  .opcao .emoji{font-size:1.4em;line-height:1;flex:none}
+  input:focus-visible,button:focus-visible,.opcao:has(input:focus-visible){outline:4px solid var(--foco);outline-offset:3px}
+  label.campo{display:block;font-weight:bold;margin:14px 0 4px}
+  input[type=text],input[type=tel],input[type=email]{width:100%;font:inherit;padding:12px;border:3px solid var(--borda);border-radius:8px;background:#fff;color:var(--texto)}
+  .dica{color:var(--fraco);font-size:.8em;margin-top:2px}
+  .erro{color:#b42323;font-weight:bold;margin-top:8px}
+  .botoes{display:flex;flex-wrap:wrap;gap:12px;margin-top:22px}
+  button{font:inherit;font-weight:bold;padding:14px 24px;border-radius:10px;cursor:pointer;border:3px solid var(--verde);background:#fff;color:var(--verde)}
+  button.principal{background:var(--verde);color:#fff}
+  button.leve{border-color:var(--borda);color:var(--fraco);font-weight:normal}
+  .previa{background:#fff;border:2px dashed var(--borda);border-radius:10px;padding:12px 14px;white-space:pre-wrap;font-size:.85em}
+  .aviso{background:#fbf0d8;border:3px solid var(--alerta);border-radius:10px;padding:12px 14px;margin:14px 0}
+  .resumo li{margin:6px 0}
+  [hidden]{display:none!important}
+  .so-leitor{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</head>
+<body>
+<header><div class="marca">É Golpe?</div><div>Proteção contra golpes na internet</div></header>
+<main>
+  <div id="anuncio" class="so-leitor" aria-live="polite"></div>
+
+  <!-- Passo 1: acessibilidade -->
+  <section id="passo1" aria-labelledby="t1">
+    <div class="passo-num">PASSO 1 DE 3</div>
+    <h1 id="t1" tabindex="-1">Bem-vindo! Como você prefere usar o É Golpe?</h1>
+    <p>Escolha o que combina com você. Pode marcar mais de uma opção. Dá para mudar depois, no ícone da extensão.</p>
+    <fieldset>
+      <legend>Minha acessibilidade</legend>
+      <label class="opcao"><input type="checkbox" name="perfil" value="idoso"><span class="emoji" aria-hidden="true">👵</span>
+        <span><b>Sou idoso(a) ou tenho dificuldade com a internet</b><small>Letras grandes, avisos simples, leitura em voz alta e uma pessoa de confiança para perguntar se é golpe.</small></span></label>
+      <label class="opcao"><input type="checkbox" name="perfil" value="cego"><span class="emoji" aria-hidden="true">🦯</span>
+        <span><b>Sou cego(a) ou uso leitor de tela</b><small>Avisos anunciados pelo leitor de tela, com foco no botão seguro.</small></span></label>
+      <label class="opcao"><input type="checkbox" name="perfil" value="baixaVisao"><span class="emoji" aria-hidden="true">🔍</span>
+        <span><b>Tenho baixa visão (enxergo pouco)</b><small>Letras e botões bem grandes.</small></span></label>
+      <label class="opcao"><input type="checkbox" name="perfil" value="daltonico"><span class="emoji" aria-hidden="true">🎨</span>
+        <span><b>Sou daltônico(a) (confundo cores)</b><small>Cores azul, laranja e preto, sempre com símbolo e palavra, no lugar de verde e vermelho.</small></span></label>
+      <label class="opcao"><input type="checkbox" name="perfil" value="leitura"><span class="emoji" aria-hidden="true">🔊</span>
+        <span><b>Tenho dificuldade para ler</b><small>Os avisos são lidos em voz alta, com frases curtas.</small></span></label>
+      <label class="opcao"><input type="checkbox" name="perfil" value="padrao"><span class="emoji" aria-hidden="true">✅</span>
+        <span><b>Não preciso de ajustes</b><small>Usar o jeito padrão.</small></span></label>
+    </fieldset>
+    <div class="botoes"><button id="ir2" class="principal" type="button">Continuar</button></div>
+  </section>
+
+  <!-- Passo 2: ajustes -->
+  <section id="passo2" aria-labelledby="t2" hidden>
+    <div class="passo-num">PASSO 2 DE 3</div>
+    <h1 id="t2" tabindex="-1">Confira os ajustes</h1>
+    <p>Já marcamos o que combina com a sua escolha. Mude se quiser.</p>
+    <fieldset>
+      <legend>Ajustes</legend>
+      <label class="opcao"><input type="checkbox" id="modoSimples"><span><b>Letras grandes e avisos simples</b><small>Só o essencial, em tamanho grande.</small></span></label>
+      <label class="opcao"><input type="checkbox" id="vozAutomatica"><span><b>Ler os avisos em voz alta sozinho</b><small>Quando um site for bloqueado, o aviso é lido em voz alta. Se você usa leitor de tela (NVDA, JAWS, Narrador), deixe desligado para não ouvir duas vozes.</small></span></label>
+      <label class="opcao"><input type="checkbox" id="daltonico"><span><b>Cores para daltonismo</b><small>Azul para seguro, laranja para atenção e preto para perigo.</small></span></label>
+    </fieldset>
+    <div class="botoes">
+      <button id="volta1" class="leve" type="button">Voltar</button>
+      <button id="ir3" class="principal" type="button">Continuar</button>
+    </div>
+  </section>
+
+  <!-- Passo 3: pessoa de confiança -->
+  <section id="passo3" aria-labelledby="t3" hidden>
+    <div class="passo-num">PASSO 3 DE 3</div>
+    <h1 id="t3" tabindex="-1">Cadastre uma pessoa de confiança</h1>
+    <p>Quando um site for bloqueado, você vai poder mandar o link para essa pessoa com um toque, perguntando: <b>"isso é golpe?"</b>. Pode ser um filho, neto, amigo ou vizinho.</p>
+    <div id="avisoIdoso" class="aviso" hidden><b>Recomendado para você.</b> Pedir ajuda antes de pagar ou digitar senha é a melhor proteção contra golpes.</div>
+    <label class="campo" for="nome">Nome da pessoa</label>
+    <input type="text" id="nome" autocomplete="off" maxlength="60" placeholder="Ex.: Maria (minha filha)">
+    <label class="campo" for="telefone">WhatsApp (com DDD)</label>
+    <input type="tel" id="telefone" autocomplete="off" maxlength="25" placeholder="Ex.: (11) 98765-4321" aria-describedby="dicaTel">
+    <div class="dica" id="dicaTel">Só números do Brasil com DDD. A mensagem abre no WhatsApp e você decide enviar.</div>
+    <label class="campo" for="email">E-mail (opcional)</label>
+    <input type="email" id="email" autocomplete="off" maxlength="100" placeholder="Ex.: maria@email.com">
+    <div id="erro3" class="erro" role="alert" hidden></div>
+    <p><b>Mensagem que será enviada quando um site for bloqueado:</b></p>
+    <div class="previa" id="previa"></div>
+    <p class="dica">Os dados da pessoa ficam só neste computador. O É Golpe? nunca envia nada sozinho.</p>
+    <div class="botoes">
+      <button id="volta2" class="leve" type="button">Voltar</button>
+      <button id="testar" type="button">Mandar mensagem de teste</button>
+      <button id="salvar" class="principal" type="button">Salvar e terminar</button>
+      <button id="pular" class="leve" type="button">Pular por enquanto</button>
+    </div>
+  </section>
+
+  <!-- Pronto -->
+  <section id="passo4" aria-labelledby="t4" hidden>
+    <h1 id="t4" tabindex="-1">Pronto! Você está protegido.</h1>
+    <ul class="resumo" id="resumo"></ul>
+    <p>Quando um site for suspeito, o É Golpe? mostra um aviso com o que encontrou e o que fazer. Se ele for perigoso, é bloqueado antes de abrir.</p>
+    <div class="botoes">
+      <button id="verBloqueio" class="principal" type="button">Ver como é a tela de bloqueio</button>
+      <button id="mudar" class="leve" type="button">Mudar as escolhas</button>
+    </div>
+  </section>
+</main>
+<script src="pessoa.js"></script>
+<script src="boas-vindas.js"></script>
+</body>
+</html>

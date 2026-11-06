@@ -5,7 +5,8 @@
 
   // ---------- Estado e configuração ----------
   let ativo = true;
-  let config = { limite: 3, imagens: false, modoSimples: false };
+  let config = { limite: 3, imagens: false, modoSimples: false, vozAutomatica: false, daltonico: false };
+  let pessoa = null;                       // pessoa de confiança (fica só neste computador)
   let siteRes = null;
   let avisoSite = null;
   let fecharAvisoAtual = null;
@@ -13,9 +14,13 @@
   let rodadas = 0;
 
   try {
-    chrome.storage.local.get('config').then((d) => { if (d.config) Object.assign(config, d.config); }).catch(() => {});
+    chrome.storage.local.get(['config', 'pessoaConfianca']).then((d) => {
+      if (d.config) Object.assign(config, d.config);
+      pessoa = d.pessoaConfianca || null;
+    }).catch(() => {});
     chrome.storage.onChanged.addListener((mud) => {
       if (mud.config && mud.config.newValue) Object.assign(config, mud.config.newValue);
+      if (mud.pessoaConfianca) pessoa = mud.pessoaConfianca.newValue || null;
     });
   } catch (e) { /* contexto inválido */ }
 
@@ -72,7 +77,15 @@
     .tela.grande{font-size:24px}
     .tela.grande .caixa,.tela.grande .passo{font-size:24px}
     .tela.grande .tit{font-size:clamp(26px,4.4vh,40px)}
-    .tela.grande button{font-size:24px}`;
+    .tela.grande button{font-size:24px}
+    .tela.daltonico{background:#3a0a0a}
+    .tela.daltonico button.seguro{color:#000}
+    .tela button.grandao{width:100%;max-width:720px;font-size:22px;font-weight:bold;padding:18px 22px;border-radius:10px}
+    .tela button.ra{background:#ffeb3b;color:#000;border-color:#ffeb3b}
+    .tela button.pessoa{background:#25d366;color:#000;border-color:#25d366}
+    .tela.daltonico button.pessoa{background:#9fd3ff;border-color:#9fd3ff}
+    .tela .acoes{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}
+    .conf{font-size:clamp(22px,3.4vh,30px);font-weight:bold}`;
 
   // Avisos ficam em Shadow DOM fechado: o CSS e o JS do site não os alcançam.
   function criarCaixa(estilo) {
@@ -176,6 +189,9 @@
     const titulo = res.comercio
       ? (perigo ? 'Esta loja tem cara de golpe' : 'Esta loja ainda não provou ser confiável')
       : (perigo ? 'Este site pode ser um golpe' : 'Este site é suspeito');
+    const confTexto = res.confianca !== undefined
+      ? 'Confiança: ' + res.confianca + '%. Lojas precisam de pelo menos ' + res.limite + '%.'
+      : (typeof res.pontos === 'number' ? 'Confiança: ' + Math.max(0, 100 - res.pontos) + '%.' : '');
 
     const { host, root } = criarCaixa({
       position: 'fixed', inset: '0', 'z-index': '2147483647', display: 'block'
@@ -200,38 +216,54 @@
       type: 'button', class: 'pequeno',
       onclick: () => {
         if (!confirmou) { confirmou = true; continuar.textContent = 'Tem certeza? Clique de novo para entrar'; return; }
+        enviar({ tipo: 'parar-fala' });
         fechar();
       }
     }, 'Continuar mesmo assim (não recomendado)');
 
     const dominioRA = (res.dominio || location.hostname).replace(/^www\./, '');
+    // Botão grande: uma fonte externa, além do nosso aviso.
     const ra = el('button', {
-      type: 'button',
+      type: 'button', class: 'grandao ra',
       onclick: () => {
         try { navigator.clipboard.writeText(dominioRA).catch(() => {}); } catch (e) { /* sem área de transferência */ }
         window.open('https://www.reclameaqui.com.br/detector-site-confiavel/', '_blank', 'noopener');
-        ra.textContent = 'Endereço copiado: cole no Reclame Aqui';
+        ra.textContent = '🔎 Endereço copiado (' + dominioRA + '): cole no Reclame Aqui';
       }
-    }, 'Verificar no Reclame Aqui');
-    const botoes = el('div', { class: 'botoes' }, voltar);
-    const ouvir = botaoOuvir('Pare. ' + titulo + '. ' + motivos.join(' ') + ' O que fazer: ' + PASSOS[nivel]);
+    }, '🔎 Verificar no Reclame Aqui');
+    const acoes = el('div', { class: 'acoes' }, voltar);
+    const P = self.EGolpePessoa;
+    if (P && P.valida(pessoa)) {
+      const msg = P.mensagem(pessoa.nome, location.href);
+      const link = P.linkWhats(pessoa, msg) || P.linkEmail(pessoa, msg);
+      acoes.append(el('button', {
+        type: 'button', class: 'grandao pessoa',
+        onclick: () => { if (link.startsWith('mailto:')) location.href = link; else window.open(link, '_blank', 'noopener'); }
+      }, '💬 Perguntar para ' + P.primeiroNome(pessoa.nome) + ' se é golpe'));
+    }
+    acoes.append(ra);
+    const textoVoz = 'Pare. ' + titulo + '. ' + (confTexto ? confTexto + ' ' : '') + motivos.join(' ') + ' O que fazer: ' + PASSOS[nivel];
+    const botoes = el('div', { class: 'botoes' });
+    const ouvir = botaoOuvir(textoVoz);
     if (ouvir) botoes.append(ouvir);
-    botoes.append(ra, continuar);
+    botoes.append(continuar);
 
     const tela = el('div', {
-      class: 'tela' + (simples ? ' grande' : ''), role: 'alertdialog', 'aria-modal': 'true', 'aria-labelledby': 'pg-tit'
+      class: 'tela' + (simples ? ' grande' : '') + (config.daltonico ? ' daltonico' : ''), role: 'alertdialog', 'aria-modal': 'true', 'aria-labelledby': 'pg-tit'
     },
       triangulo(),
       el('div', { class: 'pare', 'aria-hidden': 'true' }, 'PARE'),
       el('div', { class: 'tit', id: 'pg-tit' }, titulo),
-      ...(res.confianca === undefined ? [] : [el('div', { class: 'tit' }, 'Confiança: ' + res.confianca + ' de 100. Lojas precisam de mais de ' + res.limite + '.')]),
-      el('div', { class: 'caixa' }, el('b', {}, 'O que encontramos:'), el('ul', {}, ...motivos.map((m) => el('li', {}, m)))),
+      ...(confTexto ? [el('div', { class: 'conf' }, confTexto)] : []),
       el('div', { class: 'passo' }, el('b', {}, 'O que fazer: '), PASSOS[nivel]),
+      acoes,
+      el('div', { class: 'caixa' }, el('b', {}, 'O que encontramos:'), el('ul', {}, ...motivos.map((m) => el('li', {}, m)))),
       botoes);
     root.appendChild(tela);
     document.documentElement.appendChild(host);
     avisoSite = host;
     voltar.focus({ preventScroll: true });                       // Enter = ação segura; leitor de tela anuncia o alerta
+    if (config.vozAutomatica) enviar({ tipo: 'falar', texto: textoVoz });
   }
 
   // ---------- 2) Página pedindo pagamento ----------
@@ -517,7 +549,10 @@
   registrar(document.documentElement);
 
   // Espera a configuração carregar para o aviso já sair no tamanho certo.
-  const configPronta = chrome.storage.local.get('config').then((d) => { if (d.config) Object.assign(config, d.config); }).catch(() => {});
+  const configPronta = chrome.storage.local.get(['config', 'pessoaConfianca']).then((d) => {
+    if (d.config) Object.assign(config, d.config);
+    pessoa = d.pessoaConfianca || null;
+  }).catch(() => {});
   configPronta.then(() => enviar({ tipo: 'checar-site', host: location.hostname, protocolo: location.protocol, url: location.href }))
     .then((res) => {
       siteRes = res;

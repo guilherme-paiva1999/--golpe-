@@ -14,7 +14,9 @@ Golpes que **não** estão nas listas, testados com as regras reais de `backgrou
 As regras quase não pegam golpe desconhecido: muitos golpes da lista são sites comuns invadidos,
 iguais a um site normal pelo nome. A proteção hoje vem das listas, que só conhecem golpes já denunciados.
 
-# Experimentos de aprendizado de máquina (não estão ligados à extensão)
+# Experimentos de aprendizado de máquina
+
+> **v3.0:** o modelo do item 1 (só o nome do site) foi ligado à extensão como um sinal que soma pontos, aplicado ao domínio principal. Detalhes e medição no README principal, seção "Aprendizado de máquina ligado".
 
 Meta pedida: acerto de pelo menos 94%. **Não foi atingida de forma honesta.** Abaixo, o que foi medido.
 
@@ -46,7 +48,7 @@ outra fonte de dados o acerto cai para o nível de cara ou coroa. Ligado à exte
 golpe qualquer notícia ou produto com endereço comprido.
 
 ## Conclusão
-- Nenhum modelo aqui está pronto para decidir sozinho. Nada foi ligado à extensão.
+- Nenhum modelo aqui está pronto para decidir sozinho. Na v3.0, o modelo do nome do site entrou só como sinal extra (soma pontos), com limiar de ~1% de falsos alertas.
 - A idade do domínio e outras consultas de rede ajudam de verdade (2,6% de falsos alertas contra 4%).
 - O que falta é um conjunto de **páginas** (senha, formulário para outro domínio, links, texto) de
   golpes e de sites normais, de preferência do Brasil, coletado de forma equilibrada. Não foi possível

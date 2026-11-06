@@ -13,6 +13,21 @@
   label{display:flex;gap:8px;align-items:flex-start;font-size:14px}
   select,button{font:14px Arial,sans-serif;padding:6px 8px}
   small{color:#586964}
+  .grande{width:100%;font-size:17px;font-weight:bold;padding:14px 12px;border-radius:10px;cursor:pointer}
+  #btnRA{background:#ffeb3b;color:#000;border:3px solid #000}
+  #btnPessoa{background:#25d366;color:#000;border:3px solid #0b6e5b}
+  #btnAcess{background:#0b6e5b;color:#fff;border:0}
+  button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #1565c0;outline-offset:2px}
+  /* Modo simples: tudo maior */
+  body.simples{width:400px;font-size:18px}
+  body.simples #pill{font-size:22px}
+  body.simples ul,body.simples label{font-size:17px}
+  body.simples .grande{font-size:20px}
+  /* Daltonismo: azul, laranja e preto (sempre com texto) */
+  body.daltonico #pill.ok{background:#dcecf8;color:#00507d}
+  body.daltonico #pill.atencao{background:#fdeccc;color:#6b4500}
+  body.daltonico #pill.perigo{background:#000;color:#fff}
+  body.daltonico #btnPessoa{background:#9fd3ff}
 </style>
 </head>
 <body>
@@ -21,6 +36,28 @@
   <div id="pill">Analisando…</div>
   <div id="host"><small></small></div>
   <ul id="motivos"></ul>
+</section>
+<section>
+  <button id="btnRA" class="grande" type="button">🔎 Verificar no Reclame Aqui</button>
+  <small>Abre o Detector de Site Confiável e copia o endereço deste site para você colar.</small>
+  <label for="notaRA">O que o Reclame Aqui mostrou para este site?</label>
+  <select id="notaRA">
+    <option value="">Ainda não verifiquei</option>
+    <option value="verificado">RA Verificado / Confiável</option>
+    <option value="otimo">Ótimo / RA1000</option>
+    <option value="bom">Bom</option>
+    <option value="regular">Regular</option>
+    <option value="ruim">Ruim</option>
+    <option value="nao_recomendado">Não recomendado</option>
+    <option value="sem_cadastro">Sem cadastro</option>
+  </select>
+  <small id="raInfo">O resultado entra na nota deste site. Recarregue a página para ver o efeito.</small>
+</section>
+<section>
+  <label>Pessoa de confiança</label>
+  <button id="btnPessoa" class="grande" type="button" hidden>💬 Perguntar se este site é golpe</button>
+  <small id="pessoaInfo"></small>
+  <button id="btnAcess" class="grande" type="button">♿ Acessibilidade e pessoa de confiança</button>
 </section>
 <section>
   <label for="limite">Sensibilidade nos posts</label>
@@ -37,22 +74,6 @@
   <label for="simples"><input type="checkbox" id="simples"> Modo simples<br><small>Avisos com letras bem grandes, só o essencial e botão para ouvir.</small></label>
   <label for="idade"><input type="checkbox" id="idade"> Consultar a idade do site em qualquer página<br><small>Envia o domínio ao rdap.org. Desligado, só consulta quando já há suspeita.</small></label>
   <label for="imagens"><input type="checkbox" id="imagens"> Verificar imagens feitas por IA<br><small>Pede permissão para baixar o início das imagens.</small></label>
-</section>
-<section>
-  <label>Reclame Aqui</label>
-  <button id="btnRA" type="button">Verificar no Reclame Aqui</button>
-  <label for="notaRA">O que o Reclame Aqui mostrou para este site?</label>
-  <select id="notaRA">
-    <option value="">Ainda não verifiquei</option>
-    <option value="verificado">RA Verificado / Confiável</option>
-    <option value="otimo">Ótimo / RA1000</option>
-    <option value="bom">Bom</option>
-    <option value="regular">Regular</option>
-    <option value="ruim">Ruim</option>
-    <option value="nao_recomendado">Não recomendado</option>
-    <option value="sem_cadastro">Sem cadastro</option>
-  </select>
-  <small id="raInfo">O resultado entra na nota deste site. Recarregue a página para ver o efeito.</small>
 </section>
 <section>
   <label>Ajude o É Golpe? a aprender</label>
@@ -73,6 +94,7 @@
   <button id="atualizar" type="button">Atualizar listas de golpes agora</button>
   <small id="quando"></small>
 </section>
+<script src="pessoa.js"></script>
 <script src="popup.js"></script>
 </body>
 </html>

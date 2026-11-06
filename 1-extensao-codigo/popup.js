@@ -1,7 +1,8 @@
 'use strict';
 
 const $ = (id) => document.getElementById(id);
-const PADRAO = { limite: 3, consultaIdade: false, imagens: false, modoSimples: false, rigor: 'alto' };
+const PADRAO = { limite: 3, consultaIdade: false, imagens: false, modoSimples: false, rigor: 'alto', perfis: [], vozAutomatica: false, daltonico: false };
+const P = self.EGolpePessoa;
 const TEXTO = { ok: 'Nenhum sinal forte de golpe', atencao: 'Atenção: confira antes de pagar', perigo: 'Provável golpe' };
 
 async function lerConfig() {
@@ -69,7 +70,15 @@ async function mostrarStatus() {
     const res = aba && aba.url ? await chrome.runtime.sendMessage({ tipo: 'status', url: aba.url }) : null;
     if (!res) { $('pill').textContent = 'Esta página não é analisada'; return; }
     $('pill').className = res.nivel;
-    $('pill').textContent = res.conhecido ? 'Site conhecido e confiável' : (res.nivel === 'ok' ? 'Não verificado: confira antes de pagar' : TEXTO[res.nivel]);
+    $('pill').textContent = res.conhecido ? '✓ Site conhecido e confiável'
+      : (res.nivel === 'ok' ? '? Não verificado: confira antes de pagar' : (res.nivel === 'perigo' ? 'X ' : '! ') + TEXTO[res.nivel]);
+    if (!res.conhecido && !res.permitido) {
+      const conf = res.confianca !== undefined ? res.confianca : Math.max(0, 100 - res.pontos);
+      const d = document.createElement('div');
+      d.style.fontSize = '15px';
+      d.textContent = 'Confiança: ' + conf + '%';
+      $('pill').appendChild(d);
+    }
     $('host').firstChild.textContent = res.host;
     for (const m of res.motivos) {
       const li = document.createElement('li');
@@ -81,8 +90,32 @@ async function mostrarStatus() {
   }
 }
 
+async function prepararPessoa() {
+  const { pessoaConfianca } = await chrome.storage.local.get('pessoaConfianca');
+  $('btnAcess').addEventListener('click', () => chrome.runtime.openOptionsPage());
+  if (!P.valida(pessoaConfianca)) {
+    $('pessoaInfo').textContent = 'Nenhuma pessoa cadastrada. Cadastre alguém para perguntar se um site é golpe.';
+    return;
+  }
+  const nome = P.primeiroNome(pessoaConfianca.nome);
+  $('pessoaInfo').textContent = 'Pessoa cadastrada: ' + pessoaConfianca.nome + '.';
+  const aba = await abaAtual();
+  let u = null;
+  try { u = new URL(aba.url); } catch (e) { /* página especial */ }
+  if (!u || !/^https?:$/.test(u.protocol)) return;
+  $('btnPessoa').hidden = false;
+  $('btnPessoa').textContent = '💬 Perguntar para ' + nome + ' se este site é golpe';
+  $('btnPessoa').addEventListener('click', () => {
+    const msg = P.mensagem(pessoaConfianca.nome, u.href);
+    const link = P.linkWhats(pessoaConfianca, msg) || P.linkEmail(pessoaConfianca, msg);
+    if (link) chrome.tabs.create({ url: link });
+  });
+}
+
 async function iniciar() {
   const cfg = await lerConfig();
+  document.body.classList.toggle('simples', !!cfg.modoSimples);
+  document.body.classList.toggle('daltonico', !!cfg.daltonico);
   $('limite').value = String(cfg.limite);
   $('idade').checked = cfg.consultaIdade;
   $('rigor').value = cfg.rigor;
@@ -91,7 +124,7 @@ async function iniciar() {
   $('btnSeguro').addEventListener('click', () => rotular('seguro'));
   $('btnBaixar').addEventListener('click', baixar);
   $('simples').checked = cfg.modoSimples;
-  $('simples').addEventListener('change', () => salvar({ modoSimples: $('simples').checked }));
+  $('simples').addEventListener('change', () => { salvar({ modoSimples: $('simples').checked }); document.body.classList.toggle('simples', $('simples').checked); });
   $('imagens').checked = cfg.imagens;
 
   $('limite').addEventListener('change', () => salvar({ limite: Number($('limite').value) }));
@@ -123,6 +156,7 @@ async function iniciar() {
   mostrarData();
   mostrarStatus();
   prepararRA();
+  prepararPessoa();
 }
 
 async function mostrarData() {

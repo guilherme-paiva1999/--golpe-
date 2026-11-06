@@ -1,110 +1,88 @@
-# É Golpe? v2
+# É Golpe? · tudo o que foi produzido
 
-## Instalar
-1. Extraia o ZIP.
-2. Abra `chrome://extensions` e ligue o **Modo do desenvolvedor**.
-3. Clique em **Carregar sem compactação** e escolha a pasta extraída (a que tem o `manifest.json`).
-4. Fixe o ícone na barra (peça de quebra-cabeça, depois o alfinete).
-5. Aguarde 1 a 2 minutos: a extensão baixa as listas de golpes. O horário aparece no popup.
+Extensão do Chrome que avisa sobre golpes, feita para o Hackathon "Negócios em Transformação" (UniSenac, Senac, Sebrae).
+Versão da extensão neste pacote: **3.0.0**.
 
-Depois de instalar, **recarregue as abas que já estavam abertas**. Páginas abertas antes não recebem a extensão.
+## O que tem em cada pasta
 
-## Testes rápidos (nada disso é perigoso)
+| Pasta | Conteúdo |
+|---|---|
+| `1-extensao-codigo/` | Código completo: extensão, páginas de teste (`teste/`), experimentos de aprendizado de máquina e testes de lógica (`ml/`), resumo do consumidor.gov.br (`dados/`). O `README.md` explica cada regra. |
+| `2-extensao-pronta-para-instalar/` | ZIP para instalar no Chrome. |
+| `3-apresentacao/` | Canvas (PDF, PNG e HTML editável), pitch de 3 minutos (indústria criativa) e o pitch anterior de 4min20, prévias das telas. |
+| `4-logotipo/` | Logotipo em SVG e PNG (fundo claro e escuro) e ícone. |
+| `5-video/` | Vídeo da extensão funcionando (gravação real, sem dados injetados) e o roteiro que gravou o vídeo, com os sites fictícios. |
+| `6-prototipo-interativo/` | Primeira demonstração interativa (página HTML). |
 
-### A) Botões de teste no popup
-Em qualquer site comum (http ou https), clique no ícone e use "Testar os avisos nesta página":
-- **Aviso de atenção** (amarelo, triângulo)
-- **Aviso de perigo** (vermelho, octógono)
-- **Aviso de pagamento**
-- **Tela de bloqueio**
+Os arquivos `.html` do canvas e do protótipo abrem em qualquer navegador. Eles foram feitos para a plataforma de artefatos, então não têm cabeçalho HTML completo; mesmo assim funcionam.
 
-Ligue o **Modo simples** no popup e repita para ver as letras grandes. Clique em **Ouvir o aviso** para testar a voz. `Esc` fecha o aviso.
+## Links
 
-### B) Bloqueio real
-Digite na barra de endereço: `http://nubank-atualizar-cadastro.xyz/login`
-O site não existe, e a extensão bloqueia **antes** de a página abrir. Deve aparecer a tela vermelha de bloqueio. Para continuar é preciso clicar duas vezes em "Continuar mesmo assim".
+- Código no GitHub: https://github.com/guilherme-paiva1999/--golpe- (histórico completo de commits)
+- Canvas online: https://claude.ai/artifact/TsDp8xN4Fo1cE6e6m6fBu2
+- Protótipo interativo online: https://claude.ai/artifact/Pjj9iQcpdWSEbqNVqBePTK
 
-### C) Páginas de teste (posts, pagamento, senha sem cadeado)
-Na pasta do projeto, rode:
-```
-python3 -m http.server 8000 --directory teste
-```
-e abra `http://localhost:8000/`:
-- **feed.html**: o post com frases de golpe fica desfocado, com aviso e botão "Ver mesmo assim".
-- **pagamento.html**: aparece o aviso "Pare e pense" na parte de baixo.
-- **senha-http.html**: aviso de atenção por pedir senha sem cadeado.
+## Instalar a extensão
 
-## Arquivos
-- `manifest.json`: permissões mínimas; o acesso a todos os sites só é pedido se o usuário ligar a análise de imagens.
-- `background.js`: listas no IndexedDB, nota de risco por pontos, idade do domínio (RDAP), bloqueio.
-- `content.js`: avisos em Shadow DOM, aviso de pagamento, proteção de posts e imagens, modo de teste.
-- `bloqueado.html/js`: página de bloqueio.
-- `popup.html/js`: situação do site, configurações e botões de teste.
-- `teste/`: páginas de teste.
+1. Extraia `2-extensao-pronta-para-instalar/e-golpe-extensao.zip`.
+2. Em `chrome://extensions`, ligue o **Modo do desenvolvedor**.
+3. **Carregar sem compactação** e escolha a pasta com o `manifest.json`.
+4. Na primeira vez abre a tela de boas-vindas: escolha a acessibilidade e, se quiser, a pessoa de confiança.
+5. Recarregue as abas abertas. O popup tem botões para testar os avisos.
 
-## Fontes de dados
-Phishing.Database e URLhaus (abuse.ch). Confira as licenças antes de publicar.
+## Novidades da 3.0.0
 
-## Presunção de golpe (v2.3)
-Todo site desconhecido começa suspeito e só deixa de ser quando prova o contrário. Sinais lidos na página
-(só verdadeiro/falso sai da página): pede pagamento, mensagem de pressão, desconto exagerado, formulário
-que envia a outro site, pede senha, sem CNPJ/contato. A **idade do domínio** (consultada só quando a
-página mostra dinheiro, senha ou pressão) pesa muito: menos de 30 dias soma 35 pontos; mais de 1 ano
-tira 20 e mais de 3 anos tira 30. Rigor "alto" (padrão) avisa a partir de 25 pontos e bloqueia a partir de 60.
-Selo no ícone: ✓ provado, ? não verificado, ! atenção, X perigo.
-Os botões "É golpe" e "É seguro" guardam os seus rótulos neste computador ("Baixar meus dados") para treinar um modelo depois.
-Os pesos foram definidos à mão, **não treinados**; `ml/testar_pontuacao.js` testa só a lógica.
+- **Tela de boas-vindas** na instalação: a pessoa escolhe a acessibilidade (idoso/dificuldade com a internet, cego/leitor de tela,
+  baixa visão, daltônico, dificuldade para ler). Cada perfil liga letras grandes, voz automática e/ou cores para daltonismo.
+- **Pessoa de confiança**: para idosos (recomendado) e quem quiser. Na tela de bloqueio aparece "Perguntar para Maria se é golpe",
+  que abre o WhatsApp com a mensagem e o link do site. Nada é enviado sozinho.
+- **Tela de bloqueio nova**: confiança em %, "O que fazer", botão do **Reclame Aqui grande**, e a verificação completa com as
+  mesmas coisas que o Reclame Aqui confere (idade do site, empresa responsável pelo CNPJ do registro.br, situação na Receita pela
+  BrasilAPI, reclamações no consumidor.gov.br, listas de golpes). Cada prova ruim diminui a confiança.
+- **Aprendizado de máquina ligado**: o modelo do nome do site roda na extensão e soma pontos (pega ~10% dos golpes com ~1% de falsos alertas).
+- **Só fontes abertas**: o feed do OpenPhish (que não permite uso comercial) foi retirado.
+- Lojas precisam de **pelo menos 80%** de confiança.
 
-## Lojas precisam provar mais de 75 de 100 (v2.4)
-Se a página vende ou pede pagamento, ela começa com 0 de confiança e precisa passar de **75**.
-Provas: idade do domínio (3 anos +35, 1 ano +25, 6 meses +10), https +10, CNPJ com dígitos válidos +10,
-contato +10 (+5 se o e-mail é do próprio site), políticas de trocas/privacidade/entrega +15, gateway de
-pagamento conhecido +10. Sinais ruins tiram: site de menos de 30 dias −40, pressão −15, desconto exagerado −15,
-formulário para outro site −20, hospedagem gratuita −15. Menos de 30 de confiança bloqueia; de 30 a 75 avisa.
-**Hospedagem gratuita** (`vercel.app`, `blogspot.com`...) não prova idade: a idade seria a do serviço.
-Os pesos foram definidos à mão. `ml/testar_confianca.js` testa só a lógica.
+## O que a extensão faz (2.8.0)
 
-## Feed do OpenPhish
-O `openphish.eu` não abre a partir deste ambiente, mas o feed público está espelhado no GitHub
-(`openphish/public_feed`). Foi adicionado como fonte de golpes, atualizada a cada 6 horas.
-Medido em 273 sites de golpe recentes: as regras pegam 1,1%; só 2,6% já estavam no Phishing.Database;
-58,6% estão em hospedagem gratuita. Ou seja, o feed traz cobertura que as outras listas ainda não têm.
-Confira os termos de uso do OpenPhish antes de publicar a extensão.
+- **Presunção de golpe:** todo site começa suspeito. Lojas (venda ou pagamento) precisam de **mais de 75 de 100** de confiança.
+- **Provas de confiança:** idade do domínio, https, CNPJ válido e **ativo na Receita** (BrasilAPI), contato, políticas, gateway de pagamento, reputação no **consumidor.gov.br**, nota do **Reclame Aqui** registrada pela pessoa.
+- **Sinais de golpe:** pressão ("últimas unidades"), desconto exagerado, formulário para outro site, site novo, hospedagem gratuita, **imitação do gov.br**, **marca falsa em página de login (AiTM)**.
+- **Listas:** Phishing.Database, URLhaus (a cada 6 horas) e "Evite esses sites" do Procon-SP (o OpenPhish foi retirado na 3.0.0).
+- **Avisos:** tela vermelha com PARE, motivos e o que fazer, modo simples, leitura em voz alta, botão para o Reclame Aqui, bloqueio antes de abrir.
 
-## Lista "Evite esses sites" do Procon-SP (v2.5)
-Fonte: https://sistemas.procon.sp.gov.br/evitesite/list/evitesites.php (83 sites, atualizada em 12/05/2026 segundo a página).
-A lista reúne sites com reclamações de consumidores, notificados que não responderam ou não encontrados, então
-**não é uma lista de golpe confirmado**: gera um aviso forte (nível atenção, 50 pontos), sem bloqueio direto.
-Nenhum dos 83 aparece no Phishing.Database nem no feed do OpenPhish: é cobertura brasileira nova.
-Confira os termos de uso do Procon-SP antes de publicar a extensão.
+## Pedidos que ficaram pendentes (não implementados)
 
-## Imitação do governo e marca falsa na página (v2.6)
-- **Gov.br:** endereço com "gov", "inss", "detran", "receitafederal" etc. que **não** termina em `.gov.br` soma 60 pontos
-  (governos de outros países, como `gov.uk`, ficam de fora). "Restituição", "FGTS", "IRPF" sozinhos somam 20; com
-  "resgate", "valores", "consulta" etc., 60. Ex.: `resgate-valores-gov.me` é bloqueado antes de abrir.
-- **Marca falsa (AiTM):** se o título ou os cabeçalhos da página dizem ser Microsoft, Google, gov.br, um banco etc.,
-  e a página pede senha ou pagamento num endereço que não é o oficial, o resultado é **perigo**, mesmo em site antigo
-  (muitos ataques usam sites invadidos). Botões "Entrar com Google" não contam.
-- A tela de bloqueio mostra os motivos que vieram da página.
-- Testes de lógica: `node ml/testar_gov_marca.js`. Páginas de teste em `teste/`.
+- ~~Limite das lojas de 75 para 80% e confiança em porcentagem~~ (feito na 3.0.0).
+- ~~Tela de bloqueio no mesmo padrão do alerta~~ (feito na 3.0.0).
+- ~~Botão "Verificar no Reclame Aqui" mais em destaque~~ (feito na 3.0.0).
+- **"Cadastre sua marca"**: citado no pitch de 3 minutos como próximo passo, ainda não existe.
+- Frase-tese da indústria criativa no início do pitch de 3 minutos (sugerida, não aplicada).
 
-## Reclame Aqui (v2.7)
-O Reclame Aqui não tem API pública, bloqueia consultas automáticas (Cloudflare) e o `robots.txt` proíbe robôs
-na busca e no detector. Por isso a extensão **não consulta o Reclame Aqui sozinha**. Ela:
-- mostra o botão **"Verificar no Reclame Aqui"** (no alerta e no popup), que abre o Detector de Site Confiável
-  oficial e copia o endereço do site;
-- deixa a pessoa registrar no popup **o que o Reclame Aqui mostrou**. Esse registro entra na pontuação:
-  em lojas soma na confiança (Verificado +20, Ótimo +15, Bom +10, Regular 0, Ruim −20, Não recomendado −40,
-  Sem cadastro −5); nos demais sites, o contrário nos pontos de risco.
-Testes de lógica: `node ml/testar_reclameaqui.js`.
+## Números verificados (lidos nas páginas)
 
-## Receita Federal (BrasilAPI) e consumidor.gov.br (v2.8)
-- **BrasilAPI** (gratuita, código aberto): se a página mostra um CNPJ, a extensão consulta a situação na Receita.
-  Ativo +10 de confiança; aberto há menos de 6 meses −15; **inexistente, baixado ou inapto −25**. Sem resposta, não conta.
-  Só o CNPJ (dado público da empresa) é enviado; o resultado fica guardado por 7 dias.
-- **consumidor.gov.br** (dados abertos oficiais): resumo de abril a setembro de 2026 de 1.053 empresas com 20+ reclamações
-  (1,94 milhão de reclamações), em `dados/consumidor.json`. Liga ao site pelo nome exato (do domínio ou da Receita).
-  Cadastrada +5; responde 95%+ +5; resolve 60%+ +5; resolve menos de 30% −10; nota abaixo de 2 −5.
-  Não estar cadastrada não conta contra (o cadastro é voluntário). Só números por empresa; nenhum dado de quem reclamou.
-  Para atualizar: baixar os "Dados – Mês/Ano" em consumidor.gov.br (Dados Abertos) e rodar `python3 ml/consumidor.py dados/consumidor.json arquivos.zip`.
-- Testes de lógica: `node ml/testar_empresa.js`.
+- 48% desistiram de comprar on-line por desconfiança (Serasa, via CNN Brasil, 11/02/2025).
+- 4 em cada 10 brasileiros já foram vítimas de golpes (Serasa, via Mercado&Consumo, 05/08/2024).
+- 82% compram on-line ao menos uma vez por mês (Serasa, Relatório de Identidade e Fraude 2025).
+- Quase 1,5 milhão de tentativas de fraude de identidade digital no 1º tri de 2026, +36,6% (Serasa, via Lets Money).
+- CERT.br 2026 (jan–out): varejo foi a categoria com mais páginas falsas (1.616). Licença CC BY-NC-ND 4.0: cite a fonte.
+- Feed do OpenPhish: as regras pegaram 1,1% dos golpes recentes; só 2,6% já estavam no Phishing.Database.
+
+## Aprendizado de máquina: resultado honesto
+
+A meta de 94% **não foi atingida** de forma honesta. Só com o nome do site: 81% de acerto e 10% de falsos alertas.
+Com o endereço completo, o "93–97%" do conjunto público engana (o modelo aprende "tem caminho = golpe").
+Na 3.0.0 o modelo do nome do site foi ligado como sinal extra (soma pontos, não decide sozinho). Detalhes em `1-extensao-codigo/README.md` e `1-extensao-codigo/ml/README.md`.
+
+## Licenças das fontes (confira antes de uso comercial)
+
+No Hackathon (protótipo acadêmico), o uso é em geral não comercial. Se virar produto pago:
+o OpenPhish exige o feed pago (por isso foi retirado na 3.0.0); integração automática com o Reclame Aqui só com parceria;
+os números do CERT.br podem ser citados, mas não embutidos (licença NC).
+
+## Rede do ambiente de nuvem
+
+Para pesquisar e testar, foram liberados no ambiente "Default" estes sites: serasaexperian, meioemensagem,
+letsmoney, baguete, mercadoeconsumo, poder360, monitormercantil, cnnbrasil, sistemas.procon.sp.gov.br,
+catalogodefraudes.rnp.br, stats.cert.br, brasilapi.com.br, www.reclameaqui.com.br, consumidor.gov.br e dados.gov.br.
+Se não precisar mais deles, remova nas configurações de rede do ambiente.

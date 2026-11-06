@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Site bloqueado · É Golpe?</title>
+<style>
+  *{box-sizing:border-box}
+  :root{--fundo:#b71c1c;--escuro:rgba(0,0,0,.28);--favor:#b9f6ca;--contra:#ffcdd2}
+  body.daltonico{--fundo:#3a0a0a;--favor:#9fd3ff;--contra:#ffd08a}
+  body{margin:0;overflow-x:hidden;min-height:100vh;background:var(--fundo);color:#fff;font:20px/1.5 Arial,Helvetica,sans-serif;padding:24px 16px 40px}
+  body.grande{font-size:24px}
+  main{max-width:780px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+  .tri{width:clamp(90px,18vh,160px);height:auto}
+  .pare{font-size:clamp(44px,min(12vh,19vw),100px);font-weight:900;letter-spacing:.14em;line-height:1;padding-left:.14em}
+  h1{margin:0;font-size:clamp(24px,3.8vh,34px);line-height:1.2}
+  h1:focus{outline:none}
+  h2{font-size:1em;margin:0 0 6px}
+  .host{font:bold 1em monospace;background:var(--escuro);padding:10px 14px;border-radius:8px;overflow-wrap:anywhere;max-width:100%}
+  p{margin:0}
+  .caixa{width:100%;text-align:left;background:var(--escuro);border-radius:10px;padding:14px 18px}
+  ul{margin:0;padding-left:24px}
+  li{line-height:1.5;margin:3px 0}
+  /* Confiança: número + barra + frase (nunca só cor) */
+  .conf{display:flex;flex-direction:column;gap:8px}
+  .conf .num{font-size:1.6em;font-weight:900}
+  .barra{height:22px;border:3px solid #fff;border-radius:12px;overflow:hidden;background:rgba(255,255,255,.15);position:relative}
+  .barra i{display:block;height:100%;background:#fff;width:0;transition:width .6s}
+  .barra b{position:absolute;top:0;bottom:0;width:3px;background:#ffeb3b}
+  .passo{border:3px solid #fff;border-radius:10px}
+  .verif{list-style:none;padding:0}
+  .verif li{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;padding:8px 0;border-top:1px solid rgba(255,255,255,.25)}
+  .verif li:first-child{border-top:0}
+  .verif .ic{font-weight:900;font-size:1.1em;width:1.6em;text-align:center}
+  .verif .favor .ic{color:var(--favor)} .verif .contra .ic{color:var(--contra)}
+  .verif .rot{font-weight:bold}
+  details summary{cursor:pointer;font-weight:bold}
+  .botoes{display:flex;flex-direction:column;gap:12px;width:100%}
+  .linha{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+  button,a.botao{font:inherit;padding:12px 22px;border-radius:10px;cursor:pointer;border:3px solid #fff;background:transparent;color:#fff;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:10px}
+  #voltar{background:#fff;color:#b71c1c;font-weight:bold;font-size:1.15em;padding:16px 28px}
+  body.daltonico #voltar{color:#000}
+  .grandao{width:100%;font-size:1.2em;font-weight:bold;padding:20px 24px;min-height:76px}
+  #ra{background:#ffeb3b;color:#000;border-color:#ffeb3b}
+  #perguntar{background:#25d366;color:#000;border-color:#25d366}
+  body.daltonico #perguntar{background:#9fd3ff;border-color:#9fd3ff}
+  .sub{font-size:.75em;font-weight:normal;display:block}
+  .grandao .ico{font-size:1.4em}
+  #continuar{font-size:.8em;padding:8px 14px;border-width:2px}
+  button:focus-visible,a:focus-visible{outline:4px solid #ffeb3b;outline-offset:3px}
+  #ra:focus-visible{outline-color:#fff}
+  .pequeno{font-size:.8em;opacity:.95}
+  .pequeno a{color:#fff}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main role="alertdialog" aria-labelledby="titulo" aria-describedby="resumo">
+  <svg class="tri" viewBox="0 0 32 30" aria-hidden="true"><path d="M16 2.500L30 27.500H2z" fill="#fff" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><path d="M16 11v8M16 22.800v.4" stroke="#b71c1c" stroke-width="3" stroke-linecap="round" fill="none"/></svg>
+  <div class="pare" aria-hidden="true">PARE</div>
+  <h1 id="titulo" tabindex="-1">Este site foi bloqueado para a sua segurança</h1>
+  <div class="host" id="host"></div>
+
+  <section class="caixa conf" aria-labelledby="tConf">
+    <h2 id="tConf">Confiança neste site</h2>
+    <div class="num" id="confNum" aria-live="polite">Verificando…</div>
+    <div class="barra" aria-hidden="true"><i id="confBarra"></i><b id="confLimite"></b></div>
+    <p id="resumo">Estamos conferindo o site em fontes abertas (idade do site, empresa responsável, Receita Federal, reclamações e listas de golpes).</p>
+  </section>
+
+  <section class="caixa passo" aria-labelledby="tFazer">
+    <h2 id="tFazer">O que fazer</h2>
+    <p>Não digite senha, CPF nem dados do cartão. Se você chegou aqui por uma mensagem, e-mail ou anúncio, apague-os e acesse o serviço digitando o endereço oficial. Na dúvida, pergunte a alguém de confiança.</p>
+  </section>
+
+  <div class="botoes">
+    <button id="voltar" type="button">Voltar para a segurança</button>
+    <button id="perguntar" class="grandao" type="button" hidden><span class="ico" aria-hidden="true">💬</span><span><span id="perguntarTxt">Perguntar se é golpe</span><span class="sub">Envia o link deste site pelo WhatsApp</span></span></button>
+    <div class="linha" id="outrosEnvios" hidden>
+      <button id="perguntarEmail" type="button" hidden>Perguntar por e-mail</button>
+      <button id="copiarMsg" type="button">Copiar a mensagem</button>
+    </div>
+    <button id="ra" class="grandao" type="button"><span class="ico" aria-hidden="true">🔎</span><span>Verificar no Reclame Aqui<span class="sub" id="raSub">Abre o Detector de Site Confiável e copia o endereço para você colar</span></span></button>
+  </div>
+  <p class="pequeno" id="semPessoa" hidden>Quer perguntar a alguém antes? <a href="#" id="cadastrar">Cadastre uma pessoa de confiança</a>.</p>
+
+  <section class="caixa" aria-labelledby="tMotivos" id="caixaMotivos">
+    <h2 id="tMotivos">O que encontramos</h2>
+    <ul id="motivos"></ul>
+  </section>
+
+  <section class="caixa" aria-labelledby="tVerif" id="caixaVerif" hidden>
+    <details id="detalhesVerif" open>
+      <summary id="tVerif">Verificação completa (as mesmas coisas que o Reclame Aqui confere)</summary>
+      <ul class="verif" id="verif"></ul>
+      <p class="pequeno">Fontes abertas: Phishing.Database, URLhaus, Procon-SP, RDAP (registro.br), BrasilAPI (Receita Federal), consumidor.gov.br e o nosso modelo de aprendizado de máquina. Cada prova ruim diminui a confiança.</p>
+    </details>
+  </section>
+
+  <div class="linha">
+    <button id="ouvir" type="button">Ouvir o aviso</button>
+    <button id="continuar" type="button">Continuar mesmo assim (não recomendado)</button>
+  </div>
+</main>
+<script src="pessoa.js"></script>
+<script src="bloqueado.js"></script>
+</body>
+</html>
