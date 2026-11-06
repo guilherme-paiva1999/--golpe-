@@ -28,18 +28,18 @@ Na instalação, a pessoa escolhe como prefere usar: letras grandes, aviso em vo
 
 Quando ela abre uma loja, a gente consulta a Receita Federal: se a empresa existe, se está ativa, há quanto tempo existe e se é registrada para vender. Loja sem CNPJ é bloqueada antes de a pessoa digitar o cartão, com o motivo em palavras simples e um botão para perguntar para alguém de confiança pelo WhatsApp.
 
-## Slide 5 · Quem faz o quê (como funciona, diferencial e negócio)
-São duas peças que trabalham juntas. No celular, o aplicativo: a pessoa toca em Compartilhar no link do WhatsApp e confere antes de abrir. No computador, a extensão do Chrome age sozinha, só onde tem dinheiro: loja, Pix e pagamento. Em site de notícia, ela fica quieta.
+## Slide 5 · Quem faz o quê (como funciona, diferencial e negócio: o selo)
+São duas peças que trabalham juntas. No celular, o aplicativo confere o link antes de abrir. No computador, a extensão do Chrome age sozinha, só onde tem dinheiro: loja, Pix e pagamento.
 
-O Google e os antivírus avisam sobre vírus. A gente vai além: é feito para o Brasil, com Receita Federal, Pix, Procon e o Reclame Aqui, que já abre com o site preenchido. Explica tudo em palavras simples. E deixa a marca honesta provar que é verdadeira e vender sem alerta.
+O Google e os antivírus avisam sobre vírus. A gente vai além: é feito para o Brasil, com Receita Federal, Pix, Procon e Reclame Aqui, e explica tudo em palavras simples.
 
-E o negócio: para quem compra, é de graça. Quem paga são as famílias, no Plano Família, com alertas para a pessoa de confiança, e as marcas e lojas, pelo selo de verificação e pelo aviso quando alguém copiar o nome delas. O tamanho do problema mostra o tamanho do mercado: 24 milhões de vítimas em um único ano.
+E como a gente se sustenta? Com o selo "Isso não é golpe". Para quem compra, é de graça. Quem paga é a loja honesta: o pequeno criador, a marca independente, que assina o selo para provar que é de verdade. Para ganhar o selo, a loja passa pela nossa verificação: CNPJ ativo, tempo de empresa, atividade registrada para vender e reputação. E o selo não se compra: se a loja deixar de cumprir as regras, perde o selo. O tamanho do problema mostra o tamanho do mercado: 24 milhões de vítimas em um único ano.
 
 ## Slide 6 · Conversa com uma pessoa com deficiência visual (validação)
 A gente não fez isso sozinho. Conversamos com uma pessoa com deficiência visual para entender como ela usa a internet. O pedido dela foi direto: "letras maiores e menos brilho na tela". Foi isso que orientou o nosso menu de acessibilidade.
 
 ## Slide 7 · Links (fechamento)
-O próximo passo é o "Cadastre sua marca": o criador registra o site oficial, e qualquer cópia dispara o alerta.
+O próximo passo é lançar o selo "Isso não é golpe", junto com o "Cadastre sua marca": o criador registra o site oficial, e qualquer cópia dispara o alerta.
 
 Nós somos o Isso é Golpe? e estamos mudando a forma como o brasileiro descobre se um site é golpe: antes de pagar, e não depois. Obrigado!
 
@@ -61,5 +61,5 @@ Nós somos o Isso é Golpe? e estamos mudando a forma como o brasileiro descobre
 - Confira a grafia do nome "Aghata" (escrevi como veio na mensagem).
 - Grave o **vídeo de 40 segundos** do MVP (as folhas do evento pedem isso: a internet do evento pode falhar).
 - O slide 7 (Links) está vazio: sugestão de colocar o GitHub (https://github.com/guilherme-paiva1999/--golpe-) e o endereço do aplicativo (https://guilherme-paiva1999.github.io/--golpe-/), depois que o GitHub Pages estiver ligado.
-- "Cadastre sua marca" ainda não existe: no pitch ele é o próximo passo.
+- O selo "Isso não é golpe" e o "Cadastre sua marca" ainda não existem: no pitch eles são o próximo passo. O preço da assinatura ainda não foi definido; se a banca perguntar, diga que o próximo passo é validar com as lojas quanto elas pagariam.
 - O pedido "menos brilho na tela" orientou o menu, mas a extensão ainda não tem um ajuste de brilho (tem letras grandes, voz, leitor de tela e cores para daltonismo).
