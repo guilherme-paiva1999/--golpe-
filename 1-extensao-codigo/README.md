@@ -174,3 +174,11 @@ node ml/testar_modelo.js        # paridade do modelo (rodar antes: python3 ml/ge
 node ml/testar_confianca.js && node ml/testar_reclameaqui.js && node ml/testar_empresa.js
 node ml/testar_gov_marca.js && node ml/testar_pontuacao.js
 ```
+
+## v3.1: visual de cartaz de campanha
+A tela de bloqueio e o aviso de tela cheia nas páginas seguem o estilo dos cartazes de "Alerta de golpe" das prefeituras:
+vermelho chapado com textura leve, faixa zebrada na lateral, triângulo amarelo com "!" preto, título condensado em caixa alta
+("ALERTA / DE GOLPE", com tarja preta), porcentagem de confiança grande em amarelo e recados curtos em caixa alta.
+Botões retos, sem emojis; a marca do É Golpe? fica no rodapé. No modo daltônico o fundo é azul.
+- Letra: **Anton** (`fontes/anton.woff2`), licença SIL Open Font License 1.1 (`fontes/OFL-Anton.txt`), embutida para funcionar sem internet.
+- Nas páginas, a letra é carregada com `FontFace` a partir da própria extensão (`web_accessible_resources` com `use_dynamic_url`).

@@ -1,7 +1,7 @@
 # É Golpe? · tudo o que foi produzido
 
 Extensão do Chrome que avisa sobre golpes, feita para o Hackathon "Negócios em Transformação" (UniSenac, Senac, Sebrae).
-Versão da extensão neste pacote: **3.0.1**.
+Versão da extensão neste pacote: **3.1.0**.
 
 ## O que tem em cada pasta
 
@@ -43,6 +43,7 @@ Os arquivos `.html` do canvas e do protótipo abrem em qualquer navegador. Eles 
 - **Só fontes abertas**: o feed do OpenPhish (que não permite uso comercial) foi retirado.
 - Confiança sempre em porcentagem, que aparece na hora (sem "carregando"): **só é confiável acima de 80%**.
 - Botão do Reclame Aqui **verde, com a logo** do Reclame Aqui (3.0.1).
+- Visual de **cartaz de campanha** ("ALERTA DE GOLPE") na tela de bloqueio e nos avisos (3.1.0).
 
 ## O que a extensão faz (2.8.0)
 

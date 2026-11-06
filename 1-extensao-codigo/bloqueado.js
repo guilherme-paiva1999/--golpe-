@@ -25,8 +25,8 @@ function li(texto) {
 }
 
 function textoParaOuvir() {
-  let t = 'Pare. ' + $('titulo').textContent + '. ';
-  if (verificacao) t += 'Confiança neste site: ' + verificacao.confianca + ' por cento. ';
+  let t = 'Pare. Alerta de golpe. Bloqueamos este site para proteger você. ';
+  if (verificacao) t += 'Confiança neste site: ' + verificacao.confianca + ' por cento. Para ser confiável, precisa passar de ' + (verificacao.limite || 80) + ' por cento. ';
   t += motivos.slice(0, config.modoSimples ? 2 : 4).join(' ') + ' ';
   t += 'Não digite senha, CPF nem dados do cartão. ';
   if (pessoa) t += 'Se quiser, aperte o botão para perguntar a ' + P.primeiroNome(pessoa.nome) + ' se é golpe.';
@@ -52,9 +52,10 @@ function mostrarMotivos() {
 
 // Mostra a porcentagem. Só é confiável quem PASSA do limite (mais de 80% no rigor padrão).
 function mostrarConfianca(confianca, limite) {
-  $('confNum').textContent = 'Confiança: ' + confianca + '%';
+  $('confNum').textContent = confianca + '%';
   $('confBarra').style.width = confianca + '%';
   $('confLimite').style.left = 'calc(' + limite + '% - 2px)';
+  $('confLimiteTxt').textContent = 'confiável acima de ' + limite + '%';
   $('resumo').textContent = 'Para ser considerado confiável, o site precisa passar de ' + limite + '%. Este tem ' + confianca + '%' +
     (confianca < 30 ? ': muito baixa. Tem cara de golpe.' : confianca <= limite ? ': não é confiável. Não pague nem digite dados.' : '.');
 }
@@ -93,7 +94,7 @@ function prepararPessoa() {
   if (email) {
     const b = whats ? $('perguntarEmail') : $('perguntar');
     b.hidden = false;
-    if (!whats) $('perguntar').querySelector('.sub').textContent = 'Envia o link deste site por e-mail';
+    if (!whats) $('perguntar').querySelector('.sub2').textContent = 'Manda o link deste site por e-mail';
     else b.textContent = 'Perguntar para ' + nome + ' por e-mail';
     b.addEventListener('click', () => { location.href = email; });
   }
@@ -108,6 +109,7 @@ async function iniciar() {
   config = dados.config || {};
   pessoa = dados.pessoaConfianca || null;
   document.body.classList.toggle('grande', !!config.modoSimples);
+  document.documentElement.classList.toggle('daltonico', !!config.daltonico);
   document.body.classList.toggle('daltonico', !!config.daltonico);
 
   if (!url) {

@@ -60,34 +60,48 @@
     button:focus-visible{outline:4px solid #1565c0;outline-offset:2px;box-shadow:0 0 0 7px #fff}
     .aviso{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:#c62828;color:#fff;font-size:18px;line-height:1.4;padding:12px 16px;margin:4px 0;border-radius:6px}
     .aviso button{margin:0;font-size:16px;padding:6px 12px}
-    .tela{position:fixed;inset:0;background:#b71c1c;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;overflow-y:auto;overflow-x:hidden;text-align:center}
-    .tela>:first-child{margin-top:auto}
-    .tela>:last-child{margin-bottom:auto}
-    .tri{width:clamp(110px,22vh,190px);height:auto;flex:none}
-    .pare{font-size:clamp(44px,min(13vh,19vw),110px);font-weight:900;letter-spacing:.14em;line-height:1;padding-left:.14em}
-    .tit{font-size:clamp(22px,3.6vh,34px);font-weight:bold;line-height:1.2;max-width:760px}
-    .caixa{max-width:720px;width:100%;text-align:left;background:rgba(0,0,0,.28);border-radius:10px;padding:14px 18px;font-size:19px;line-height:1.5}
-    .caixa ul{margin:6px 0 0;padding-left:22px}
-    .tela .passo{max-width:720px;width:100%;text-align:left;font-size:19px;margin-top:0;border-color:#fff}
-    .botoes{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:6px}
-    .tela button{margin:0;font-size:20px;padding:12px 22px;border:3px solid #fff;background:transparent;color:#fff}
-    .tela button.seguro{background:#fff;color:#b71c1c;font-weight:bold;font-size:22px;padding:14px 28px}
-    .tela button.pequeno{font-size:16px;padding:8px 14px;border-width:2px}
-    .tela button:focus-visible{outline:4px solid #ffeb3b;outline-offset:3px;box-shadow:none}
-    .tela.grande{font-size:24px}
-    .tela.grande .caixa,.tela.grande .passo{font-size:24px}
-    .tela.grande .tit{font-size:clamp(26px,4.4vh,40px)}
-    .tela.grande button{font-size:24px}
-    .tela.daltonico{background:#3a0a0a}
-    .tela.daltonico button.seguro{color:#000}
-    .tela button.grandao{width:100%;max-width:720px;font-size:22px;font-weight:bold;padding:18px 22px;border-radius:10px}
-    .tela button.ra{background:#056734;color:#fff;border-color:#fff;display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap}
-    .logo-ra{background:#fff;border-radius:8px;padding:8px 12px;display:inline-flex}
+    /* Tela cheia no estilo de cartaz de campanha (o mesmo da tela de bloqueio) */
+    .tela{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;color:#fff;font:19px/1.5 Arial,Helvetica,sans-serif;text-align:left;
+      --fundo:#d4151c;--fundo2:#a90e14;--am:#ffd21f;
+      background:radial-gradient(ellipse at 30% 0%,var(--fundo) 0%,var(--fundo) 55%,var(--fundo2) 100%)}
+    .tela.daltonico{--fundo:#24558f;--fundo2:#173b66}
+    .tela.grande{font-size:23px}
+    .zebra{position:fixed;left:0;top:0;bottom:0;width:26px;background:repeating-linear-gradient(-45deg,#111 0 16px,transparent 16px 32px)}
+    .miolo{position:relative;max-width:820px;margin:0 auto;padding:34px 28px 40px 58px;display:flex;flex-direction:column;gap:20px}
+    .tela .caps,.tela .caps *{font-family:'EGolpeAnton',Impact,'Arial Narrow',sans-serif;text-transform:uppercase;font-weight:400;line-height:.95}
+    .topo{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px}
+    .h1{margin:0;font-size:clamp(54px,10vw,104px)}
+    .h1 .l1{display:block}
+    .h1 .l2{display:inline-block;white-space:nowrap;background:#111;color:#fff;padding:.04em .16em .02em;transform:rotate(-2.5deg);margin-top:.06em}
+    .sub{margin:14px 0 0;font-size:1.25em;line-height:1.3;font-weight:bold}
+    .host{display:inline-block;margin-top:14px;background:#fff;color:#111;font:bold .95em Consolas,monospace;padding:8px 12px;overflow-wrap:anywhere;max-width:100%}
+    .tri{width:clamp(130px,24vw,230px);height:auto;transform:rotate(9deg);filter:drop-shadow(0 18px 16px rgba(0,0,0,.4))}
+    .conf{border-top:4px solid #fff;padding-top:14px;display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+    .num{font-size:clamp(84px,14vw,124px);color:var(--am);line-height:.85}
+    .rot{font-size:clamp(26px,4.4vw,38px);padding-bottom:4px}
+    .conf-txt{margin:0;width:100%}
+    .grito{margin:0;font-size:clamp(32px,5.4vw,48px);line-height:1}
+    .grito span{color:var(--am)}
+    .calmo{margin:-6px 0 0}
+    .acoes{display:flex;flex-direction:column;gap:14px}
+    .tela button{margin:0;font:inherit;cursor:pointer;border-radius:3px}
+    .tela button:focus-visible{outline:4px solid #fff;outline-offset:4px;box-shadow:none}
+    .tela button.seguro{background:var(--am);color:#111;border:0;padding:18px 24px;font-size:clamp(28px,4.4vw,38px);box-shadow:0 6px 0 #111}
+    .tela button.grandao{display:flex;align-items:center;gap:16px;text-align:left;padding:16px 20px;border:0;width:100%}
+    .grandao .t{font-size:clamp(24px,3.6vw,30px);display:block}
+    .tela button.pessoa{background:#fff;color:#111}
+    .tela button.pessoa svg{width:50px;height:50px;flex:none}
+    .tela button.ra{background:#056734;color:#fff;flex-wrap:wrap}
+    .logo-ra{background:#fff;padding:8px 12px;display:inline-flex;flex:none}
     .logo-ra img{height:30px;width:auto;display:block}
-    .tela button.pessoa{background:#25d366;color:#000;border-color:#25d366}
-    .tela.daltonico button.pessoa{background:#9fd3ff;border-color:#9fd3ff}
-    .tela .acoes{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}
-    .conf{font-size:clamp(22px,3.4vh,30px);font-weight:bold}`;
+    .h2{margin:0 0 8px;font-size:clamp(28px,4.4vw,36px)}
+    .lista{list-style:none;margin:0;padding:0}
+    .lista li{position:relative;padding:8px 0 8px 40px;border-top:2px solid rgba(255,255,255,.35)}
+    .lista li::before{content:'!';position:absolute;left:0;top:8px;width:28px;height:28px;background:var(--am);color:#111;font:20px/28px 'EGolpeAnton',Impact,sans-serif;text-align:center}
+    .rodape{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;border-top:4px solid #fff;padding-top:14px}
+    .tela button.leve{background:transparent;color:#fff;border:2px solid #fff;padding:10px 16px;font-size:.9em;font-weight:bold}
+    .tela button.link{background:none;border:0;color:#fff;text-decoration:underline;font-size:.85em;padding:6px 0}
+    @media (max-width:560px){.miolo{padding:24px 16px 32px 42px}.zebra{width:18px}.topo{grid-template-columns:1fr}.tri{position:absolute;right:10px;top:16px;width:110px}}`;
 
   // Avisos ficam em Shadow DOM fechado: o CSS e o JS do site não os alcançam.
   function criarCaixa(estilo) {
@@ -161,25 +175,31 @@
     atencao: 'Antes de pagar, abra o site oficial digitando o endereço você mesmo e confira o CNPJ da loja.'
   };
 
-  function triangulo() {
-    const s = document.createElementNS(SVG, 'svg');
-    s.setAttribute('viewBox', '0 0 32 30');
-    s.setAttribute('aria-hidden', 'true');
-    s.setAttribute('class', 'tri');
-    const forma = document.createElementNS(SVG, 'path');
-    forma.setAttribute('d', 'M16 2.500L30 27.500H2z');
-    forma.setAttribute('fill', '#fff');
-    forma.setAttribute('stroke', '#fff');
-    forma.setAttribute('stroke-width', '2');
-    forma.setAttribute('stroke-linejoin', 'round');
-    const sinal = document.createElementNS(SVG, 'path');
-    sinal.setAttribute('d', 'M16 11v8M16 22.800v.4');
-    sinal.setAttribute('stroke', '#b71c1c');
-    sinal.setAttribute('stroke-width', '3');
-    sinal.setAttribute('stroke-linecap', 'round');
-    sinal.setAttribute('fill', 'none');
-    s.append(forma, sinal);
-    return s;
+  // Desenhos fixos do cartaz (texto estático da extensão, nunca vindo da página).
+  const DESENHOS = {
+    tri: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 200" class="tri" aria-hidden="true">' +
+      '<path d="M118 14 L214 184 Q218 194 206 194 L30 194 Q18 194 24 184 Z" fill="#b88a00"/>' +
+      '<path d="M104 8 Q110 0 116 8 L208 172 Q214 184 200 184 L20 184 Q6 184 12 172 Z" fill="#ffd21f"/>' +
+      '<path d="M106 34 Q110 28 114 34 L184 160 Q187 166 180 166 L40 166 Q33 166 36 160 Z" fill="none" stroke="#111" stroke-width="10" stroke-linejoin="round"/>' +
+      '<path d="M110 70 L110 118" stroke="#111" stroke-width="18" stroke-linecap="round"/><circle cx="110" cy="144" r="10" fill="#111"/></svg>',
+    balao: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" aria-hidden="true">' +
+      '<path d="M30 5C15 5 4 15 4 28c0 7 3 13 9 17l-3 11 12-7c2.5.6 5 .9 8 .9 15 0 26-10 26-22S45 5 30 5z" fill="#111"/>' +
+      '<path d="M30 15v16" stroke="#ffd21f" stroke-width="6" stroke-linecap="round"/><circle cx="30" cy="40" r="3.6" fill="#ffd21f"/></svg>'
+  };
+  function desenho(nome) {
+    return document.importNode(new DOMParser().parseFromString(DESENHOS[nome], 'image/svg+xml').documentElement, true);
+  }
+
+  // Letra condensada do cartaz (Anton, licença OFL), embutida na extensão. Sem ela, usa Impact.
+  let fonteCarregada = false;
+  function carregarFonte() {
+    if (fonteCarregada) return;
+    fonteCarregada = true;
+    try {
+      const f = new FontFace('EGolpeAnton', 'url("' + chrome.runtime.getURL('fontes/anton.woff2') + '")');
+      document.fonts.add(f);
+      f.load().catch(() => {});
+    } catch (e) { /* a página pode bloquear: fica a letra reserva */ }
   }
 
   function mostrarAvisoSite(res) {
@@ -193,6 +213,7 @@
       : (perigo ? 'Este site pode ser um golpe' : 'Este site é suspeito');
     // Porcentagem: só é confiável quem passa do limite (mais de 80% no rigor padrão).
     const limiteConf = res.limite || (config.rigor === 'normal' ? 60 : 80);
+    const confNum = res.confianca !== undefined ? res.confianca : (typeof res.pontos === 'number' ? Math.max(0, 100 - res.pontos) : null);
     const confTexto = res.confianca !== undefined
       ? 'Confiança: ' + res.confianca + '%. Para ser confiável, precisa passar de ' + limiteConf + '%.'
       : (typeof res.pontos === 'number' ? 'Confiança: ' + Math.max(0, 100 - res.pontos) + '%. Para ser confiável, precisa passar de ' + limiteConf + '%.' : '');
@@ -215,9 +236,9 @@
     fecharAvisoAtual = fechar;
 
     let confirmou = false;
-    const voltar = el('button', { type: 'button', class: 'seguro', onclick: () => enviar({ tipo: 'voltar' }) }, 'Voltar para a segurança');
+    const voltar = el('button', { type: 'button', class: 'seguro caps', onclick: () => enviar({ tipo: 'voltar' }) }, 'Voltar para a segurança');
     const continuar = el('button', {
-      type: 'button', class: 'pequeno',
+      type: 'button', class: 'link',
       onclick: () => {
         if (!confirmou) { confirmou = true; continuar.textContent = 'Tem certeza? Clique de novo para entrar'; return; }
         enviar({ tipo: 'parar-fala' });
@@ -230,7 +251,7 @@
     const logo = el('img', { src: chrome.runtime.getURL('icons/reclameaqui.png'), alt: '' });
     const chip = el('span', { class: 'logo-ra', 'aria-hidden': 'true' }, logo);
     logo.addEventListener('error', () => chip.remove());          // se a página bloquear a imagem, fica só o texto
-    const textoRA = el('span', {}, 'Verificar no Reclame Aqui');
+    const textoRA = el('span', { class: 't caps' }, 'Verificar no Reclame Aqui');
     const ra = el('button', {
       type: 'button', class: 'grandao ra',
       onclick: () => {
@@ -247,26 +268,36 @@
       acoes.append(el('button', {
         type: 'button', class: 'grandao pessoa',
         onclick: () => { if (link.startsWith('mailto:')) location.href = link; else window.open(link, '_blank', 'noopener'); }
-      }, '💬 Perguntar para ' + P.primeiroNome(pessoa.nome) + ' se é golpe'));
+      }, desenho('balao'), el('span', { class: 't caps' }, 'Perguntar para ' + P.primeiroNome(pessoa.nome) + ' se é golpe')));
     }
     acoes.append(ra);
     const textoVoz = 'Pare. ' + titulo + '. ' + (confTexto ? confTexto + ' ' : '') + motivos.join(' ') + ' O que fazer: ' + PASSOS[nivel];
-    const botoes = el('div', { class: 'botoes' });
     const ouvir = botaoOuvir(textoVoz);
-    if (ouvir) botoes.append(ouvir);
-    botoes.append(continuar);
+    if (ouvir) ouvir.className = 'leve';
+    const [l1, l2] = perigo ? ['Alerta', 'de golpe'] : ['Atenção', res.comercio ? 'loja suspeita' : 'site suspeito'];
+    carregarFonte();
 
     const tela = el('div', {
       class: 'tela' + (simples ? ' grande' : '') + (config.daltonico ? ' daltonico' : ''), role: 'alertdialog', 'aria-modal': 'true', 'aria-labelledby': 'pg-tit'
     },
-      triangulo(),
-      el('div', { class: 'pare', 'aria-hidden': 'true' }, 'PARE'),
-      el('div', { class: 'tit', id: 'pg-tit' }, titulo),
-      ...(confTexto ? [el('div', { class: 'conf' }, confTexto)] : []),
-      el('div', { class: 'passo' }, el('b', {}, 'O que fazer: '), PASSOS[nivel]),
-      acoes,
-      el('div', { class: 'caixa' }, el('b', {}, 'O que encontramos:'), el('ul', {}, ...motivos.map((m) => el('li', {}, m)))),
-      botoes);
+      el('div', { class: 'zebra', 'aria-hidden': 'true' }),
+      el('div', { class: 'miolo' },
+        el('div', { class: 'topo' },
+          el('div', {},
+            el('div', { class: 'h1 caps', id: 'pg-tit' }, el('span', { class: 'l1' }, l1), ' ', el('span', { class: 'l2' }, l2)),
+            el('p', { class: 'sub' }, titulo + '.'),
+            el('div', { class: 'host' }, location.hostname)),
+          desenho('tri')),
+        ...(confNum === null ? [] : [el('div', { class: 'conf' },
+          el('span', { class: 'num caps' }, confNum + '%'),
+          el('span', { class: 'rot caps' }, 'de', el('br'), 'confiança'),
+          el('p', { class: 'conf-txt' }, 'Para ser considerado confiável, o site precisa passar de ' + limiteConf + '%.'))]),
+        el('p', { class: 'grito caps' }, 'Não digite ', el('span', {}, 'senha, CPF'), ' nem dados do ', el('span', {}, 'cartão!')),
+        el('p', { class: 'calmo' }, PASSOS[nivel]),
+        acoes,
+        el('section', {}, el('div', { class: 'h2 caps' }, 'O que encontramos'), el('ul', { class: 'lista' }, ...motivos.map((m) => el('li', {}, m)))),
+        ...(ouvir ? [el('div', {}, ouvir)] : []),
+        el('div', { class: 'rodape' }, continuar)));
     root.appendChild(tela);
     document.documentElement.appendChild(host);
     avisoSite = host;
