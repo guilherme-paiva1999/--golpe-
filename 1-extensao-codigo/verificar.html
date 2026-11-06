@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="icones/icone-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
-<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="verificar.css">
 </head>
 <body>
 <header class="topo">
@@ -52,6 +52,13 @@
       <p class="pequeno">Os dois primeiros sites não existem: são só exemplos de como os golpes costumam ser.</p>
     </div>
 
+    <div class="dica juntos" id="juntos">
+      <h2>O aplicativo e a extensão trabalham juntos</h2>
+      <p><strong>Aplicativo:</strong> confere o link <strong>antes</strong> de você abrir, no celular ou no computador.</p>
+      <p><strong>Extensão do Chrome:</strong> no computador, confere sozinha <strong>cada página</strong> que abre: bloqueia golpes antes de carregar, lê a página (pressa, desconto exagerado, marca falsa) e avisa na hora de pagar.</p>
+      <p class="pequeno" id="juntosEstado"></p>
+    </div>
+
     <p class="estado-listas" id="estadoListas" aria-live="polite"></p>
   </section>
 
@@ -84,7 +91,7 @@
       <a class="btn btn-whats" id="perguntar" href="#" target="_blank" rel="noopener" hidden></a>
       <button type="button" class="btn btn-claro" id="cadastrarPessoa" hidden>Cadastrar uma pessoa de confiança</button>
       <a class="btn btn-ra" id="reclameAqui" href="https://www.reclameaqui.com.br/detector-site-confiavel/" target="_blank" rel="noopener">
-        <img src="nucleo/icons/reclameaqui.png" alt="" width="28" height="28">Verificar no Reclame Aqui</a>
+        <img src="icons/reclameaqui.png" alt="" width="28" height="28">Verificar no Reclame Aqui</a>
       <button type="button" class="btn btn-claro" id="ouvir">Ouvir o resultado</button>
     </div>
 
@@ -157,9 +164,9 @@
 </main>
 
 <script src="ponte.js"></script>
-<script src="nucleo/modelo.js"></script>
-<script src="nucleo/pessoa.js"></script>
-<script src="nucleo/background.js"></script>
-<script src="app.js"></script>
+<script src="modelo.js"></script>
+<script src="pessoa.js"></script>
+<script src="background.js"></script>
+<script src="verificar.js"></script>
 </body>
 </html>

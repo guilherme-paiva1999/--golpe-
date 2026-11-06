@@ -1,7 +1,8 @@
 'use strict';
-/* É Golpe? aplicativo (protótipo).
-   As regras, as listas, os pesos, o modelo de aprendizado de máquina e as consultas são os da extensão
-   (nucleo/background.js, copiado de 1-extensao-codigo pelo copiar-nucleo.sh). Este arquivo só cuida das telas.
+/* É Golpe? · tela "Verificar um link". É o aplicativo do celular e também uma tela da extensão (aberta pelo popup).
+   As regras, as listas, os pesos, o modelo de aprendizado de máquina e as consultas vêm do próprio background.js
+   da extensão, carregado nesta página (veja ponte.js). Não há cópia: muda num lugar, muda nos dois.
+   Divisão de trabalho: esta tela confere o LINK antes de abrir; a extensão confere cada PÁGINA depois que ela abre.
 
    Diferença da extensão: o aplicativo não vê a página, só o link. Por isso a conta começa em 50%
    (link desconhecido), tira os pontos de risco do endereço e depois soma ou tira as provas
@@ -131,6 +132,10 @@ async function mostrarResultado(res) {
   }
   $('abrirSite').textContent = res.nivel === 'ok' ? 'Abrir o site' : 'Abrir o site mesmo assim';
   $('avisoAbrir').hidden = true;
+  if (EGolpeModo === 'extensao' && res.nivel === 'ok') {
+    $('avisoAbrir').textContent = 'Depois que o site abrir, a extensão continua conferindo a página.';
+    $('avisoAbrir').hidden = false;
+  }
   const cfg = await lerConfig();
   if (cfg.vozAutomatica) falarResultado();
 }
@@ -184,6 +189,11 @@ async function mostrarListas(extra) {
 }
 async function baixarListas(forcar) {
   const { atualizadoEm } = await chrome.storage.local.get('atualizadoEm');
+  // Dentro da extensão, quem baixa as listas é o service worker; esta tela só pede para ele.
+  if (EGolpeModo === 'extensao') {
+    if (forcar) { mostrarListas('Baixando as listas de golpes…'); await EGolpeChromeReal.runtime.sendMessage({ tipo: 'atualizar-listas' }).catch(() => {}); }
+    return mostrarListas();
+  }
   if (!forcar && atualizadoEm && Date.now() - atualizadoEm < 86400000) return mostrarListas();
   if (!navigator.onLine) return mostrarListas('Sem internet: as listas de golpes serão baixadas quando a conexão voltar.');
   mostrarListas('Baixando as listas de golpes…');
@@ -259,7 +269,8 @@ $('abrirSite').addEventListener('click', () => {
   if (!atual) return;
   if (atual.nivel !== 'ok' && !confirmarAbrir) {
     confirmarAbrir = true;
-    $('avisoAbrir').textContent = 'Tem certeza? Toque de novo para abrir. Não digite senha nem dados do cartão.';
+    $('avisoAbrir').textContent = 'Tem certeza? Toque de novo para abrir. Não digite senha nem dados do cartão.' +
+      (EGolpeModo === 'extensao' ? ' A extensão vai continuar de olho na página e pode bloquear o site.' : '');
     $('avisoAbrir').hidden = false;
     $('abrirSite').textContent = 'Sim, abrir mesmo assim';
     return;
@@ -271,7 +282,11 @@ $('abrirSite').addEventListener('click', () => {
 (async () => {
   await aplicarVisual();
   history.replaceState({ tela: 'telaInicio' }, '', location.pathname + location.search);
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  if (EGolpeModo === 'aplicativo' && 'serviceWorker' in navigator) navigator.serviceWorker.register('app-sw.js').catch(() => {});
+  $('juntosEstado').textContent = EGolpeModo === 'extensao'
+    ? 'Você está usando a extensão: ela já protege as páginas deste computador.'
+    : 'No computador, instale também a extensão É Golpe? no Chrome.';
+  if (EGolpeModo === 'extensao') $('dicaCompartilhar').hidden = true;
   // Link que chegou pelo "Compartilhar" do Android (share_target no manifest).
   const q = new URLSearchParams(location.search);
   const compartilhado = [q.get('url'), q.get('text'), q.get('title')].filter(Boolean).join(' ');

@@ -1,10 +1,10 @@
 'use strict';
 // Guarda o aplicativo no aparelho para abrir sem internet. As regras e o modelo funcionam offline;
 // as consultas (RDAP, BrasilAPI, listas) só com internet e nunca passam por este cache.
-const CACHE = 'egolpe-app-v1';
-const ARQUIVOS = ['./', 'index.html', 'app.css', 'app.js', 'ponte.js', 'manifest.webmanifest',
-  'nucleo/background.js', 'nucleo/modelo.js', 'nucleo/pessoa.js', 'nucleo/ml/modelo.json',
-  'nucleo/dados/consumidor.json', 'nucleo/icons/reclameaqui.png', 'icones/icone-192.png', 'icones/icone-512.png'];
+const CACHE = 'egolpe-app-v2';
+const ARQUIVOS = ['verificar.html', 'verificar.css', 'verificar.js', 'ponte.js', 'manifest.webmanifest',
+  'background.js', 'modelo.js', 'pessoa.js', 'ml/modelo.json', 'dados/consumidor.json',
+  'icons/reclameaqui.png', 'icones/icone-192.png', 'icones/icone-512.png'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ARQUIVOS))); self.skipWaiting(); });
 self.addEventListener('activate', (e) => {
   e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))));

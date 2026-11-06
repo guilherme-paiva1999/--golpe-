@@ -94,6 +94,7 @@ async function mostrarStatus() {
 async function prepararPessoa() {
   const { pessoaConfianca } = await chrome.storage.local.get('pessoaConfianca');
   $('btnAcess').addEventListener('click', () => chrome.runtime.openOptionsPage());
+  $('btnVerificar').addEventListener('click', () => chrome.tabs.create({ url: chrome.runtime.getURL('verificar.html') }));
   if (!P.valida(pessoaConfianca)) {
     $('pessoaInfo').textContent = 'Nenhuma pessoa cadastrada. Cadastre alguém para perguntar se um site é golpe.';
     return;

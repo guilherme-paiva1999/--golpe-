@@ -54,6 +54,7 @@ textarea{resize:vertical}
 .exemplos ul{list-style:none;margin:0 0 8px;padding:0;display:grid;gap:10px}
 .btn-exemplo{width:100%;font:inherit;text-align:left;min-height:56px;padding:10px 16px;border-radius:10px;cursor:pointer;
   background:var(--sup);color:var(--tx);border:2px dashed var(--tx2)}
+.juntos p{max-width:60ch}
 .estado-listas{font-size:.85em;color:var(--tx2)}
 .carregando{display:grid;justify-items:center;gap:16px;padding:60px 0;font-size:1.2em;font-weight:700}
 .girando{width:56px;height:56px;border-radius:50%;border:6px solid var(--linha);border-top-color:var(--tx);animation:gira 1s linear infinite}

@@ -176,6 +176,16 @@ node ml/testar_confianca.js && node ml/testar_reclameaqui.js && node ml/testar_e
 node ml/testar_gov_marca.js && node ml/testar_pontuacao.js
 ```
 
+## v3.4: aplicativo e extensão juntos
+A tela **"Verificar um link"** (`verificar.html`, `verificar.js`, `verificar.css`) serve aos dois:
+- **Na extensão:** botão "Verificar um link antes de abrir" no popup. Usa o armazenamento da extensão
+  (pessoa de confiança, notas do Reclame Aqui, listas já baixadas).
+- **No celular:** a mesma pasta publicada como site vira o aplicativo (PWA, com `manifest.webmanifest` e `app-sw.js`).
+  Lá, o `ponte.js` imita o `chrome.storage` com o armazenamento do aparelho.
+A tela carrega o próprio `background.js`; o `ponte.js` desliga nela os ouvintes (bloqueio, alarmes, mensagens),
+porque quem bloqueia páginas é só o service worker. A tela confere só o **link** (não vê a página):
+começa em 50%, tira os pontos de risco do endereço e soma as provas com os pesos da tela de bloqueio. Confiável com 90% ou mais.
+
 ## v3.2: visual sóbrio e limpo
 A tela de bloqueio e o aviso de tela cheia nas páginas usam um visual simples: fundo vermelho-escuro (azul no modo daltônico),
 octógono com "X", o rótulo PERIGO, título direto, o site numa caixa escura, a confiança em porcentagem com uma barra fina,

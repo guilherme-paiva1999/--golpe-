@@ -3,7 +3,7 @@
   "short_name": "É Golpe?",
   "description": "Recebeu um link? Confira se é golpe antes de abrir.",
   "lang": "pt-BR",
-  "start_url": "./",
+  "start_url": "verificar.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f6f8fc",
@@ -14,7 +14,7 @@
     { "src": "icones/icone-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "share_target": {
-    "action": "./",
+    "action": "verificar.html",
     "method": "GET",
     "params": { "title": "title", "text": "text", "url": "url" }
   }

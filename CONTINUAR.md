@@ -43,7 +43,8 @@ As capturas de tela ficam em `teste-real/capturas/` (não vão para o GitHub).
 | `1-extensao-codigo/pessoa.js` | Mensagem para a pessoa de confiança (WhatsApp/e-mail) |
 | `1-extensao-codigo/popup.html/js` | Janelinha do ícone |
 | `1-extensao-codigo/README.md` | Explica cada regra e cada versão em detalhe |
-| `7-aplicativo/` | Aplicativo para celular. A pasta `nucleo/` é cópia da extensão: depois de mudar a extensão, rode `7-aplicativo/copiar-nucleo.sh` |
+| `1-extensao-codigo/verificar.html/js/css` + `ponte.js` | Tela "Verificar um link": é o aplicativo do celular e também uma tela da extensão (botão no popup). Usa o próprio `background.js`, sem cópia |
+| `7-aplicativo/README.md` | Como publicar e instalar o aplicativo no celular |
 
 ## 5. Decisões já tomadas (para não desfazer sem querer)
 - **Só fontes abertas** que permitem uso comercial: Phishing.Database (MIT), URLhaus (CC0), Procon-SP, RDAP, BrasilAPI,
@@ -56,6 +57,7 @@ As capturas de tela ficam em `teste-real/capturas/` (não vão para o GitHub).
   ~1% de falsos alertas; detalhes no README da extensão).
 - **Visual** da tela de bloqueio e dos avisos: sóbrio e limpo (vermelho-escuro, octógono com X, "PERIGO", lista de motivos,
   três botões). O visual de "cartaz de campanha" da v3.1 foi descartado por estar poluído.
+- **Aplicativo e extensão juntos** (3.4.0): o aplicativo confere o link antes de abrir; a extensão cuida das páginas. Um código só: o aplicativo é a `verificar.html` da pasta da extensão.
 - **Pessoa de confiança**: os dados ficam só no computador; nada é enviado sozinho (abre o WhatsApp e a pessoa confirma).
 - Segredos (senhas, chaves, `.env`, bancos de dados) **nunca** vão para o GitHub. O repositório é **privado**: no outro computador, entre com a sua conta (`gh auth login`) antes de clonar.
 
