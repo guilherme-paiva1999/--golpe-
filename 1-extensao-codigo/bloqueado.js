@@ -50,7 +50,13 @@ function falar(texto) {
 // Loja estrangeira (v3.7): outro título e outro texto, e as provas que conseguimos ver ficam abertas.
 function avisoEstrangeira() {
   $('titulo').textContent = 'Esta é uma loja estrangeira';
-  $('texto').textContent = 'Ela está fora dos nossos cuidados: não tem CNPJ e não segue as leis brasileiras de defesa do consumidor. ' +
+  const fora = document.createElement('p');
+  fora.className = 'fora';
+  fora.innerHTML = '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 4L61 58H3z" fill="#1a1200"/>' +
+    '<rect x="29" y="22" width="6" height="20" rx="3" fill="#fff8e6"/><circle cx="32" cy="49" r="3.5" fill="#fff8e6"/></svg>';
+  fora.append('Ela está fora dos nossos cuidados.');
+  $('texto').before(fora);
+  $('texto').textContent = 'Ela não tem CNPJ e não segue as leis brasileiras de defesa do consumidor. ' +
     'Mas o que podemos dizer sobre ela está logo abaixo.';
   motivos = motivos.filter((m) => !/^Esta é uma loja estrangeira/.test(m));
   $('detalhes').open = true;
