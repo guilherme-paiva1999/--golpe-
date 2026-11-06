@@ -1,7 +1,7 @@
 # É Golpe? · tudo o que foi produzido
 
 Extensão do Chrome que avisa sobre golpes, feita para o Hackathon "Negócios em Transformação" (UniSenac, Senac, Sebrae).
-Versão da extensão neste pacote: **3.0.0**.
+Versão da extensão neste pacote: **3.0.1**.
 
 ## O que tem em cada pasta
 
@@ -36,12 +36,13 @@ Os arquivos `.html` do canvas e do protótipo abrem em qualquer navegador. Eles 
   baixa visão, daltônico, dificuldade para ler). Cada perfil liga letras grandes, voz automática e/ou cores para daltonismo.
 - **Pessoa de confiança**: para idosos (recomendado) e quem quiser. Na tela de bloqueio aparece "Perguntar para Maria se é golpe",
   que abre o WhatsApp com a mensagem e o link do site. Nada é enviado sozinho.
-- **Tela de bloqueio nova**: confiança em %, "O que fazer", botão do **Reclame Aqui grande**, e a verificação completa com as
+- **Tela de bloqueio nova**: confiança em %, "O que fazer", botão do **Reclame Aqui grande, verde e com a logo**, e a verificação completa com as
   mesmas coisas que o Reclame Aqui confere (idade do site, empresa responsável pelo CNPJ do registro.br, situação na Receita pela
   BrasilAPI, reclamações no consumidor.gov.br, listas de golpes). Cada prova ruim diminui a confiança.
 - **Aprendizado de máquina ligado**: o modelo do nome do site roda na extensão e soma pontos (pega ~10% dos golpes com ~1% de falsos alertas).
 - **Só fontes abertas**: o feed do OpenPhish (que não permite uso comercial) foi retirado.
-- Lojas precisam de **pelo menos 80%** de confiança.
+- Confiança sempre em porcentagem, que aparece na hora (sem "carregando"): **só é confiável acima de 80%**.
+- Botão do Reclame Aqui **verde, com a logo** do Reclame Aqui (3.0.1).
 
 ## O que a extensão faz (2.8.0)
 

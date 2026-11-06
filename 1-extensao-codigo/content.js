@@ -81,7 +81,9 @@
     .tela.daltonico{background:#3a0a0a}
     .tela.daltonico button.seguro{color:#000}
     .tela button.grandao{width:100%;max-width:720px;font-size:22px;font-weight:bold;padding:18px 22px;border-radius:10px}
-    .tela button.ra{background:#ffeb3b;color:#000;border-color:#ffeb3b}
+    .tela button.ra{background:#056734;color:#fff;border-color:#fff;display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap}
+    .logo-ra{background:#fff;border-radius:8px;padding:8px 12px;display:inline-flex}
+    .logo-ra img{height:30px;width:auto;display:block}
     .tela button.pessoa{background:#25d366;color:#000;border-color:#25d366}
     .tela.daltonico button.pessoa{background:#9fd3ff;border-color:#9fd3ff}
     .tela .acoes{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}
@@ -189,9 +191,11 @@
     const titulo = res.comercio
       ? (perigo ? 'Esta loja tem cara de golpe' : 'Esta loja ainda não provou ser confiável')
       : (perigo ? 'Este site pode ser um golpe' : 'Este site é suspeito');
+    // Porcentagem: só é confiável quem passa do limite (mais de 80% no rigor padrão).
+    const limiteConf = res.limite || (config.rigor === 'normal' ? 60 : 80);
     const confTexto = res.confianca !== undefined
-      ? 'Confiança: ' + res.confianca + '%. Lojas precisam de pelo menos ' + res.limite + '%.'
-      : (typeof res.pontos === 'number' ? 'Confiança: ' + Math.max(0, 100 - res.pontos) + '%.' : '');
+      ? 'Confiança: ' + res.confianca + '%. Para ser confiável, precisa passar de ' + limiteConf + '%.'
+      : (typeof res.pontos === 'number' ? 'Confiança: ' + Math.max(0, 100 - res.pontos) + '%. Para ser confiável, precisa passar de ' + limiteConf + '%.' : '');
 
     const { host, root } = criarCaixa({
       position: 'fixed', inset: '0', 'z-index': '2147483647', display: 'block'
@@ -222,15 +226,19 @@
     }, 'Continuar mesmo assim (não recomendado)');
 
     const dominioRA = (res.dominio || location.hostname).replace(/^www\./, '');
-    // Botão grande: uma fonte externa, além do nosso aviso.
+    // Botão grande: uma fonte externa, além do nosso aviso. Verde da marca, com a logo numa etiqueta branca.
+    const logo = el('img', { src: chrome.runtime.getURL('icons/reclameaqui.png'), alt: '' });
+    const chip = el('span', { class: 'logo-ra', 'aria-hidden': 'true' }, logo);
+    logo.addEventListener('error', () => chip.remove());          // se a página bloquear a imagem, fica só o texto
+    const textoRA = el('span', {}, 'Verificar no Reclame Aqui');
     const ra = el('button', {
       type: 'button', class: 'grandao ra',
       onclick: () => {
         try { navigator.clipboard.writeText(dominioRA).catch(() => {}); } catch (e) { /* sem área de transferência */ }
         window.open('https://www.reclameaqui.com.br/detector-site-confiavel/', '_blank', 'noopener');
-        ra.textContent = '🔎 Endereço copiado (' + dominioRA + '): cole no Reclame Aqui';
+        textoRA.textContent = 'Endereço copiado (' + dominioRA + '): cole no Reclame Aqui';
       }
-    }, '🔎 Verificar no Reclame Aqui');
+    }, chip, textoRA);
     const acoes = el('div', { class: 'acoes' }, voltar);
     const P = self.EGolpePessoa;
     if (P && P.valida(pessoa)) {

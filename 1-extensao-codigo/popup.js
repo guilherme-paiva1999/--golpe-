@@ -76,7 +76,8 @@ async function mostrarStatus() {
       const conf = res.confianca !== undefined ? res.confianca : Math.max(0, 100 - res.pontos);
       const d = document.createElement('div');
       d.style.fontSize = '15px';
-      d.textContent = 'Confiança: ' + conf + '%';
+      const cfg = await lerConfig();
+      d.textContent = 'Confiança: ' + conf + '% (confiável só acima de ' + (cfg.rigor === 'normal' ? 60 : 80) + '%)';
       $('pill').appendChild(d);
     }
     $('host').firstChild.textContent = res.host;

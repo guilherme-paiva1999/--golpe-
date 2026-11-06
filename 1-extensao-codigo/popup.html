@@ -14,7 +14,10 @@
   select,button{font:14px Arial,sans-serif;padding:6px 8px}
   small{color:#586964}
   .grande{width:100%;font-size:17px;font-weight:bold;padding:14px 12px;border-radius:10px;cursor:pointer}
-  #btnRA{background:#ffeb3b;color:#000;border:3px solid #000}
+  #btnRA{background:#056734;color:#fff;border:3px solid #034222;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+  #btnRA:disabled{opacity:.55;cursor:default}
+  .logo-ra{background:#fff;border-radius:6px;padding:5px 8px;display:inline-flex}
+  .logo-ra img{height:20px;width:auto;display:block}
   #btnPessoa{background:#25d366;color:#000;border:3px solid #0b6e5b}
   #btnAcess{background:#0b6e5b;color:#fff;border:0}
   button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #1565c0;outline-offset:2px}
@@ -38,7 +41,7 @@
   <ul id="motivos"></ul>
 </section>
 <section>
-  <button id="btnRA" class="grande" type="button">🔎 Verificar no Reclame Aqui</button>
+  <button id="btnRA" class="grande" type="button"><span class="logo-ra" aria-hidden="true"><img src="icons/reclameaqui.png" alt=""></span><span>Verificar no Reclame Aqui</span></button>
   <small>Abre o Detector de Site Confiável e copia o endereço deste site para você colar.</small>
   <label for="notaRA">O que o Reclame Aqui mostrou para este site?</label>
   <select id="notaRA">

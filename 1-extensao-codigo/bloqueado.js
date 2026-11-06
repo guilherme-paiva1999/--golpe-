@@ -14,7 +14,9 @@ let pessoa = null;
 let motivos = [];
 let verificacao = null;
 
-const ICONES = { contra: ['✗', 'Contra'], favor: ['✓', 'A favor'], neutro: ['•', 'Informação'] };
+const limiteDaConfig = () => (config.rigor === 'normal' ? 60 : 80);
+
+const ICONES ={ contra: ['✗', 'Contra'], favor: ['✓', 'A favor'], neutro: ['•', 'Informação'] };
 
 function li(texto) {
   const e = document.createElement('li');
@@ -48,14 +50,18 @@ function mostrarMotivos() {
   $('caixaMotivos').hidden = !lista.length;
 }
 
+// Mostra a porcentagem. Só é confiável quem PASSA do limite (mais de 80% no rigor padrão).
+function mostrarConfianca(confianca, limite) {
+  $('confNum').textContent = 'Confiança: ' + confianca + '%';
+  $('confBarra').style.width = confianca + '%';
+  $('confLimite').style.left = 'calc(' + limite + '% - 2px)';
+  $('resumo').textContent = 'Para ser considerado confiável, o site precisa passar de ' + limite + '%. Este tem ' + confianca + '%' +
+    (confianca < 30 ? ': muito baixa. Tem cara de golpe.' : confianca <= limite ? ': não é confiável. Não pague nem digite dados.' : '.');
+}
+
 function mostrarVerificacao(v) {
   verificacao = v;
-  const limite = v.limite || 80;
-  $('confNum').textContent = 'Confiança: ' + v.confianca + '%';
-  $('confBarra').style.width = v.confianca + '%';
-  $('confLimite').style.left = 'calc(' + limite + '% - 2px)';
-  $('resumo').textContent = 'Sites precisam de pelo menos ' + limite + '% de confiança. Este tem ' + v.confianca + '%' +
-    (v.confianca < 30 ? ': muito baixa. Tem cara de golpe.' : v.confianca < limite ? ': baixa. Não pague nem digite dados.' : '.');
+  mostrarConfianca(v.confianca, v.limite || limiteDaConfig());
   $('verif').replaceChildren(...v.itens.map((it) => {
     const [ic, rot] = ICONES[it.efeito] || ICONES.neutro;
     const e = document.createElement('li');
@@ -116,15 +122,18 @@ async function iniciar() {
   try {
     const res = await chrome.runtime.sendMessage({ tipo: 'detalhes', url: url.href });
     motivos = (res && res.motivos) || [];
-  } catch (e) { motivos = []; }
+    // A porcentagem aparece na hora (mesma conta da verificação: site bloqueado começa com no máximo 30%).
+    // Quando a verificação completa termina, o número é ajustado com as provas encontradas.
+    const pontos = res && typeof res.pontos === 'number' ? res.pontos : 100;
+    mostrarConfianca(Math.max(0, 100 - Math.max(70, pontos)), limiteDaConfig());
+  } catch (e) { motivos = []; mostrarConfianca(0, limiteDaConfig()); }
   mostrarMotivos();
   if (config.vozAutomatica) falar(textoParaOuvir());
 
   try {
     const v = await chrome.runtime.sendMessage({ tipo: 'investigar', url: url.href });
-    if (v) mostrarVerificacao(v);
-    else $('confNum').textContent = 'Não foi possível verificar agora';
-  } catch (e) { $('confNum').textContent = 'Não foi possível verificar agora'; }
+    if (v) mostrarVerificacao(v);              // sem resposta: fica a porcentagem que já está na tela
+  } catch (e) { /* sem resposta: fica a porcentagem que já está na tela */ }
 }
 
 $('voltar').addEventListener('click', async () => {

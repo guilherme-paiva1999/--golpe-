@@ -134,7 +134,7 @@ Nada é enviado sozinho: a pessoa confirma o envio no WhatsApp. Também há "Cop
 
 ### Tela de bloqueio no mesmo padrão do alerta
 **Confiança em porcentagem** (com barra e frase, nunca só cor), "O que fazer", botões grandes (voltar, perguntar à pessoa de confiança,
-**Verificar no Reclame Aqui** em destaque), "O que encontramos" e a **verificação completa**, que olha as mesmas coisas que o
+**Verificar no Reclame Aqui** em destaque, verde e com a logo), "O que encontramos" e a **verificação completa**, que olha as mesmas coisas que o
 Detector de Site Confiável do Reclame Aqui, só com fontes abertas e sem abrir o site:
 
 | Item | Fonte | Efeito na confiança |
@@ -150,8 +150,11 @@ Detector de Site Confiável do Reclame Aqui, só com fontes abertas e sem abrir 
 Um site bloqueado começa com no máximo 30% (o que o bloqueou) e cada prova muda a confiança. O CNPJ do responsável pelo
 domínio também passou a valer nas lojas quando a página não mostra CNPJ. O número de CPF nunca é guardado.
 
-### Lojas: pelo menos 80%
-O limite das lojas subiu de "mais de 75" para **pelo menos 80%** (rigor alto; 60% no normal), e a confiança aparece em %.
+### Confiável só acima de 80%
+A confiança aparece sempre em **porcentagem**, na hora (sem texto de "carregando"; quando a verificação completa termina, o número é ajustado). Um site só é **confiável se passar de 80%** (rigor alto, o padrão; 60% no rigor normal). Antes era "mais de 75".
+
+### Logo do Reclame Aqui
+`icons/reclameaqui.png` vem do Wikimedia Commons (`File:Reclame-aqui-logo.png`, imagem em domínio público). O nome e a logo são **marca registrada** do Reclame Aqui: aqui só identificam o botão que leva ao site deles. Para uso comercial, peça autorização ao Reclame Aqui.
 
 ### Aprendizado de máquina ligado (`modelo.js` + `ml/modelo.json`)
 O classificador do nome do site (gradient boosting, `ml/treinar.py`) agora roda dentro da extensão. `modelo.js` recalcula os

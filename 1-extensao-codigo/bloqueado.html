@@ -41,14 +41,16 @@
   #voltar{background:#fff;color:#b71c1c;font-weight:bold;font-size:1.15em;padding:16px 28px}
   body.daltonico #voltar{color:#000}
   .grandao{width:100%;font-size:1.2em;font-weight:bold;padding:20px 24px;min-height:76px}
-  #ra{background:#ffeb3b;color:#000;border-color:#ffeb3b}
+  /* Reclame Aqui: verde-escuro da marca, texto branco e a logo numa etiqueta branca (a logo é verde e sumiria no verde) */
+  #ra{background:#056734;color:#fff;border-color:#fff;flex-wrap:wrap}
+  .logo-ra{background:#fff;border-radius:8px;padding:8px 12px;display:inline-flex;flex:none}
+  .logo-ra img{height:30px;width:auto;display:block}
   #perguntar{background:#25d366;color:#000;border-color:#25d366}
   body.daltonico #perguntar{background:#9fd3ff;border-color:#9fd3ff}
   .sub{font-size:.75em;font-weight:normal;display:block}
   .grandao .ico{font-size:1.4em}
   #continuar{font-size:.8em;padding:8px 14px;border-width:2px}
   button:focus-visible,a:focus-visible{outline:4px solid #ffeb3b;outline-offset:3px}
-  #ra:focus-visible{outline-color:#fff}
   .pequeno{font-size:.8em;opacity:.95}
   .pequeno a{color:#fff}
   [hidden]{display:none!important}
@@ -63,9 +65,9 @@
 
   <section class="caixa conf" aria-labelledby="tConf">
     <h2 id="tConf">Confiança neste site</h2>
-    <div class="num" id="confNum" aria-live="polite">Verificando…</div>
+    <div class="num" id="confNum"></div>
     <div class="barra" aria-hidden="true"><i id="confBarra"></i><b id="confLimite"></b></div>
-    <p id="resumo">Estamos conferindo o site em fontes abertas (idade do site, empresa responsável, Receita Federal, reclamações e listas de golpes).</p>
+    <p id="resumo"></p>
   </section>
 
   <section class="caixa passo" aria-labelledby="tFazer">
@@ -80,7 +82,7 @@
       <button id="perguntarEmail" type="button" hidden>Perguntar por e-mail</button>
       <button id="copiarMsg" type="button">Copiar a mensagem</button>
     </div>
-    <button id="ra" class="grandao" type="button"><span class="ico" aria-hidden="true">🔎</span><span>Verificar no Reclame Aqui<span class="sub" id="raSub">Abre o Detector de Site Confiável e copia o endereço para você colar</span></span></button>
+    <button id="ra" class="grandao" type="button"><span class="logo-ra" aria-hidden="true"><img src="icons/reclameaqui.png" alt=""></span><span>Verificar no Reclame Aqui<span class="sub" id="raSub">Abre o Detector de Site Confiável e copia o endereço para você colar</span></span></button>
   </div>
   <p class="pequeno" id="semPessoa" hidden>Quer perguntar a alguém antes? <a href="#" id="cadastrar">Cadastre uma pessoa de confiança</a>.</p>
 
