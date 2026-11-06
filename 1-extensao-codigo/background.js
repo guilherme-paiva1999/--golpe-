@@ -55,6 +55,7 @@ const MARCAS = {
 // Sites que prometem espionar redes sociais/celular de outras pessoas (golpe ou programa-espião).
 const ESPIONAGEM = /(social|phone|mobile|cell|whats?app|insta(gram)?|face(book)?|tele(gram)?|tiktok|chat|follow|wech|msg|sms|track)\w*spy|spy\w*(app|phone|chat|social)|espion(ar|agem)\w*|(whats|zap|insta|celular|face)\w*espi[aã]o|espi[aã]o\w*(whats|zap|insta|celular|face)|spyware|stalker/i;
 
+const MOTIVO_ESPIAO = 'O site promete espiar ou clonar a conta de outra pessoa. Isso é crime e quase sempre é golpe: cobram e não entregam, ou roubam os seus dados.';
 const MOTIVO_PROCON = 'O Procon-SP recomenda evitar este site: ele teve reclamações de consumidores, não respondeu ou não foi encontrado.';
 
 // Sites do governo brasileiro terminam em .gov.br. Nomes que imitam o governo fora disso são suspeitos.
@@ -518,7 +519,7 @@ function estadoSelo(res) {
   return res.nivel === 'ok' ? 'verificar' : res.nivel;
 }
 
-const SINAIS_CHAVES = ['pagamento', 'pressao', 'desconto', 'formExterno', 'senha', 'semContato', 'brasil',
+const SINAIS_CHAVES = ['pagamento', 'pressao', 'desconto', 'formExterno', 'senha', 'semContato', 'brasil', 'espionagem',
   'venda', 'cnpjValido', 'cnpjInvalido', 'contato', 'emailMesmoDominio', 'politicas', 'gateway'];
 
 // Loja (venda ou pedido de pagamento): começa com 0 e precisa PROVAR confiança: só é confiável com 90% ou mais.
@@ -720,7 +721,7 @@ async function avaliarPagina(host, protocolo, sinais) {
   if (falsa) { r.pontos += 50; r.motivos.unshift(falsa); }
   const comercio = !!(sinais.pagamento || sinais.venda);
   // A idade só é consultada quando a página mostra venda, dinheiro, senha ou pressão (privacidade).
-  const precisaIdade = comercio || sinais.senha || sinais.pressao || sinais.formExterno || cfg.consultaIdade;
+  const precisaIdade = comercio || sinais.senha || sinais.pressao || sinais.formExterno || sinais.espionagem || cfg.consultaIdade;
   const gratuito = sufixo(host, HOSPEDAGEM);                  // subdomínio grátis: a idade é do serviço, não da loja
   const ml = gratuito ? null : await sinalML(r.dominio);
   if (ml && ml.pontos) { r.pontos += ml.pontos; r.motivos.push(ml.motivo); }
@@ -741,6 +742,7 @@ async function avaliarPagina(host, protocolo, sinais) {
     c.confianca = aplicarConsumidor(consumidor, true, c.confianca, motivos);
     let nivel = c.confianca >= limite ? 'ok' : (c.confianca < 30 ? 'perigo' : 'atencao');
     if (falsa) nivel = 'perigo';                       // marca falsa é decisiva, mesmo em site antigo
+    if (sinais.espionagem) { nivel = 'perigo'; motivos.unshift(MOTIVO_ESPIAO); }   // v3.10
     // Loja sem CNPJ ativo é bloqueada (v3.6). A porcentagem calculada continua a mesma e aparece na tela de bloqueio.
     let cnpj = situacaoCnpj(cnpjUsado, empresa, rdap);
     // Loja estrangeira (v3.7): fora do .br, sem CNPJ e sem preços em R$ nem página em português. Também é bloqueada,
@@ -769,6 +771,10 @@ async function avaliarPagina(host, protocolo, sinais) {
   res.pontos = aplicarEmpresa(empresa, false, res.pontos, res.motivos);
   res.pontos = aplicarConsumidor(consumidor, false, res.pontos, res.motivos);
   if (falsa) res.pontos = Math.max(res.pontos, 70);  // marca falsa é decisiva, mesmo em site antigo (invadido)
+  if (sinais.espionagem) {                            // v3.10: promessa de espionar ou clonar a conta de outra pessoa
+    res.pontos += 50;
+    res.motivos.unshift(MOTIVO_ESPIAO);
+  }
   const nivel = nivelPorRigor(res.pontos, cfg.rigor);
   return { nivel, pontos: res.pontos, motivos: res.motivos, dominio: r.dominio, conhecido: false,
     provado: nivel === 'ok' && dias !== null && dias >= 365, dias };
@@ -1026,7 +1032,12 @@ async function tratar(msg, sender) {
       const res = { ...(await analisar(u.hostname.toLowerCase(), u.protocol)), host: u.hostname };
       if (msg.tipo === 'detalhes') {
         const guardados = (await chrome.storage.session.get('motivos:' + u.href))['motivos:' + u.href];
-        if (guardados && guardados.length) res.motivos = [...new Set([...guardados, ...res.motivos])];
+        if (guardados && guardados.length) {
+          // A idade do site pode vir duas vezes (da página e do endereço), com palavras diferentes: fica uma só.
+          const idadeNaPagina = guardados.some((m) => /dias de vida|meses de vida|ano de vida/.test(m));
+          const doEndereco = res.motivos.filter((m) => !(idadeNaPagina && /^Este site foi criado há/.test(m)));
+          res.motivos = [...new Set([...guardados, ...doEndereco])];
+        }
         const conta = (await chrome.storage.session.get('conta:' + u.href))['conta:' + u.href];
         if (conta) res.conta = conta;                   // porcentagem calculada na página da loja
       }

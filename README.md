@@ -1,7 +1,7 @@
 # É Golpe? · tudo o que foi produzido
 
 Extensão do Chrome que avisa sobre golpes, feita para o Hackathon "Negócios em Transformação" (UniSenac, Senac, Sebrae).
-Versão da extensão neste pacote: **3.9.0**.
+Versão da extensão neste pacote: **3.10.0**.
 
 ## O que tem em cada pasta
 
@@ -35,6 +35,11 @@ Veja [`CONTINUAR.md`](CONTINUAR.md): como baixar, instalar, rodar os testes e as
 3. **Carregar sem compactação** e escolha a pasta com o `manifest.json`.
 4. Na primeira vez abre a tela de boas-vindas: escolha a acessibilidade e, se quiser, a pessoa de confiança.
 5. Recarregue as abas abertas. O popup tem botões para testar os avisos.
+
+## Novidades da 3.10.0
+
+- Sites que **prometem espionar ou clonar a conta de outra pessoa** (como os de "clonar perfil do Instagram") são bloqueados.
+- Vídeo curto da extensão funcionando num site real: `5-video/video-extensao-curto.mp4`.
 
 ## Novidades da 3.9.0
 

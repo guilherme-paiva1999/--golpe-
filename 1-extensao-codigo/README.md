@@ -176,6 +176,14 @@ node ml/testar_confianca.js && node ml/testar_reclameaqui.js && node ml/testar_e
 node ml/testar_gov_marca.js && node ml/testar_pontuacao.js
 ```
 
+## v3.10: sites que prometem espionar ou clonar a conta de outra pessoa
+Num site real (`www.sppy.site`, "Clonar perfil agora… 100% anônimo, sem notificar o usuário"), a extensão via o endereço suspeito
+(terminação .site, 41 dias de vida), mas ficava quieta, porque a página não pedia pagamento logo de cara. Agora a página conta como
+golpe quando tem um **botão de ação** ("Clonar", "Espionar", "Investigar", "Rastrear", "Hackear"…) **e** a promessa no texto
+("de qualquer pessoa", "sem notificar", "100% anônimo", "mensagens apagadas"…): soma 50 pontos de risco e o motivo
+"O site promete espiar ou clonar a conta de outra pessoa…". Uma notícia que só fala desse golpe não tem o botão e não conta
+(conferido ao vivo: G1 e CNN Brasil abrem normalmente). Também deixa de repetir a idade do site na tela de bloqueio.
+
 ## v3.9: dados da empresa na BrasilAPI (situação, tempo de empresa e atividades)
 Quando há CNPJ (na página ou no registro.br), a BrasilAPI informa:
 - **Situação:** inexistente, baixada, suspensa ou inapta tira 25 e, em loja, bloqueia (como antes).

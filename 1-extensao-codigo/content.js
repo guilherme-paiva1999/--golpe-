@@ -342,6 +342,20 @@
   function hostEm(host, lista) { return lista.some((g) => host === g || host.endsWith('.' + g)); }
 
   const TEXTO_COMPRA = /^(comprar(\s+agora)?|compre(\s+j[áa]|\s+agora)?|adicionar(\s+(ao|à|a)\s+(carrinho|sacola|cesta))?|add\s+to\s+(cart|bag)|buy\s+now|finalizar\s+(a\s+)?compra|ir\s+para\s+o\s+carrinho|ver\s+carrinho)\b/i;
+  // v3.10: página que promete espionar ou clonar a conta de OUTRA pessoa ("Clonar perfil agora", "de qualquer pessoa",
+  // "sem notificar"). Precisa do botão de ação E da promessa no texto: uma notícia que só fala desse golpe não conta.
+  const BOTAO_ESPIAO = /\b(clonar|clone|espionar|espiar|espione|investigar|rastrear|hackear|invadir|monitorar)\b/i;
+  const PROMESSA_ESPIAO = /(de\s+qualquer\s+pessoa|sem\s+(notificar|que\s+(ela|ele|a\s+pessoa)\s+saiba|ser\s+notificad)|100%\s+an[ôo]nimo|conversas?\s+(apagadas|de\s+outra\s+pessoa)|mensagens\s+(de\s+qualquer|apagadas|privadas\s+de))/i;
+  function paginaEspiao(texto) {
+    if (!PROMESSA_ESPIAO.test(texto)) return false;
+    const els = document.querySelectorAll('button, a, input[type="submit"], input[type="button"], [role="button"]');
+    for (let i = 0; i < els.length && i < 2000; i++) {
+      const t = (els[i].innerText || els[i].value || els[i].getAttribute('aria-label') || '').trim().slice(0, 60);
+      if (t && BOTAO_ESPIAO.test(t)) return true;
+    }
+    return false;
+  }
+
   function botaoDeCompra() {
     const els = document.querySelectorAll('button, a, input[type="submit"], input[type="button"], [role="button"]');
     for (let i = 0; i < els.length && i < 4000; i++) {
@@ -387,7 +401,7 @@
     const politicas = POLITICAS.filter((p) => p.test(texto)).length >= 2;
     // Página voltada ao Brasil: preços em R$ ou página em português (usado para saber se a loja é estrangeira).
     const brasil = preco >= 1 || /^pt/i.test(document.documentElement.lang || '');
-    return { pagamento, pressao, desconto: descontoExagerado(texto), formExterno, senha, venda, brasil,
+    return { pagamento, pressao, desconto: descontoExagerado(texto), formExterno, senha, venda, brasil, espionagem: paginaEspiao(texto),
       semContato: pagamento && !(CNPJ.test(texto) || contato), cnpjValido, cnpjInvalido, contato, emailMesmoDominio, politicas, gateway,
       marcas: (senha || pagamento) ? marcasDaPagina() : [], cnpj };
   }
@@ -413,7 +427,7 @@
   function paginaDeDinheiro(s) {
     // Pressão e desconto sozinhos não bastam (notícias falam em "últimas horas" e "50% de desconto"):
     // contam só junto com venda ou pagamento, que já entram por conta própria.
-    return !!(s.pagamento || s.venda || s.formExterno || (s.senha && s.marcas && s.marcas.length));
+    return !!(s.pagamento || s.venda || s.formExterno || s.espionagem || (s.senha && s.marcas && s.marcas.length));
   }
 
   let ultimoEnvio = '';
