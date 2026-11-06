@@ -13,11 +13,11 @@ Quem mais sofre? Segundo a Fundação Seade, 82% das pessoas com 60 anos ou mais
 
 E a desconfiança machuca também quem vende de verdade. Na indústria criativa, o patrimônio é a marca, e é exatamente a marca que o golpista copia: a loja com fotos roubadas, o ingresso falso, o curso clonado.
 
-## Slide 2 · Feira do Empreendedor (quem somos)
-Nós somos [nome], [nome], [nome] e [nome], estudantes de [curso], e desenvolvemos este projeto aqui na Feira do Empreendedor. O time junta negócios, com [nome], design, com [nome], e desenvolvimento, com [nome] e [nome].
+## Slide 2 · Feira do Empreendedor
+E foi pensando nessas pessoas que este projeto nasceu, aqui na Feira do Empreendedor.
 
-## Slide 3 · Ícone (proposta de valor)
-Nós criamos o Isso é Golpe?, uma proteção que confere sites e links antes de você pagar, para ajudar quem compra pela internet, principalmente idosos e famílias, a não cair em golpe e a confiar nas lojas honestas.
+## Slide 3 · Ícone (quem somos e proposta de valor)
+Por isso que eu, Guilherme, e meus colegas Ian, Arthur, Aghata, João e Rudá criamos o Isso é Golpe?: uma proteção que confere sites e links antes de você pagar, para ajudar quem compra pela internet, principalmente idosos e famílias, a não cair em golpe e a confiar nas lojas honestas.
 
 A regra é simples: todo site começa suspeito e só é confiável se provar, com 90% ou mais de confiança.
 
@@ -58,7 +58,7 @@ Nós somos o Isso é Golpe? e estamos mudando a forma como o brasileiro descobre
 - Fantástico 2020 (265 mil boletins) e Minas Gerais (+453% e +1.375%): não encontrei a fonte.
 
 ## Antes de apresentar
-- Preencha os nomes da equipe e o curso no slide 2.
+- Confira a grafia do nome "Aghata" (escrevi como veio na mensagem).
 - Grave o **vídeo de 40 segundos** do MVP (as folhas do evento pedem isso: a internet do evento pode falhar).
 - O slide 7 (Links) está vazio: sugestão de colocar o GitHub (https://github.com/guilherme-paiva1999/--golpe-) e o endereço do aplicativo (https://guilherme-paiva1999.github.io/--golpe-/), depois que o GitHub Pages estiver ligado.
 - "Cadastre sua marca" ainda não existe: no pitch ele é o próximo passo.
