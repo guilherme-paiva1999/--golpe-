@@ -147,8 +147,9 @@ $('ra').addEventListener('click', async () => {
   if (url) {
     const dominio = url.hostname.replace(/^www\./, '');
     $('raSub').hidden = false;
-    try { await navigator.clipboard.writeText(dominio); $('raSub').textContent = 'Endereço copiado (' + dominio + '): cole no campo do Reclame Aqui'; }
-    catch (e) { $('raSub').textContent = 'Digite no Reclame Aqui: ' + dominio; }
+    try { await navigator.clipboard.writeText(dominio); } catch (e) { /* sem área de transferência */ }
+    await chrome.storage.local.set({ raPendente: { host: dominio, t: Date.now() } });   // reclameaqui.js preenche o Detector
+    $('raSub').textContent = 'O Reclame Aqui vai abrir com ' + dominio + ' já preenchido. Se não aparecer, cole o endereço (já copiado).';
   }
   chrome.tabs.create({ url: 'https://www.reclameaqui.com.br/detector-site-confiavel/' });
 });

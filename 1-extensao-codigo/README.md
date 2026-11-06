@@ -176,6 +176,16 @@ node ml/testar_confianca.js && node ml/testar_reclameaqui.js && node ml/testar_e
 node ml/testar_gov_marca.js && node ml/testar_pontuacao.js
 ```
 
+## v3.5: Reclame Aqui com o endereço já preenchido
+Ao clicar em **"Verificar no Reclame Aqui"** (popup, tela de bloqueio, aviso na página ou "Verificar um link"), a extensão guarda
+o endereço por 2 minutos e abre o Detector de Site Confiável. O `reclameaqui.js`, que só roda na página do Detector, escreve o
+endereço no campo e mostra um aviso pequeno. Ele **não envia** o formulário nem lê o resultado: a pessoa clica no botão do próprio
+Reclame Aqui, então continua sem consulta automática (o site proíbe robôs). Se o campo não for encontrado em 15 segundos,
+nada muda e o endereço continua copiado para colar. Abrir o Reclame Aqui sem clicar no botão não preenche nada.
+No aplicativo do celular não há como mexer em outro site: o endereço fica só copiado.
+O campo é achado pelo tipo (`url`) ou pelo texto (site, endereço, link, domínio). Foi testado numa página parecida, não no site real,
+que bloqueia navegadores automáticos: se o Reclame Aqui mudar a página, pode ser preciso ajustar o `reclameaqui.js`.
+
 ## v3.4: aplicativo e extensão juntos
 A tela **"Verificar um link"** (`verificar.html`, `verificar.js`, `verificar.css`) serve aos dois:
 - **Na extensão:** botão "Verificar um link antes de abrir" no popup. Usa o armazenamento da extensão

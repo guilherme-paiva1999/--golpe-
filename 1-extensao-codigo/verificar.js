@@ -254,7 +254,11 @@ $('voltarAjustes').addEventListener('click', () => history.back());
 $('ouvir').addEventListener('click', falarResultado);
 $('atualizarListas').addEventListener('click', () => baixarListas(true));
 $('reclameAqui').addEventListener('click', () => {
-  if (atual && navigator.clipboard) navigator.clipboard.writeText(atual.host).catch(() => {});
+  if (!atual) return;
+  const host = atual.host.replace(/^www\./, '');
+  if (navigator.clipboard) navigator.clipboard.writeText(host).catch(() => {});
+  // Dentro da extensão, o reclameaqui.js preenche o Detector sozinho. No celular, o endereço fica copiado para colar.
+  if (EGolpeModo === 'extensao') chrome.storage.local.set({ raPendente: { host, t: Date.now() } }).catch(() => {});
 });
 $('notaRA').addEventListener('change', async () => {
   if (!atual) return;

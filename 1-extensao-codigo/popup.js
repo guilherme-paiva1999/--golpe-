@@ -56,6 +56,7 @@ async function prepararRA() {
   if (chave) $('notaRA').value = reclameAqui[chave].nota;
   $('btnRA').addEventListener('click', async () => {
     try { await navigator.clipboard.writeText(host); } catch (e) { /* sem área de transferência */ }
+    await chrome.storage.local.set({ raPendente: { host, t: Date.now() } });   // reclameaqui.js preenche o Detector
     chrome.tabs.create({ url: 'https://www.reclameaqui.com.br/detector-site-confiavel/' });
   });
   $('notaRA').addEventListener('change', async () => {

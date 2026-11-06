@@ -244,8 +244,9 @@
       type: 'button', class: 'b ra',
       onclick: () => {
         try { navigator.clipboard.writeText(dominioRA).catch(() => {}); } catch (e) { /* sem área de transferência */ }
+        try { chrome.storage.local.set({ raPendente: { host: dominioRA, t: Date.now() } }); } catch (e) { /* extensão recarregada */ }
         window.open('https://www.reclameaqui.com.br/detector-site-confiavel/', '_blank', 'noopener');
-        textoRA.textContent = 'Endereço copiado: cole no Reclame Aqui';
+        textoRA.textContent = 'Abrindo o Reclame Aqui com o endereço preenchido';
       }
     }, chip, textoRA);
     const acoes = el('div', { class: 'acoes' }, voltar);
