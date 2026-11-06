@@ -341,13 +341,27 @@
   }
   function hostEm(host, lista) { return lista.some((g) => host === g || host.endsWith('.' + g)); }
 
+  const TEXTO_COMPRA = /^(comprar(\s+agora)?|compre(\s+j[áa]|\s+agora)?|adicionar(\s+(ao|à|a)\s+(carrinho|sacola|cesta))?|add\s+to\s+(cart|bag)|buy\s+now|finalizar\s+(a\s+)?compra|ir\s+para\s+o\s+carrinho|ver\s+carrinho)\b/i;
+  function botaoDeCompra() {
+    const els = document.querySelectorAll('button, a, input[type="submit"], input[type="button"], [role="button"]');
+    for (let i = 0; i < els.length && i < 4000; i++) {
+      const e = els[i];
+      const t = (e.innerText || e.value || e.getAttribute('aria-label') || '').trim().slice(0, 60);
+      if (t && TEXTO_COMPRA.test(t)) return true;
+    }
+    return !!document.querySelector('a[href*="carrinho" i], a[href*="sacola" i], a[href*="/cart" i], a[href*="/bag" i], a[href*="checkout" i], [class*="minicart" i], [id*="minicart" i]');
+  }
+
   function lerSinais() {
     const texto = (document.body ? document.body.innerText : '').slice(0, 100000);
     const campoCartao = !!document.querySelector('input[autocomplete^="cc-"], input[name*="card" i], input[name*="cartao" i], input[name*="cvv" i], input[id*="cvv" i]');
     const senha = !!document.querySelector('input[type="password"]');
     const pagamento = campoCartao || PAGAMENTO.some((p) => p.test(texto));
     const preco = (texto.match(/R\$\s?\d/g) || []).length;
-    const venda = preco >= 1 && /adicionar\s+ao\s+carrinho|comprar\s+agora|\bcomprar\b|carrinho\s+de\s+compras|finalizar\s+compra/i.test(texto);
+    // v3.8: loja de verdade tem BOTÃO de compra ou link de carrinho. "R$" e "comprar" soltos no texto aparecem em notícias
+    // (cotações, "vendido por R$ 22 milhões") e faziam sites de notícias parecerem lojas.
+    const compraUI = botaoDeCompra();
+    const venda = preco >= 1 && compraUI;
     const contador = !!document.querySelector('[class*="countdown" i], [id*="countdown" i], [class*="timer" i], [id*="timer" i]');
     const pressao = contador || PRESSAO.some((p) => p.test(texto));
     let formExterno = false, gateway = false;
@@ -397,7 +411,9 @@
   }
 
   function paginaDeDinheiro(s) {
-    return !!(s.pagamento || s.venda || s.pressao || s.desconto || s.formExterno || (s.senha && s.marcas && s.marcas.length));
+    // Pressão e desconto sozinhos não bastam (notícias falam em "últimas horas" e "50% de desconto"):
+    // contam só junto com venda ou pagamento, que já entram por conta própria.
+    return !!(s.pagamento || s.venda || s.formExterno || (s.senha && s.marcas && s.marcas.length));
   }
 
   let ultimoEnvio = '';

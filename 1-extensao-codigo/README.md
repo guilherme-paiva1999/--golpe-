@@ -176,6 +176,13 @@ node ml/testar_confianca.js && node ml/testar_reclameaqui.js && node ml/testar_e
 node ml/testar_gov_marca.js && node ml/testar_pontuacao.js
 ```
 
+## v3.8: sites de notícias não são mais tratados como loja
+A medição com sites reais mostrou CNN Brasil e Estadão bloqueados como "loja sem CNPJ": a página tinha "R$" (cotações,
+"vendido por R$ 22 milhões") e a palavra "comprar" no texto. Agora só é loja quando a página tem preço **e** um **botão** de compra
+("Comprar", "Adicionar ao carrinho/sacola", "Finalizar compra") ou link de carrinho, sacola ou checkout. Pressão ("últimas horas")
+e desconto sozinhos também não fazem mais a página contar como página de dinheiro. Conferido ao vivo: CNN Brasil, Estadão, G1 e UOL
+abrem sem análise; KaBuM continua analisada como loja.
+
 ## v3.7: loja estrangeira
 Loja **fora do .br**, **sem CNPJ** e **não voltada ao Brasil** (sem preços em R$ e página que não está em português) também é
 bloqueada, mas com outro aviso: **"Esta é uma loja estrangeira"**, "Ela está fora dos nossos cuidados: não tem CNPJ e não segue as leis
