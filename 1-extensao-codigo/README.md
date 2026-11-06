@@ -176,6 +176,13 @@ node ml/testar_confianca.js && node ml/testar_reclameaqui.js && node ml/testar_e
 node ml/testar_gov_marca.js && node ml/testar_pontuacao.js
 ```
 
+## v3.7: loja estrangeira
+Loja **fora do .br**, **sem CNPJ** e **não voltada ao Brasil** (sem preços em R$ e página que não está em português) também é
+bloqueada, mas com outro aviso: **"Esta é uma loja estrangeira"**, "Ela está fora dos nossos cuidados: não tem CNPJ e não segue as leis
+brasileiras de defesa do consumidor. Mas o que podemos dizer sobre ela está logo abaixo", com a lista do que vimos e a verificação
+completa já aberta. Loja sem CNPJ com preços em R$ ou em português, mesmo em .com ou .shop, continua com o aviso de "sem CNPJ":
+é o disfarce comum de loja falsa. Página de teste: `teste/loja-estrangeira.html`.
+
 ## v3.6: só em páginas de dinheiro, e loja sem CNPJ é bloqueada
 - **Só age onde há dinheiro.** Avisos, análise da página e selo no ícone só aparecem quando a página vende, pede pagamento ou Pix,
   usa pressão ("últimas unidades") ou desconto exagerado, manda dados de cartão, CPF ou senha para outro site, ou pede senha

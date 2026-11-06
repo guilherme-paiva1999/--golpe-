@@ -371,7 +371,9 @@
     const emailMesmoDominio = emails.some((d) => d === raiz || d.endsWith('.' + raiz) || raiz.endsWith('.' + d));
     const contato = CONTATO.test(texto) || ENDERECO.test(texto) || emails.length > 0 || !!document.querySelector('a[href^="tel:"]');
     const politicas = POLITICAS.filter((p) => p.test(texto)).length >= 2;
-    return { pagamento, pressao, desconto: descontoExagerado(texto), formExterno, senha, venda,
+    // Página voltada ao Brasil: preços em R$ ou página em português (usado para saber se a loja é estrangeira).
+    const brasil = preco >= 1 || /^pt/i.test(document.documentElement.lang || '');
+    return { pagamento, pressao, desconto: descontoExagerado(texto), formExterno, senha, venda, brasil,
       semContato: pagamento && !(CNPJ.test(texto) || contato), cnpjValido, cnpjInvalido, contato, emailMesmoDominio, politicas, gateway,
       marcas: (senha || pagamento) ? marcasDaPagina() : [], cnpj };
   }

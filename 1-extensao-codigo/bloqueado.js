@@ -26,7 +26,9 @@ function li(texto) {
 }
 
 function textoParaOuvir() {
-  let t = 'Pare. Alerta de golpe. Bloqueamos este site para proteger você. ';
+  let t = contaDaPagina && contaDaPagina.cnpj === 'estrangeira'
+    ? 'Esta é uma loja estrangeira. Ela está fora dos nossos cuidados, mas o que podemos dizer sobre ela é o seguinte. '
+    : 'Pare. Alerta de golpe. Bloqueamos este site para proteger você. ';
   if (verificacao || contaDaPagina) t += 'Confiança neste site: ' + (verificacao || contaDaPagina).confianca + ' por cento. Para ser confiável, precisa ter ' + ((verificacao || contaDaPagina).limite || 90) + ' por cento ou mais. ';
   t += motivos.slice(0, config.modoSimples ? 2 : 4).join(' ') + ' ';
   t += 'Não digite senha, CPF nem dados do cartão. ';
@@ -43,6 +45,15 @@ function falar(texto) {
     return true;
   }
   return false;
+}
+
+// Loja estrangeira (v3.7): outro título e outro texto, e as provas que conseguimos ver ficam abertas.
+function avisoEstrangeira() {
+  $('titulo').textContent = 'Esta é uma loja estrangeira';
+  $('texto').textContent = 'Ela está fora dos nossos cuidados: não tem CNPJ e não segue as leis brasileiras de defesa do consumidor. ' +
+    'Mas o que podemos dizer sobre ela está logo abaixo.';
+  motivos = motivos.filter((m) => !/^Esta é uma loja estrangeira/.test(m));
+  $('detalhes').open = true;
 }
 
 function mostrarMotivos() {
@@ -128,6 +139,7 @@ async function iniciar() {
     if (res && res.conta && typeof res.conta.confianca === 'number') {
       contaDaPagina = res.conta;               // loja: mostra exatamente a porcentagem calculada na página
       mostrarConfianca(res.conta.confianca, res.conta.limite || limiteDaConfig());
+      if (res.conta.cnpj === 'estrangeira') avisoEstrangeira();
     } else mostrarConfianca(Math.max(0, 100 - Math.max(70, pontos)), limiteDaConfig());
   } catch (e) { motivos = []; mostrarConfianca(0, limiteDaConfig()); }
   mostrarMotivos();

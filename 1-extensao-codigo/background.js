@@ -518,7 +518,7 @@ function estadoSelo(res) {
   return res.nivel === 'ok' ? 'verificar' : res.nivel;
 }
 
-const SINAIS_CHAVES = ['pagamento', 'pressao', 'desconto', 'formExterno', 'senha', 'semContato',
+const SINAIS_CHAVES = ['pagamento', 'pressao', 'desconto', 'formExterno', 'senha', 'semContato', 'brasil',
   'venda', 'cnpjValido', 'cnpjInvalido', 'contato', 'emailMesmoDominio', 'politicas', 'gateway'];
 
 // Loja (venda ou pedido de pagamento): começa com 0 e precisa PROVAR confiança: só é confiável com 90% ou mais.
@@ -710,8 +710,14 @@ async function avaliarPagina(host, protocolo, sinais) {
     let nivel = c.confianca >= limite ? 'ok' : (c.confianca < 30 ? 'perigo' : 'atencao');
     if (falsa) nivel = 'perigo';                       // marca falsa é decisiva, mesmo em site antigo
     // Loja sem CNPJ ativo é bloqueada (v3.6). A porcentagem calculada continua a mesma e aparece na tela de bloqueio.
-    const cnpj = situacaoCnpj(cnpjUsado, empresa, rdap);
-    if (cnpj === 'nenhum') {
+    let cnpj = situacaoCnpj(cnpjUsado, empresa, rdap);
+    // Loja estrangeira (v3.7): fora do .br, sem CNPJ e sem preços em R$ nem página em português. Também é bloqueada,
+    // com outro aviso. Loja sem CNPJ voltada ao Brasil (R$ ou português) continua com o aviso de "sem CNPJ".
+    if (cnpj === 'nenhum' && !r.dominio.endsWith('.br') && !sinais.brasil) cnpj = 'estrangeira';
+    if (cnpj === 'estrangeira') {
+      nivel = 'perigo';
+      motivos.unshift('Esta é uma loja estrangeira e está fora dos nossos cuidados: ela não tem CNPJ e não segue as leis brasileiras de defesa do consumidor.');
+    } else if (cnpj === 'nenhum') {
       nivel = 'perigo';
       motivos.unshift('Esta loja não tem CNPJ registrado: a página não mostra um CNPJ' +
         (r.dominio.endsWith('.br') ? ' e o site não está em nome de uma empresa no registro.br.' : '.') +

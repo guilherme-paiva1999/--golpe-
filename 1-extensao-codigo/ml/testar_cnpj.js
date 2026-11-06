@@ -22,8 +22,10 @@ const t = async (nome, host, sinais, espNivel, espCnpj) => {
 (async () => {
   await t('loja com CNPJ ativo na página', 'loja.com.br', loja({ cnpjValido: true, cnpj: '11222333000181', gateway: true }), 'ok', 'ativo');
   await t('loja sem CNPJ na página, registro.br em nome de empresa', 'empresa.com.br', loja({ gateway: true }), 'ok', 'ativo');
-  await t('loja sem CNPJ, site em nome de pessoa física', 'pessoa.com.br', loja({ gateway: true }), 'perigo', 'nenhum');
-  await t('loja .com sem CNPJ na página', 'lojinha.com', loja({ gateway: true }), 'perigo', 'nenhum');
+  await t('loja sem CNPJ, site em nome de pessoa física', 'pessoa.com.br', loja({ gateway: true, brasil: true }), 'perigo', 'nenhum');
+  await t('loja .com sem CNPJ, com preços em R$ (voltada ao Brasil)', 'lojinha.com', loja({ gateway: true, brasil: true }), 'perigo', 'nenhum');
+  await t('loja estrangeira: .com, sem CNPJ, sem R$ nem português', 'shop-abroad.com', loja({ gateway: true }), 'perigo', 'estrangeira');
+  await t('loja .com.br sem CNPJ e sem R$ não é "estrangeira"', 'pessoa.com.br', loja({ gateway: true }), 'perigo', 'nenhum');
   await t('loja com CNPJ baixado na Receita', 'loja2.com.br', loja({ cnpjValido: true, cnpj: '99888777000166', gateway: true }), 'perigo', 'irregular');
   await t('BrasilAPI sem resposta: a regra não bloqueia', 'loja3.com.br', loja({ cnpjValido: true, cnpj: '55444333000122', gateway: true }), 'ok', 'sem-resposta');
   n++; const blog = await T.avaliarPagina('blog-qualquer.com', 'https:', { senha: true });
