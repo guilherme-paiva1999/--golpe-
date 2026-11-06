@@ -56,7 +56,7 @@ As capturas de tela ficam em `teste-real/capturas/` (não vão para o GitHub).
 - **Visual** da tela de bloqueio e dos avisos: sóbrio e limpo (vermelho-escuro, octógono com X, "PERIGO", lista de motivos,
   três botões). O visual de "cartaz de campanha" da v3.1 foi descartado por estar poluído.
 - **Pessoa de confiança**: os dados ficam só no computador; nada é enviado sozinho (abre o WhatsApp e a pessoa confirma).
-- Segredos (senhas, chaves, `.env`, bancos de dados) **nunca** vão para o GitHub. O repositório é **público**.
+- Segredos (senhas, chaves, `.env`, bancos de dados) **nunca** vão para o GitHub. O repositório é **privado**: no outro computador, entre com a sua conta (`gh auth login`) antes de clonar.
 
 ## 6. Ideias que ficaram para depois
 - "Cadastre sua marca" (citado no pitch de 3 minutos).
