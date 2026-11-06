@@ -12,13 +12,13 @@ E a Serasa mostra o outro lado: **48% dos consumidores já desistiram de uma com
 O golpe rouba quem compra, e a desconfiança rouba quem vende de verdade, principalmente o pequeno criador, que ainda não é uma marca famosa.
 
 ## 0:55 · A solução (35 s)
-O **É Golpe?** é uma extensão de navegador com uma regra simples: **todo site precisa provar que é confiável**.
+O **É Golpe?** é uma extensão de navegador com uma regra simples: **todo site precisa provar que é confiável**, e só passa com **90% ou mais de confiança**.
 Ela confere há quanto tempo o site existe, se o **CNPJ está ativo na Receita**, se a empresa responde reclamações no **consumidor.gov.br**, se a página usa pressão como "últimas unidades".
 Se uma loja diz ser uma marca e o endereço não é o oficial, aparece um **alerta vermelho** que explica o motivo em linguagem simples.
 
 ## 1:30 · A ligação com a indústria criativa (45 s)
 E aqui está a ligação com a indústria criativa: o mesmo sistema que alerta quem compra **protege quem cria**.
-A marca honesta prova que é verdadeira, passa da nossa nota mínima e vende sem alerta.
+A marca honesta prova que é verdadeira, chega aos 90% de confiança e vende sem alerta.
 O próximo passo é o **"Cadastre sua marca"**: a estilista, o estúdio de design ou a banda registram o site oficial, e qualquer cópia passa a disparar o alerta para quem tentar comprar nela.
 Loja copiada, ingresso falso de show, curso clonado: o golpe muda, a defesa é a mesma.
 
