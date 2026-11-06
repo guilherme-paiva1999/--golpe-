@@ -394,13 +394,19 @@
     document.documentElement.appendChild(host);
   }
 
+  function paginaDeDinheiro(s) {
+    return !!(s.pagamento || s.venda || s.pressao || s.desconto || s.formExterno || (s.senha && s.marcas && s.marcas.length));
+  }
+
   let ultimoEnvio = '';
   async function checarPagina() {
     if (!ativo || rodadas++ >= 6 || !document.body) return;
     if (siteRes && siteRes.conhecido) return;               // site provado: não incomoda
     const sinais = lerSinais();
     const chave = JSON.stringify(sinais);
-    const gatilho = sinais.pagamento || sinais.venda || sinais.pressao || sinais.desconto || sinais.formExterno || sinais.senha;
+    // v3.6: a extensão só age em páginas de compra, pagamento, Pix ou promoção. Senha sozinha não conta
+    // (todo site tem login); conta quando a página diz ser um banco, o gov.br ou outra marca (golpe de login falso).
+    const gatilho = paginaDeDinheiro(sinais);
     if (!gatilho || chave === ultimoEnvio) return;
     ultimoEnvio = chave;
     const res = await enviar({ tipo: 'avaliar-pagina', host: location.hostname, protocolo: location.protocol, url: location.href, sinais });
@@ -578,7 +584,9 @@
   configPronta.then(() => enviar({ tipo: 'checar-site', host: location.hostname, protocolo: location.protocol, url: location.href }))
     .then((res) => {
       siteRes = res;
-      if (res && res.nivel !== 'ok') mostrarAvisoSite(res);
+      // Endereço suspeito: o aviso só aparece se a página pedir dinheiro (compra, pagamento, Pix, promoção).
+      // Em sites de leitura e vídeo, a extensão fica quieta. Golpe confirmado já foi bloqueado antes de abrir.
+      if (res && res.nivel !== 'ok' && document.body && paginaDeDinheiro(lerSinais())) mostrarAvisoSite(res);
       checarPagina();
     });
 })();

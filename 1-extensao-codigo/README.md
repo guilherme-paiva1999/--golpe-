@@ -176,6 +176,19 @@ node ml/testar_confianca.js && node ml/testar_reclameaqui.js && node ml/testar_e
 node ml/testar_gov_marca.js && node ml/testar_pontuacao.js
 ```
 
+## v3.6: só em páginas de dinheiro, e loja sem CNPJ é bloqueada
+- **Só age onde há dinheiro.** Avisos, análise da página e selo no ícone só aparecem quando a página vende, pede pagamento ou Pix,
+  usa pressão ("últimas unidades") ou desconto exagerado, manda dados de cartão, CPF ou senha para outro site, ou pede senha
+  dizendo ser um banco, o gov.br ou outra marca. Em sites de leitura e vídeo a extensão fica quieta.
+  Continuam valendo em qualquer site: o **bloqueio antes de abrir** de endereços que estão em listas de golpes ou que imitam
+  banco ou gov.br (pontos de risco ≥ 70), e a proteção de posts com frases de golpe com dinheiro ("faça um Pix", "lucro garantido").
+- **Loja sem CNPJ ativo é bloqueada.** Numa página que vende ou pede pagamento, a extensão procura o CNPJ na página e, nos sites .br,
+  o do responsável pelo domínio no registro.br, e confere na Receita pela BrasilAPI. Sem CNPJ (ou site em nome de pessoa física),
+  ou com CNPJ inexistente, baixado ou inapto: bloqueia. Se a BrasilAPI não responder, essa regra não bloqueia.
+  Teste: `node ml/testar_cnpj.js`.
+- **Um número só na tela de bloqueio.** Quando a loja é bloqueada pela página, a tela mostra a mesma porcentagem que causou o bloqueio
+  (antes ela recalculava outra). A lista de provas continua embaixo.
+
 ## v3.5: Reclame Aqui com o endereço já preenchido
 Ao clicar em **"Verificar no Reclame Aqui"** (popup, tela de bloqueio, aviso na página ou "Verificar um link"), a extensão guarda
 o endereço por 2 minutos e abre o Detector de Site Confiável. O `reclameaqui.js`, que só roda na página do Detector, escreve o

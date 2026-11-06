@@ -13,6 +13,7 @@ let config = {};
 let pessoa = null;
 let motivos = [];
 let verificacao = null;
+let contaDaPagina = null;   // a porcentagem que causou o bloqueio (loja), quando houver
 
 const limiteDaConfig = () => (config.rigor === 'normal' ? 60 : 90);
 
@@ -26,7 +27,7 @@ function li(texto) {
 
 function textoParaOuvir() {
   let t = 'Pare. Alerta de golpe. Bloqueamos este site para proteger você. ';
-  if (verificacao) t += 'Confiança neste site: ' + verificacao.confianca + ' por cento. Para ser confiável, precisa ter ' + (verificacao.limite || 90) + ' por cento ou mais. ';
+  if (verificacao || contaDaPagina) t += 'Confiança neste site: ' + (verificacao || contaDaPagina).confianca + ' por cento. Para ser confiável, precisa ter ' + ((verificacao || contaDaPagina).limite || 90) + ' por cento ou mais. ';
   t += motivos.slice(0, config.modoSimples ? 2 : 4).join(' ') + ' ';
   t += 'Não digite senha, CPF nem dados do cartão. ';
   if (pessoa) t += 'Se quiser, aperte o botão para perguntar a ' + P.primeiroNome(pessoa.nome) + ' se é golpe.';
@@ -59,8 +60,9 @@ function mostrarConfianca(confianca, limite) {
 }
 
 function mostrarVerificacao(v) {
-  verificacao = v;
-  mostrarConfianca(v.confianca, v.limite || limiteDaConfig());
+  // Loja bloqueada pela página: a lista de provas aparece, mas o número continua o da página (um número só).
+  verificacao = contaDaPagina ? { ...v, confianca: contaDaPagina.confianca, limite: contaDaPagina.limite || v.limite } : v;
+  mostrarConfianca(verificacao.confianca, verificacao.limite || limiteDaConfig());
   $('verif').replaceChildren(...v.itens.map((it) => {
     const [ic, rot] = ICONES[it.efeito] || ICONES.neutro;
     const e = document.createElement('li');
@@ -123,7 +125,10 @@ async function iniciar() {
     // A porcentagem aparece na hora (mesma conta da verificação: site bloqueado começa com no máximo 30%).
     // Quando a verificação completa termina, o número é ajustado com as provas encontradas.
     const pontos = res && typeof res.pontos === 'number' ? res.pontos : 100;
-    mostrarConfianca(Math.max(0, 100 - Math.max(70, pontos)), limiteDaConfig());
+    if (res && res.conta && typeof res.conta.confianca === 'number') {
+      contaDaPagina = res.conta;               // loja: mostra exatamente a porcentagem calculada na página
+      mostrarConfianca(res.conta.confianca, res.conta.limite || limiteDaConfig());
+    } else mostrarConfianca(Math.max(0, 100 - Math.max(70, pontos)), limiteDaConfig());
   } catch (e) { motivos = []; mostrarConfianca(0, limiteDaConfig()); }
   mostrarMotivos();
   if (config.vozAutomatica) falar(textoParaOuvir());

@@ -508,8 +508,8 @@ async function selo(tabId, estado) {
   const cores = cfg.daltonico
     ? { ok: '#0072b2', verificar: '#6b6b6b', atencao: '#e69f00', perigo: '#000000' }
     : { ok: '#17803f', verificar: '#6b6b6b', atencao: '#c77700', perigo: '#c62828' };
-  const m = { ok: '✓', verificar: '?', atencao: '!', perigo: 'X' }[estado];
-  if (tabId == null || !m) return;
+  const m = { ok: '✓', verificar: '?', atencao: '!', perigo: 'X', nenhum: '' }[estado];
+  if (tabId == null || m === undefined) return;
   chrome.action.setBadgeText({ tabId, text: m }).catch(() => {});
   chrome.action.setBadgeBackgroundColor({ tabId, color: cores[estado] }).catch(() => {});
 }
@@ -670,6 +670,14 @@ function aplicarConsumidor(reg, comercio, valor, motivos) {
 // Só é confiável quem CHEGA ao limite: 90% ou mais (rigor alto, o padrão) ou 60% ou mais (rigor normal).
 function limiteConfianca(rigor) { return rigor === 'normal' ? 60 : 90; }
 
+// Situação do CNPJ de uma loja: 'ativo', 'irregular' (não existe, baixado, inapto...), 'nenhum' (não achamos CNPJ
+// na página nem no registro.br) ou 'sem-resposta' (a BrasilAPI não respondeu: nesse caso a regra não bloqueia).
+function situacaoCnpj(cnpjUsado, empresa, rdap) {
+  if (!cnpjUsado) return 'nenhum';
+  if (!empresa) return 'sem-resposta';
+  return empresa.existe && empresa.ativa ? 'ativo' : 'irregular';
+}
+
 async function avaliarPagina(host, protocolo, sinais) {
   const pre = await analisar(host, protocolo, { rapido: true });
   if (pre.conhecido || pre.permitido || pre.pontos >= 100) return pre;     // provado, liberado ou já na lista
@@ -701,7 +709,18 @@ async function avaliarPagina(host, protocolo, sinais) {
     c.confianca = aplicarConsumidor(consumidor, true, c.confianca, motivos);
     let nivel = c.confianca >= limite ? 'ok' : (c.confianca < 30 ? 'perigo' : 'atencao');
     if (falsa) nivel = 'perigo';                       // marca falsa é decisiva, mesmo em site antigo
-    return { nivel, pontos: 100 - c.confianca, confianca: c.confianca, limite, comercio: true,
+    // Loja sem CNPJ ativo é bloqueada (v3.6). A porcentagem calculada continua a mesma e aparece na tela de bloqueio.
+    const cnpj = situacaoCnpj(cnpjUsado, empresa, rdap);
+    if (cnpj === 'nenhum') {
+      nivel = 'perigo';
+      motivos.unshift('Esta loja não tem CNPJ registrado: a página não mostra um CNPJ' +
+        (r.dominio.endsWith('.br') ? ' e o site não está em nome de uma empresa no registro.br.' : '.') +
+        ' Toda loja on-line no Brasil precisa informar quem vende.');
+    } else if (cnpj === 'irregular') {
+      nivel = 'perigo';
+      motivos.unshift('O CNPJ desta loja não existe ou não está ativo na Receita Federal.');
+    }
+    return { nivel, pontos: 100 - c.confianca, confianca: c.confianca, limite, comercio: true, cnpj,
       motivos, dominio: r.dominio, conhecido: false, provado: nivel === 'ok', dias };
   }
   let pontos = r.pontos + (protocolo === 'http:' ? 10 : 0);
@@ -814,9 +833,11 @@ function falar(texto) {
 }
 
 // ---------- Bloqueio antes de a página abrir ----------
-function bloquear(tabId, url, motivos) {
+function bloquear(tabId, url, motivos, conta) {
   // guarda os motivos para a tela de bloqueio (alguns vêm da página, não só do endereço)
   if (motivos && motivos.length) chrome.storage.session.set({ ['motivos:' + url]: motivos.slice(0, 6) }).catch(() => {});
+  // e a porcentagem que causou o bloqueio, para a tela mostrar o mesmo número
+  if (conta && typeof conta.confianca === 'number') chrome.storage.session.set({ ['conta:' + url]: conta }).catch(() => {});
   const alvo = chrome.runtime.getURL('bloqueado.html') + '?u=' + encodeURIComponent(url);
   return chrome.tabs.update(tabId, { url: alvo }).catch(() => {});
 }
@@ -900,7 +921,8 @@ async function tratar(msg, sender) {
       if (!hostValido(msg.host) || !protocoloValido(msg.protocolo)) return null;
       const host = msg.host.toLowerCase();
       const res = await analisar(host, msg.protocolo);
-      if (sender.tab) selo(sender.tab.id, estadoSelo(res));
+      // v3.6: sem selo em sites de leitura e vídeo; o selo aparece quando a página pede dinheiro (avaliar-pagina).
+      if (sender.tab) selo(sender.tab.id, res.nivel === 'perigo' ? 'perigo' : 'nenhum');
       if (res.nivel === 'perigo' && sender.tab && typeof msg.url === 'string') {
         try {
           const u = new URL(msg.url);
@@ -919,7 +941,11 @@ async function tratar(msg, sender) {
       const res = await avaliarPagina(host, msg.protocolo, sinais);
       if (sender.tab) selo(sender.tab.id, res.provado ? 'ok' : estadoSelo(res));
       if (res.nivel === 'perigo' && sender.tab && typeof msg.url === 'string') {
-        try { if (new URL(msg.url).hostname.toLowerCase() === host) bloquear(sender.tab.id, msg.url, res.motivos); } catch (e) { /* ignora */ }
+        try {
+          if (new URL(msg.url).hostname.toLowerCase() === host) {
+            bloquear(sender.tab.id, msg.url, res.motivos, res.comercio ? { confianca: res.confianca, limite: res.limite, cnpj: res.cnpj } : null);
+          }
+        } catch (e) { /* ignora */ }
       }
       return res;
     }
@@ -960,6 +986,8 @@ async function tratar(msg, sender) {
       if (msg.tipo === 'detalhes') {
         const guardados = (await chrome.storage.session.get('motivos:' + u.href))['motivos:' + u.href];
         if (guardados && guardados.length) res.motivos = [...new Set([...guardados, ...res.motivos])];
+        const conta = (await chrome.storage.session.get('conta:' + u.href))['conta:' + u.href];
+        if (conta) res.conta = conta;                   // porcentagem calculada na página da loja
       }
       return res;
     }

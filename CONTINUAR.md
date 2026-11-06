@@ -23,6 +23,7 @@ node ml/testar_reclameaqui.js
 node ml/testar_empresa.js
 node ml/testar_gov_marca.js
 node ml/testar_pontuacao.js
+node ml/testar_cnpj.js
 ```
 Teste real num Google Chrome (abre um Chrome escondido com perfil temporário, precisa de internet):
 ```
@@ -58,6 +59,9 @@ As capturas de tela ficam em `teste-real/capturas/` (não vão para o GitHub).
 - **Visual** da tela de bloqueio e dos avisos: sóbrio e limpo (vermelho-escuro, octógono com X, "PERIGO", lista de motivos,
   três botões). O visual de "cartaz de campanha" da v3.1 foi descartado por estar poluído.
 - **Aplicativo e extensão juntos** (3.4.0): o aplicativo confere o link antes de abrir; a extensão cuida das páginas. Um código só: o aplicativo é a `verificar.html` da pasta da extensão.
+- **Só em páginas de dinheiro** (3.6.0): avisos e análise só onde há compra, pagamento, Pix, promoção ou login que diz ser banco/gov.br. Bloqueio antes de abrir de golpe confirmado continua em qualquer site.
+- **Loja sem CNPJ ativo é bloqueada** (3.6.0), com a mesma porcentagem na tela de bloqueio.
+- **URLhaus fora do ar:** desde nov/2026 os downloads da lista respondem 410 (não existe mais nesse endereço). A extensão segue com Phishing.Database e Procon-SP. Decidir: tirar a fonte ou trocar pelo novo acesso do abuse.ch.
 - **Pessoa de confiança**: os dados ficam só no computador; nada é enviado sozinho (abre o WhatsApp e a pessoa confirma).
 - Segredos (senhas, chaves, `.env`, bancos de dados) **nunca** vão para o GitHub. O repositório é **público** desde 06/11/2026: tudo o que for enviado fica visível para qualquer pessoa, inclusive o histórico. Antes de cada commit, confira se não há dados pessoais nem chaves.
 - A logo do Reclame Aqui (`icons/reclameaqui.png`) é marca registrada e fica visível no repositório público.

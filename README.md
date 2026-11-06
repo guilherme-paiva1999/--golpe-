@@ -1,7 +1,7 @@
 # É Golpe? · tudo o que foi produzido
 
 Extensão do Chrome que avisa sobre golpes, feita para o Hackathon "Negócios em Transformação" (UniSenac, Senac, Sebrae).
-Versão da extensão neste pacote: **3.5.0**.
+Versão da extensão neste pacote: **3.6.0**.
 
 ## O que tem em cada pasta
 
@@ -35,6 +35,11 @@ Veja [`CONTINUAR.md`](CONTINUAR.md): como baixar, instalar, rodar os testes e as
 3. **Carregar sem compactação** e escolha a pasta com o `manifest.json`.
 4. Na primeira vez abre a tela de boas-vindas: escolha a acessibilidade e, se quiser, a pessoa de confiança.
 5. Recarregue as abas abertas. O popup tem botões para testar os avisos.
+
+## Novidades da 3.6.0
+
+- A extensão **só age em páginas de dinheiro**: compra, pagamento, Pix, promoção com pressão ou desconto exagerado, e login que diz ser banco ou gov.br. Em sites de leitura e vídeo ela fica quieta.
+- **Loja sem CNPJ ativo é bloqueada** (consulta na Receita pela BrasilAPI), e a tela de bloqueio mostra **a mesma porcentagem** que causou o bloqueio.
 
 ## Novidades da 3.5.0
 
