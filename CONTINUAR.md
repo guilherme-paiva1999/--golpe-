@@ -50,7 +50,7 @@ As capturas de tela ficam em `teste-real/capturas/` (não vão para o GitHub).
 - **Reclame Aqui** não é consultado automaticamente (sem API pública e o site proíbe robôs). A pessoa clica no botão verde,
   que abre o Detector oficial. A logo veio do Wikimedia Commons (domínio público), mas é marca registrada: para uso comercial,
   pedir autorização.
-- **Confiança em porcentagem**, aparece na hora (sem "carregando"). **Só é confiável acima de 80%** (rigor normal: 60%).
+- **Confiança em porcentagem**, aparece na hora (sem "carregando"). **Só é confiável com 90% ou mais** (rigor normal: 60% ou mais). Mudou de 80% para 90% na 3.3.0.
 - **Aprendizado de máquina** só soma pontos, nunca bloqueia sozinho, e olha só o domínio principal (pega ~10% dos golpes com
   ~1% de falsos alertas; detalhes no README da extensão).
 - **Visual** da tela de bloqueio e dos avisos: sóbrio e limpo (vermelho-escuro, octógono com X, "PERIGO", lista de motivos,

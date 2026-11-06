@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "É Golpe?",
-  "version": "3.2.0",
+  "version": "3.3.0",
   "description": "Avisa sobre sites suspeitos e golpes, com explicações simples, acessibilidade e uma pessoa de confiança para perguntar.",
   "minimum_chrome_version": "110",
   "icons": { "16": "icons/16.png", "48": "icons/48.png", "128": "icons/128.png" },

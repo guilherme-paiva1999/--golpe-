@@ -14,7 +14,7 @@ let pessoa = null;
 let motivos = [];
 let verificacao = null;
 
-const limiteDaConfig = () => (config.rigor === 'normal' ? 60 : 80);
+const limiteDaConfig = () => (config.rigor === 'normal' ? 60 : 90);
 
 const ICONES ={ contra: ['✗', 'Contra'], favor: ['✓', 'A favor'], neutro: ['•', 'Informação'] };
 
@@ -26,7 +26,7 @@ function li(texto) {
 
 function textoParaOuvir() {
   let t = 'Pare. Alerta de golpe. Bloqueamos este site para proteger você. ';
-  if (verificacao) t += 'Confiança neste site: ' + verificacao.confianca + ' por cento. Para ser confiável, precisa passar de ' + (verificacao.limite || 80) + ' por cento. ';
+  if (verificacao) t += 'Confiança neste site: ' + verificacao.confianca + ' por cento. Para ser confiável, precisa ter ' + (verificacao.limite || 90) + ' por cento ou mais. ';
   t += motivos.slice(0, config.modoSimples ? 2 : 4).join(' ') + ' ';
   t += 'Não digite senha, CPF nem dados do cartão. ';
   if (pessoa) t += 'Se quiser, aperte o botão para perguntar a ' + P.primeiroNome(pessoa.nome) + ' se é golpe.';
@@ -50,12 +50,12 @@ function mostrarMotivos() {
   $('caixaMotivos').hidden = !lista.length;
 }
 
-// Mostra a porcentagem. Só é confiável quem PASSA do limite (mais de 80% no rigor padrão).
+// Mostra a porcentagem. Só é confiável quem CHEGA ao limite (90% ou mais no rigor padrão).
 function mostrarConfianca(confianca, limite) {
   $('confNum').textContent = confianca + '%';
   $('confBarra').style.width = confianca + '%';
   $('confLimite').style.left = 'calc(' + limite + '% - 2px)';
-  $('resumo').textContent = 'confiável só acima de ' + limite + '%';
+  $('resumo').textContent = 'confiável só com ' + limite + '% ou mais';
 }
 
 function mostrarVerificacao(v) {

@@ -199,12 +199,12 @@
     const titulo = res.comercio
       ? (perigo ? 'Esta loja tem cara de golpe' : 'Esta loja ainda não provou ser confiável')
       : (perigo ? 'Este site pode ser um golpe' : 'Este site é suspeito');
-    // Porcentagem: só é confiável quem passa do limite (mais de 80% no rigor padrão).
-    const limiteConf = res.limite || (config.rigor === 'normal' ? 60 : 80);
+    // Porcentagem: só é confiável quem chega ao limite (90% ou mais no rigor padrão).
+    const limiteConf = res.limite || (config.rigor === 'normal' ? 60 : 90);
     const confNum = res.confianca !== undefined ? res.confianca : (typeof res.pontos === 'number' ? Math.max(0, 100 - res.pontos) : null);
     const confTexto = res.confianca !== undefined
-      ? 'Confiança: ' + res.confianca + '%. Para ser confiável, precisa passar de ' + limiteConf + '%.'
-      : (typeof res.pontos === 'number' ? 'Confiança: ' + Math.max(0, 100 - res.pontos) + '%. Para ser confiável, precisa passar de ' + limiteConf + '%.' : '');
+      ? 'Confiança: ' + res.confianca + '%. Para ser confiável, precisa ter ' + limiteConf + '% ou mais.'
+      : (typeof res.pontos === 'number' ? 'Confiança: ' + Math.max(0, 100 - res.pontos) + '%. Para ser confiável, precisa ter ' + limiteConf + '% ou mais.' : '');
 
     const { host, root } = criarCaixa({
       position: 'fixed', inset: '0', 'z-index': '2147483647', display: 'block'
@@ -273,7 +273,7 @@
         el('div', { class: 'host' }, location.hostname),
         ...(confNum === null ? [] : [el('div', { class: 'conf' },
           el('div', { class: 'conf-linha' }, el('span', { class: 'num' }, confNum + '%'), el('span', {}, 'de confiança'),
-            el('span', { class: 'conf-txt' }, '· confiável só acima de ' + limiteConf + '%')),
+            el('span', { class: 'conf-txt' }, '· confiável só com ' + limiteConf + '% ou mais')),
           barraConf(confNum, limiteConf))]),
         el('p', { class: 'texto' }, PASSOS[nivel]),
         el('ul', { class: 'lista' }, ...motivos.map((m) => el('li', {}, m))),

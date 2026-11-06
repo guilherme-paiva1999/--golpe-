@@ -521,7 +521,7 @@ function estadoSelo(res) {
 const SINAIS_CHAVES = ['pagamento', 'pressao', 'desconto', 'formExterno', 'senha', 'semContato',
   'venda', 'cnpjValido', 'cnpjInvalido', 'contato', 'emailMesmoDominio', 'politicas', 'gateway'];
 
-// Loja (venda ou pedido de pagamento): começa com 0 e precisa PROVAR confiança: só é confiável acima de 80%.
+// Loja (venda ou pedido de pagamento): começa com 0 e precisa PROVAR confiança: só é confiável com 90% ou mais.
 // Provas somam; sinais ruins tiram. O que faltou vira o aviso.
 function pontuarConfianca(sinais, dias, protocolo, pontosDoEndereco, gratuito) {
   const alertas = [], faltou = [];
@@ -667,8 +667,8 @@ function aplicarConsumidor(reg, comercio, valor, motivos) {
   return aplicarDelta(d, comercio, valor);
 }
 
-// Só é confiável quem PASSA do limite: mais de 80% (rigor alto, o padrão) ou mais de 60% (rigor normal).
-function limiteConfianca(rigor) { return rigor === 'normal' ? 60 : 80; }
+// Só é confiável quem CHEGA ao limite: 90% ou mais (rigor alto, o padrão) ou 60% ou mais (rigor normal).
+function limiteConfianca(rigor) { return rigor === 'normal' ? 60 : 90; }
 
 async function avaliarPagina(host, protocolo, sinais) {
   const pre = await analisar(host, protocolo, { rapido: true });
@@ -699,7 +699,7 @@ async function avaliarPagina(host, protocolo, sinais) {
     c.confianca = aplicarRA(await notaRA(r.dominio), true, c.confianca, motivos);
     c.confianca = aplicarEmpresa(empresa, true, c.confianca, motivos);
     c.confianca = aplicarConsumidor(consumidor, true, c.confianca, motivos);
-    let nivel = c.confianca > limite ? 'ok' : (c.confianca < 30 ? 'perigo' : 'atencao');
+    let nivel = c.confianca >= limite ? 'ok' : (c.confianca < 30 ? 'perigo' : 'atencao');
     if (falsa) nivel = 'perigo';                       // marca falsa é decisiva, mesmo em site antigo
     return { nivel, pontos: 100 - c.confianca, confianca: c.confianca, limite, comercio: true,
       motivos, dominio: r.dominio, conhecido: false, provado: nivel === 'ok', dias };

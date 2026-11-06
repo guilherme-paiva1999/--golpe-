@@ -57,7 +57,7 @@ Selo no ícone: ✓ provado, ? não verificado, ! atenção, X perigo.
 Os botões "É golpe" e "É seguro" guardam os seus rótulos neste computador ("Baixar meus dados") para treinar um modelo depois.
 Os pesos foram definidos à mão, **não treinados**; `ml/testar_pontuacao.js` testa só a lógica.
 
-## Lojas precisam provar confiança (v2.4; limite de 80% desde a v3.0)
+## Lojas precisam provar confiança (v2.4; limite de 90% desde a v3.3)
 Se a página vende ou pede pagamento, ela começa com 0 de confiança e precisa passar de **75**.
 Provas: idade do domínio (3 anos +35, 1 ano +25, 6 meses +10), https +10, CNPJ com dígitos válidos +10,
 contato +10 (+5 se o e-mail é do próprio site), políticas de trocas/privacidade/entrega +15, gateway de
@@ -150,8 +150,9 @@ Detector de Site Confiável do Reclame Aqui, só com fontes abertas e sem abrir 
 Um site bloqueado começa com no máximo 30% (o que o bloqueou) e cada prova muda a confiança. O CNPJ do responsável pelo
 domínio também passou a valer nas lojas quando a página não mostra CNPJ. O número de CPF nunca é guardado.
 
-### Confiável só acima de 80%
-A confiança aparece sempre em **porcentagem**, na hora (sem texto de "carregando"; quando a verificação completa termina, o número é ajustado). Um site só é **confiável se passar de 80%** (rigor alto, o padrão; 60% no rigor normal). Antes era "mais de 75".
+### Confiável só com 90% ou mais (v3.3)
+A confiança aparece sempre em **porcentagem**, na hora (sem texto de "carregando"; quando a verificação completa termina, o número é ajustado). Um site só é **confiável com 90% ou mais** (rigor alto, o padrão; 60% ou mais no rigor normal). Antes era "mais de 80%" (v3.0) e "mais de 75" (v2.4).
+Com 90%, uma loja só passa se juntar quase todas as provas: por exemplo, 3 anos ou mais, https, CNPJ, contato, políticas e pagamento conhecido (90%), ou essas provas sem o pagamento conhecido, mais o CNPJ ativo na Receita ou uma boa nota do Reclame Aqui.
 
 ### Logo do Reclame Aqui
 `icons/reclameaqui.png` vem do Wikimedia Commons (`File:Reclame-aqui-logo.png`, imagem em domínio público). O nome e a logo são **marca registrada** do Reclame Aqui: aqui só identificam o botão que leva ao site deles. Para uso comercial, peça autorização ao Reclame Aqui.

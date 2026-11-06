@@ -1,7 +1,7 @@
 # É Golpe? · tudo o que foi produzido
 
 Extensão do Chrome que avisa sobre golpes, feita para o Hackathon "Negócios em Transformação" (UniSenac, Senac, Sebrae).
-Versão da extensão neste pacote: **3.2.0**.
+Versão da extensão neste pacote: **3.3.0**.
 
 ## O que tem em cada pasta
 
@@ -34,6 +34,11 @@ Veja [`CONTINUAR.md`](CONTINUAR.md): como baixar, instalar, rodar os testes e as
 4. Na primeira vez abre a tela de boas-vindas: escolha a acessibilidade e, se quiser, a pessoa de confiança.
 5. Recarregue as abas abertas. O popup tem botões para testar os avisos.
 
+## Novidades da 3.3.0
+
+- Para ser **confiável**, o site agora precisa de **90% ou mais** de confiança (antes: mais de 80%).
+- Planta simples e acessível do projeto (WCAG 2.2 e NBR 9050:2020) em `3-apresentacao/planta-e-golpe.html`.
+
 ## Novidades da 3.0.0
 
 - **Tela de boas-vindas** na instalação: a pessoa escolhe a acessibilidade (idoso/dificuldade com a internet, cego/leitor de tela,
@@ -45,7 +50,7 @@ Veja [`CONTINUAR.md`](CONTINUAR.md): como baixar, instalar, rodar os testes e as
   BrasilAPI, reclamações no consumidor.gov.br, listas de golpes). Cada prova ruim diminui a confiança.
 - **Aprendizado de máquina ligado**: o modelo do nome do site roda na extensão e soma pontos (pega ~10% dos golpes com ~1% de falsos alertas).
 - **Só fontes abertas**: o feed do OpenPhish (que não permite uso comercial) foi retirado.
-- Confiança sempre em porcentagem, que aparece na hora (sem "carregando"): **só é confiável acima de 80%**.
+- Confiança sempre em porcentagem, que aparece na hora (sem "carregando"): **só é confiável acima de 80%** (mudou para 90% ou mais na 3.3.0).
 - Botão do Reclame Aqui **verde, com a logo** do Reclame Aqui (3.0.1).
 - Visual **sóbrio e limpo** na tela de bloqueio e nos avisos: o essencial na tela, detalhes num clique (3.2.0).
 
