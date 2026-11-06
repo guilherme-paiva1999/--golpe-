@@ -1,7 +1,7 @@
 # É Golpe? · tudo o que foi produzido
 
 Extensão do Chrome que avisa sobre golpes, feita para o Hackathon "Negócios em Transformação" (UniSenac, Senac, Sebrae).
-Versão da extensão neste pacote: **3.8.0**.
+Versão da extensão neste pacote: **3.9.0**.
 
 ## O que tem em cada pasta
 
@@ -35,6 +35,10 @@ Veja [`CONTINUAR.md`](CONTINUAR.md): como baixar, instalar, rodar os testes e as
 3. **Carregar sem compactação** e escolha a pasta com o `manifest.json`.
 4. Na primeira vez abre a tela de boas-vindas: escolha a acessibilidade e, se quiser, a pessoa de confiança.
 5. Recarregue as abas abertas. O popup tem botões para testar os avisos.
+
+## Novidades da 3.9.0
+
+- **Dados da empresa na BrasilAPI:** além de ativa ou inativa, a extensão pesa o **tempo de empresa** (nova pesa contra) e confere se as **atividades econômicas** combinam com vender produtos.
 
 ## Novidades da 3.8.0
 

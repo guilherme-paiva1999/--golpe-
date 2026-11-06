@@ -16,7 +16,7 @@ t('site antigo (4 anos) soma 20',conf(30,{dias:1500}),50);
 t('sem cadeado tira 10',conf(30,{dias:1500,protocolo:'http:'}),40);
 t('CNPJ inexistente tira 25',conf(30,{dias:1500,empresa:{existe:false}}),25);
 t('CNPJ baixado tira 25',conf(30,{dias:1500,empresa:{existe:true,ativa:false,situacao:'BAIXADA'}}),25);
-t('empresa ativa antiga soma 10',conf(30,{dias:1500,empresa:{existe:true,ativa:true,abertura:'2010-01-01',razao:'X'}}),60);
+t('empresa ativa antiga soma 10 (+5 por 5 anos ou mais)',conf(30,{dias:1500,empresa:{existe:true,ativa:true,abertura:'2010-01-01',razao:'X'}}),65);
 t('pessoa física tira 5',conf(30,{dias:1500,pf:true}),45);
 t('RA "Não recomendado" tira 40',conf(30,{dias:1500,ra:{nota:'nao_recomendado'}}),10);
 t('consumidor.gov.br ruim (resolve 20%, nota 1,5) tira 10',conf(30,{dias:1500,consumidor:{periodo:'x',dados:['Ruim',500,70,20,1.5]}}),40);

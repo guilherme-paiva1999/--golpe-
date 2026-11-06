@@ -176,6 +176,16 @@ node ml/testar_confianca.js && node ml/testar_reclameaqui.js && node ml/testar_e
 node ml/testar_gov_marca.js && node ml/testar_pontuacao.js
 ```
 
+## v3.9: dados da empresa na BrasilAPI (situação, tempo de empresa e atividades)
+Quando há CNPJ (na página ou no registro.br), a BrasilAPI informa:
+- **Situação:** inexistente, baixada, suspensa ou inapta tira 25 e, em loja, bloqueia (como antes).
+- **Tempo de empresa:** menos de 6 meses −15; de 6 meses a 1 ano −5; 5 anos ou mais +5. Empresas novas são usadas em golpes.
+- **Atividades econômicas (CNAE principal e secundárias):** se a página **vende produtos** e a empresa não tem nenhuma atividade de
+  comércio ou indústria (divisões 10 a 33, 45, 46, 47, intermediação 7490-1/04 ou portais 6319), tira 10, com o motivo
+  "A empresa não tem atividade de comércio registrada na Receita (atividade principal: …)". Sozinho, não bloqueia.
+- A tela de bloqueio e o aplicativo mostram "aberta há N anos" e a atividade principal.
+Testes: `node ml/testar_empresa.js` e `node ml/testar_verificacao.js`.
+
 ## v3.8: sites de notícias não são mais tratados como loja
 A medição com sites reais mostrou CNN Brasil e Estadão bloqueados como "loja sem CNPJ": a página tinha "R$" (cotações,
 "vendido por R$ 22 milhões") e a palavra "comprar" no texto. Agora só é loja quando a página tem preço **e** um **botão** de compra

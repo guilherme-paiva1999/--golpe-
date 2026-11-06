@@ -609,7 +609,11 @@ async function consultarCnpj(cnpj) {
       const j = await r.json();
       info = { existe: true, ativa: /^ATIVA$/i.test(String(j.descricao_situacao_cadastral || '').trim()),
         situacao: j.descricao_situacao_cadastral || '', razao: j.razao_social || '', fantasia: j.nome_fantasia || '',
-        abertura: j.data_inicio_atividade || '' };
+        abertura: j.data_inicio_atividade || '',
+        // v3.9: atividades econômicas (CNAE principal e secundárias) e MEI
+        cnaes: [j.cnae_fiscal, ...(Array.isArray(j.cnaes_secundarios) ? j.cnaes_secundarios.map((c) => c && c.codigo) : [])]
+          .filter(Boolean).map(String).slice(0, 60),
+        atividade: String(j.cnae_fiscal_descricao || '').slice(0, 160), mei: j.opcao_pelo_mei === true };
     }
   } catch (e) { /* sem resposta: não conta nem a favor nem contra */ }
   if (info) {
@@ -625,7 +629,26 @@ function aplicarDelta(delta, comercio, valor) {
   return comercio ? Math.max(0, Math.min(100, valor + delta)) : Math.max(0, valor - delta);
 }
 
-function aplicarEmpresa(info, comercio, valor, motivos) {
+// Atividade econômica (CNAE) que permite vender produtos: indústria (divisões 10 a 33), comércio de veículos (45),
+// atacado (46), varejo (47, inclui o comércio pela internet), intermediação de negócios (7490-1/04) e portais (6319).
+function cnaeVende(c) {
+  const s = String(c || '').replace(/\D/g, '');
+  const div = Number(s.slice(0, 2));
+  return (div >= 10 && div <= 33) || div === 45 || div === 46 || div === 47 || s.startsWith('7490104') || s.startsWith('6319');
+}
+// Tempo de empresa em dias (null se a Receita não informou).
+function diasDeEmpresa(info) {
+  const t = new Date(info && info.abertura).getTime();
+  return isNaN(t) ? null : (Date.now() - t) / 86400000;
+}
+function textoIdadeEmpresa(dias) {
+  if (dias === null) return '';
+  if (dias < 365) return 'aberta há ' + Math.max(1, Math.round(dias / 30)) + ' meses';
+  const anos = Math.floor(dias / 365);
+  return 'aberta há ' + anos + (anos === 1 ? ' ano' : ' anos');
+}
+// Peso da empresa (BrasilAPI): situação na Receita, tempo de empresa e, se a página vende produtos, as atividades registradas.
+function aplicarEmpresa(info, comercio, valor, motivos, vendeProdutos) {
   if (!info) return valor;
   let d;
   const origem = info.doRegistro ? 'do responsável pelo domínio (registro.br)' : 'mostrado na página';
@@ -633,10 +656,19 @@ function aplicarEmpresa(info, comercio, valor, motivos) {
   else if (!info.ativa) { d = -25; motivos.push('O CNPJ ' + origem + ' está com situação "' + (info.situacao || 'irregular') + '" na Receita Federal.'); }
   else {
     d = 10;
-    const ano = String(info.abertura || '').slice(0, 4);
-    motivos.push('A favor: empresa ativa na Receita Federal (' + (info.fantasia || info.razao || 'sem nome') + (ano ? ', aberta em ' + ano : '') + ').');
-    const dias = (Date.now() - new Date(info.abertura).getTime()) / 86400000;
-    if (dias >= 0 && dias < 180) { d -= 15; motivos.push('A empresa foi aberta há menos de 6 meses.'); }
+    const dias = diasDeEmpresa(info);
+    const idade = textoIdadeEmpresa(dias);
+    motivos.push('A favor: empresa ativa na Receita Federal (' + (info.fantasia || info.razao || 'sem nome') + (idade ? ', ' + idade : '') + ').');
+    // Empresas novas são usadas em golpes: menos de 6 meses pesa muito, menos de 1 ano pesa um pouco; 5 anos ou mais ajuda.
+    if (dias !== null && dias >= 0 && dias < 180) { d -= 15; motivos.push('A empresa foi aberta há menos de 6 meses.'); }
+    else if (dias !== null && dias < 365) { d -= 5; motivos.push('A empresa tem menos de 1 ano.'); }
+    else if (dias !== null && dias >= 5 * 365) d += 5;
+    // A página vende produtos, mas a empresa não tem nenhuma atividade de comércio ou indústria registrada.
+    if (vendeProdutos && Array.isArray(info.cnaes) && info.cnaes.length && !info.cnaes.some(cnaeVende)) {
+      d -= 10;
+      motivos.push('A empresa não tem atividade de comércio registrada na Receita' +
+        (info.atividade ? ' (atividade principal: ' + info.atividade + ')' : '') + ', mas a página vende produtos.');
+    }
   }
   return aplicarDelta(d, comercio, valor);
 }
@@ -705,7 +737,7 @@ async function avaliarPagina(host, protocolo, sinais) {
     const c = pontuarConfianca(sinais, dias, protocolo, r.pontos, gratuito);
     const motivos = [...r.motivos, ...c.motivos];
     c.confianca = aplicarRA(await notaRA(r.dominio), true, c.confianca, motivos);
-    c.confianca = aplicarEmpresa(empresa, true, c.confianca, motivos);
+    c.confianca = aplicarEmpresa(empresa, true, c.confianca, motivos, !!sinais.venda);
     c.confianca = aplicarConsumidor(consumidor, true, c.confianca, motivos);
     let nivel = c.confianca >= limite ? 'ok' : (c.confianca < 30 ? 'perigo' : 'atencao');
     if (falsa) nivel = 'perigo';                       // marca falsa é decisiva, mesmo em site antigo
@@ -775,10 +807,13 @@ function confiancaDaVerificacao(base, prova) {
   else if (e && !e.ativa) { somar(-25); item('contra', 'Empresa responsável', 'O CNPJ do responsável está "' + (e.situacao || 'irregular') + '" na Receita Federal.'); }
   else if (e) {
     let dd = 10;
-    const ano = String(e.abertura || '').slice(0, 4);
-    let t = 'Empresa ativa na Receita Federal: ' + (e.fantasia || e.razao || 'sem nome') + (ano ? ', aberta em ' + ano : '') + '.';
-    const dias = (Date.now() - new Date(e.abertura).getTime()) / 86400000;
-    if (dias >= 0 && dias < 180) { dd -= 15; t += ' Mas foi aberta há menos de 6 meses.'; }
+    const dias = diasDeEmpresa(e);
+    const idade = textoIdadeEmpresa(dias);
+    let t = 'Empresa ativa na Receita Federal: ' + (e.fantasia || e.razao || 'sem nome') + (idade ? ', ' + idade : '') + '.';
+    if (e.atividade) t += ' Atividade principal: ' + e.atividade + '.';
+    if (dias !== null && dias >= 0 && dias < 180) { dd -= 15; t += ' Atenção: empresa aberta há menos de 6 meses.'; }
+    else if (dias !== null && dias < 365) { dd -= 5; t += ' Empresa com menos de 1 ano.'; }
+    else if (dias !== null && dias >= 5 * 365) dd += 5;
     somar(dd); item(dd > 0 ? 'favor' : 'contra', 'Empresa responsável', t);
   } else if (prova.pf) { somar(-5); item('contra', 'Empresa responsável', 'O site está registrado em nome de uma pessoa física, não de uma empresa (CNPJ).'); }
   else item('neutro', 'Empresa responsável', prova.br ? 'Não conseguimos ver quem é o responsável pelo domínio.' : 'Sites fora do .br não mostram quem é o dono. Procure o CNPJ no rodapé, sem digitar seus dados.');
