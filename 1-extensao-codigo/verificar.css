@@ -38,6 +38,8 @@ textarea,input[type=text],input[type=tel],select{width:100%;font:inherit;color:v
   border:2px solid var(--tx2);border-radius:10px;padding:12px 14px;min-height:56px}
 textarea{resize:vertical}
 :focus-visible{outline:3px solid var(--foco);outline-offset:3px}
+/* Títulos recebem foco só para o leitor de tela anunciar a tela nova: sem contorno de teclado neles. */
+h1[tabindex="-1"]:focus{outline:none}
 .erro{color:var(--pe);font-weight:700;margin-top:8px}
 @media (prefers-color-scheme:dark){.erro{color:#ffab9e}}
 .linha-botoes{display:grid;grid-template-columns:1fr 2fr;gap:12px;margin-top:14px}
