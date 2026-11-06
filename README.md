@@ -102,11 +102,13 @@ Veja [`CONTINUAR.md`](CONTINUAR.md): como baixar, instalar, rodar os testes e as
 
 ## Números verificados (lidos nas páginas)
 
+- 82% das pessoas com 60 anos ou mais em SP já sofreram tentativas de golpes virtuais (Fundação Seade, SP TIC, jul–set/2025, via Agência SP, 16/03/2026; conferido em 06/11/2026).
+
 - 48% desistiram de comprar on-line por desconfiança (Serasa, via CNN Brasil, 11/02/2025).
 - 4 em cada 10 brasileiros já foram vítimas de golpes (Serasa, via Mercado&Consumo, 05/08/2024).
 - 82% compram on-line ao menos uma vez por mês (Serasa, Relatório de Identidade e Fraude 2025).
 - Quase 1,5 milhão de tentativas de fraude de identidade digital no 1º tri de 2026, +36,6% (Serasa, via Lets Money).
-- CERT.br 2026 (jan–out): varejo foi a categoria com mais páginas falsas (1.616). Licença CC BY-NC-ND 4.0: cite a fonte.
+- CERT.br 2026 (jan–out): varejo foi a categoria com mais páginas falsas (1.616 de 5.484). Licença CC BY-NC-ND 4.0: cite a fonte. Conferido em 06/11/2026.
 - Feed do OpenPhish: as regras pegaram 1,1% dos golpes recentes; só 2,6% já estavam no Phishing.Database.
 
 ## Aprendizado de máquina: resultado honesto

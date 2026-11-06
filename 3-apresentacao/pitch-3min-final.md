@@ -45,12 +45,12 @@ Toda vez que alguém vai pagar, aparece a pergunta: isso é golpe? **A gente res
 - **"Qual o acerto da inteligência artificial?"**: responda com honestidade. O modelo que olha só o nome do site acerta 81% e é um sinal extra; quem decide são as listas de golpes, a idade do site e o CNPJ na Receita. Estamos medindo a extensão inteira em centenas de sites reais e falsos.
 - **"E loja estrangeira?"**: é bloqueada com um aviso próprio: "esta é uma loja estrangeira, está fora dos nossos cuidados", seguido do que conseguimos ver sobre ela.
 
-## Fontes dos números
-- Fundação Seade, pesquisa SP TIC (jul–set/2025), via Agência SP: 82% das pessoas com 60 anos ou mais sofreram tentativas de golpes virtuais. https://www.agenciasp.sp.gov.br/pesquisa-do-seade-mostra-que-mais-de-80-dos-idosos-sofreram-tentativas-de-golpes-virtuais-em-sp/
-- Serasa Experian, via CNN Brasil (11/02/2025): 48% já desistiram de compra on-line por desconfiança.
-- CERT.br, estatísticas de páginas falsas, 2026 (jan–out): varejo foi a categoria com mais páginas falsas (1.616). Licença CC BY-NC-ND 4.0: cite a fonte.
+## Fontes dos números (todas conferidas na página original em 06/11/2026)
+- **82% das pessoas com 60 anos ou mais** em SP já sofreram tentativas de golpes virtuais. Fundação Seade, série Seade SP TIC (pesquisa de julho a setembro de 2025), publicado pela Agência SP em 16/03/2026. Trecho: "Levantamento inédito da Fundação Seade revela que 82% das pessoas com 60 anos ou mais, no estado de São Paulo, já sofreram tentativas de golpes virtuais". https://www.agenciasp.sp.gov.br/desenvolvimento/pesquisa-do-seade-mostra-que-mais-de-80-dos-idosos-sofreram-tentativas-de-golpes-virtuais-em-sp/
+- **4 em cada 10 brasileiros** já foram vítimas de golpes. Serasa Experian, via Mercado&Consumo, 05/08/2024. Trecho: "Quatro em cada 10 brasileiros já foram vítimas de golpes. O levantamento foi realizado pela Serasa Experian". https://mercadoeconsumo.com.br/05/08/2024/economia/quatro-em-cada-10-brasileiros-ja-foram-vitimas-de-golpes/
+- **48% já desistiram de uma compra on-line** por falta de confiança. Serasa, via CNN Brasil, 11/02/2025. Trecho: "Segundo pesquisa, 48% já desistiram de uma compra on-line por falta de confiança no site ou aplicativo". https://www.cnnbrasil.com.br/economia/money/macroeconomia/metade-dos-brasileiros-abandona-compra-on-line-por-inseguranca-diz-serasa/
+- **Varejo foi a categoria com mais páginas falsas em 2026**: 1.616 de 5.484 páginas falsas acompanhadas de janeiro a outubro de 2026. CERT.br, estatísticas de páginas falsas. Licença CC BY-NC-ND 4.0: cite a fonte. https://stats.cert.br/phishing/
 
 ## Atenção antes de apresentar
-- Confira o 82% no texto da Agência SP (não foi possível abrir a página para ler).
 - **"Cadastre sua marca" ainda não existe**: no pitch ele é o próximo passo.
 - O nome nos slides é **Isso é Golpe?**; a extensão e o aplicativo ainda se chamam **É Golpe?**. Combine com a equipe qual nome usar.

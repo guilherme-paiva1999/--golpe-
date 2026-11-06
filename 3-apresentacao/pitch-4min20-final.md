@@ -39,7 +39,7 @@ O Chrome e os antivírus protegem contra vírus. A gente vai além:
 1. **Feito para o Brasil:** Receita Federal, Pix, Procon e Reclame Aqui. Loja estrangeira recebe aviso próprio: "está fora dos nossos cuidados".
 2. **A marca honesta prova que é verdadeira** e vende sem alerta.
 3. **Pessoa de confiança:** num clique, o idoso pergunta para o filho no WhatsApp: "isso é golpe?".
-4. **Acessível de verdade:** seguimos a WCAG 2.2 e a NBR 9050: letras grandes, voz alta, leitor de tela e cores para daltonismo.
+4. **Pensado para quem tem dificuldade:** letras grandes, aviso em voz alta, leitor de tela e cores para daltonismo.
 
 ## 3:20 · Negócio (30 s)
 Para quem compra, é **de graça**.
@@ -60,14 +60,13 @@ Toda vez que alguém vai pagar ou digitar a senha, aparece a mesma pergunta: ser
 - **"E se o site for legítimo e não tiver CNPJ?"**: a pessoa vê o motivo e pode continuar mesmo assim, com dois cliques. Na dúvida, um clique abre o Reclame Aqui ou pergunta para a pessoa de confiança.
 - **"Por que não bloqueia tudo?"**: porque aviso demais vira ruído. A extensão só age onde há dinheiro: loja, pagamento, Pix e login que diz ser banco ou gov.br.
 
-## Fontes dos números
-- Fundação Seade, pesquisa SP TIC (jul–set/2025), via Agência SP: 82% das pessoas com 60 anos ou mais sofreram tentativas de golpes virtuais. https://www.agenciasp.sp.gov.br/pesquisa-do-seade-mostra-que-mais-de-80-dos-idosos-sofreram-tentativas-de-golpes-virtuais-em-sp/
-- Serasa Experian, via Mercado&Consumo (05/08/2024): 4 em cada 10 brasileiros já foram vítimas de golpes.
-- Serasa Experian, via CNN Brasil (11/02/2025): 48% já desistiram de compra on-line por desconfiança.
-- CERT.br, estatísticas de páginas falsas, 2026 (jan–out): varejo foi a categoria com mais páginas falsas (1.616). Licença CC BY-NC-ND 4.0: cite a fonte.
+## Fontes dos números (todas conferidas na página original em 06/11/2026)
+- **82% das pessoas com 60 anos ou mais** em SP já sofreram tentativas de golpes virtuais. Fundação Seade, série Seade SP TIC (pesquisa de julho a setembro de 2025), publicado pela Agência SP em 16/03/2026. Trecho: "Levantamento inédito da Fundação Seade revela que 82% das pessoas com 60 anos ou mais, no estado de São Paulo, já sofreram tentativas de golpes virtuais". https://www.agenciasp.sp.gov.br/desenvolvimento/pesquisa-do-seade-mostra-que-mais-de-80-dos-idosos-sofreram-tentativas-de-golpes-virtuais-em-sp/
+- **4 em cada 10 brasileiros** já foram vítimas de golpes. Serasa Experian, via Mercado&Consumo, 05/08/2024. Trecho: "Quatro em cada 10 brasileiros já foram vítimas de golpes. O levantamento foi realizado pela Serasa Experian". https://mercadoeconsumo.com.br/05/08/2024/economia/quatro-em-cada-10-brasileiros-ja-foram-vitimas-de-golpes/
+- **48% já desistiram de uma compra on-line** por falta de confiança. Serasa, via CNN Brasil, 11/02/2025. Trecho: "Segundo pesquisa, 48% já desistiram de uma compra on-line por falta de confiança no site ou aplicativo". https://www.cnnbrasil.com.br/economia/money/macroeconomia/metade-dos-brasileiros-abandona-compra-on-line-por-inseguranca-diz-serasa/
+- **Varejo foi a categoria com mais páginas falsas em 2026**: 1.616 de 5.484 páginas falsas acompanhadas de janeiro a outubro de 2026. CERT.br, estatísticas de páginas falsas. Licença CC BY-NC-ND 4.0: cite a fonte. https://stats.cert.br/phishing/
 
 ## Atenção antes de apresentar
-- Confira o 82% no texto da Agência SP (não foi possível abrir a página para ler).
 - **"Cadastre sua marca" ainda não existe**: no pitch ele é o próximo passo.
 - Para a demonstração, use `1-extensao-codigo/teste/loja-sem-provas.html` (rode `python3 -m http.server 8000 --directory teste` e abra pelo navegador com a extensão) ou o vídeo da pasta `5-video/`.
 - O nome nos slides é **Isso é Golpe?**; a extensão e o aplicativo ainda se chamam **É Golpe?**. Combine com a equipe qual nome usar.
