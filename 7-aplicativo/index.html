@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>É Golpe?</title>
+<meta name="description" content="Recebeu um link? Confira se é golpe antes de abrir.">
+<meta name="theme-color" content="#12284a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icones/icone-192.png">
+<link rel="apple-touch-icon" href="icones/icone-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="topo">
+  <a class="marca" href="#" id="irInicio" aria-label="É Golpe?, voltar ao início">
+    <img src="icones/icone-192.png" alt="" width="40" height="40"><span>É Golpe?</span>
+  </a>
+  <button type="button" class="btn-topo" id="abrirAjustes">Ajustes</button>
+</header>
+
+<main id="conteudo">
+  <!-- Início -->
+  <section id="telaInicio" aria-labelledby="tInicio">
+    <h1 id="tInicio">Recebeu um link?<br>Confira antes de abrir.</h1>
+    <form id="formLink" novalidate>
+      <label for="link" class="rotulo">Cole o link aqui</label>
+      <textarea id="link" rows="3" autocomplete="off" autocapitalize="none" spellcheck="false" inputmode="url"
+        placeholder="Exemplo: https://loja-exemplo.com.br/oferta"></textarea>
+      <p class="erro" id="erroLink" role="alert" hidden></p>
+      <div class="linha-botoes">
+        <button type="button" class="btn btn-claro" id="colar">Colar</button>
+        <button type="submit" class="btn btn-forte" id="verificar">Verificar</button>
+      </div>
+    </form>
+
+    <div class="dica" id="dicaCompartilhar">
+      <h2>Mais fácil: compartilhe o link</h2>
+      <p>No WhatsApp, segure o dedo no link, toque em <strong>Compartilhar</strong> e escolha o aplicativo <strong>É Golpe?</strong></p>
+      <p class="pequeno">Funciona no Android depois de instalar o aplicativo. No iPhone, copie o link e toque em Colar.</p>
+    </div>
+
+    <div class="exemplos">
+      <h2>Quer ver como funciona? Teste com um exemplo:</h2>
+      <ul>
+        <li><button type="button" class="btn-exemplo" data-link="http://nubank-atualizar-cadastro.xyz/login">Link falso de banco</button></li>
+        <li><button type="button" class="btn-exemplo" data-link="https://resgate-valores-gov.me/consulta">Falso “resgate de valores” do governo</button></li>
+        <li><button type="button" class="btn-exemplo" data-link="https://www.kabum.com.br/">Loja conhecida (KaBuM!)</button></li>
+      </ul>
+      <p class="pequeno">Os dois primeiros sites não existem: são só exemplos de como os golpes costumam ser.</p>
+    </div>
+
+    <p class="estado-listas" id="estadoListas" aria-live="polite"></p>
+  </section>
+
+  <!-- Conferindo -->
+  <section id="telaCarregando" hidden aria-live="polite">
+    <div class="carregando"><span class="girando" aria-hidden="true"></span><p>Conferindo o site…</p></div>
+  </section>
+
+  <!-- Resultado -->
+  <section id="telaResultado" hidden aria-labelledby="tResultado">
+    <div class="cartao" id="cartao" role="alert">
+      <div class="cartao-topo">
+        <span id="simbolo" aria-hidden="true"></span>
+        <div>
+          <h1 id="tResultado"></h1>
+          <p class="site" id="site"></p>
+        </div>
+      </div>
+      <p class="confianca" id="confiancaTexto"></p>
+      <div class="barra" aria-hidden="true"><span id="barraValor"></span><i id="barraLimite"></i></div>
+      <p class="limite" id="limiteTexto"></p>
+    </div>
+
+    <div class="bloco">
+      <h2>O que fazer</h2>
+      <ul class="fazer" id="oQueFazer"></ul>
+    </div>
+
+    <div class="acoes">
+      <a class="btn btn-whats" id="perguntar" href="#" target="_blank" rel="noopener" hidden></a>
+      <button type="button" class="btn btn-claro" id="cadastrarPessoa" hidden>Cadastrar uma pessoa de confiança</button>
+      <a class="btn btn-ra" id="reclameAqui" href="https://www.reclameaqui.com.br/detector-site-confiavel/" target="_blank" rel="noopener">
+        <img src="nucleo/icons/reclameaqui.png" alt="" width="28" height="28">Verificar no Reclame Aqui</a>
+      <button type="button" class="btn btn-claro" id="ouvir">Ouvir o resultado</button>
+    </div>
+
+    <div class="bloco" id="blocoMotivos">
+      <h2>Por quê</h2>
+      <ul class="motivos" id="motivos"></ul>
+    </div>
+
+    <div class="bloco">
+      <h2>O que conferimos</h2>
+      <ul class="itens" id="itens"></ul>
+    </div>
+
+    <div class="bloco">
+      <h2>Já viu no Reclame Aqui?</h2>
+      <label for="notaRA" class="rotulo-menor">O que o Reclame Aqui mostrou para este site:</label>
+      <select id="notaRA">
+        <option value="">Ainda não vi</option>
+        <option value="verificado">RA Verificado / Confiável</option>
+        <option value="otimo">Ótimo / RA1000</option>
+        <option value="bom">Bom</option>
+        <option value="regular">Regular</option>
+        <option value="ruim">Ruim</option>
+        <option value="nao_recomendado">Não recomendado</option>
+        <option value="sem_cadastro">Sem cadastro</option>
+      </select>
+      <p class="pequeno">Isso entra na conta e muda a confiança.</p>
+    </div>
+
+    <div class="acoes">
+      <button type="button" class="btn btn-forte" id="outroLink">Verificar outro link</button>
+      <button type="button" class="btn btn-perigo-borda" id="abrirSite">Abrir o site mesmo assim</button>
+      <p class="pequeno" id="avisoAbrir" hidden></p>
+    </div>
+  </section>
+
+  <!-- Ajustes -->
+  <section id="telaAjustes" hidden aria-labelledby="tAjustes">
+    <h1 id="tAjustes">Ajustes</h1>
+    <form id="formAjustes" novalidate>
+      <fieldset>
+        <legend>Pessoa de confiança</legend>
+        <p class="pequeno">Quando aparecer um site suspeito, o aplicativo mostra o botão “Perguntar para…”, que abre o WhatsApp com a mensagem pronta. Nada é enviado sozinho.</p>
+        <label for="pNome" class="rotulo-menor">Nome</label>
+        <input id="pNome" type="text" autocomplete="off" placeholder="Exemplo: Maria (filha)">
+        <label for="pTel" class="rotulo-menor">WhatsApp com DDD</label>
+        <input id="pTel" type="tel" inputmode="tel" autocomplete="off" placeholder="Exemplo: (11) 98765-4321">
+        <p class="erro" id="erroPessoa" role="alert" hidden></p>
+      </fieldset>
+      <fieldset>
+        <legend>Acessibilidade</legend>
+        <label class="opcao"><input type="checkbox" id="oGrande"> Letras e botões maiores</label>
+        <label class="opcao"><input type="checkbox" id="oVoz"> Ler o resultado em voz alta</label>
+        <label class="opcao"><input type="checkbox" id="oDalt"> Cores para daltonismo (azul, laranja e preto)</label>
+      </fieldset>
+      <div class="linha-botoes">
+        <button type="button" class="btn btn-claro" id="voltarAjustes">Voltar</button>
+        <button type="submit" class="btn btn-forte">Salvar</button>
+      </div>
+      <p class="ok-salvo" id="salvo" role="status" hidden>Salvo.</p>
+    </form>
+    <div class="bloco">
+      <h2>Listas de golpes</h2>
+      <p id="estadoListas2"></p>
+      <button type="button" class="btn btn-claro" id="atualizarListas">Atualizar as listas agora</button>
+      <p class="pequeno">As listas (Phishing.Database e outras abertas) ficam guardadas no aparelho. A primeira vez baixa cerca de 11 MB: prefira o Wi-Fi.</p>
+    </div>
+    <p class="pequeno">Seus dados ficam só neste aparelho. O aplicativo consulta só fontes abertas: listas de golpes, a idade do site (RDAP) e a situação do CNPJ na Receita (BrasilAPI).</p>
+  </section>
+</main>
+
+<script src="ponte.js"></script>
+<script src="nucleo/modelo.js"></script>
+<script src="nucleo/pessoa.js"></script>
+<script src="nucleo/background.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

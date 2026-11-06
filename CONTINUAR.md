@@ -43,6 +43,7 @@ As capturas de tela ficam em `teste-real/capturas/` (não vão para o GitHub).
 | `1-extensao-codigo/pessoa.js` | Mensagem para a pessoa de confiança (WhatsApp/e-mail) |
 | `1-extensao-codigo/popup.html/js` | Janelinha do ícone |
 | `1-extensao-codigo/README.md` | Explica cada regra e cada versão em detalhe |
+| `7-aplicativo/` | Aplicativo para celular. A pasta `nucleo/` é cópia da extensão: depois de mudar a extensão, rode `7-aplicativo/copiar-nucleo.sh` |
 
 ## 5. Decisões já tomadas (para não desfazer sem querer)
 - **Só fontes abertas** que permitem uso comercial: Phishing.Database (MIT), URLhaus (CC0), Procon-SP, RDAP, BrasilAPI,

@@ -13,6 +13,7 @@ Versão da extensão neste pacote: **3.3.0**.
 | `4-logotipo/` | Logotipo em SVG e PNG (fundo claro e escuro) e ícone. |
 | `5-video/` | Vídeo da extensão funcionando (gravação real, sem dados injetados) e o roteiro que gravou o vídeo, com os sites fictícios. |
 | `6-prototipo-interativo/` | Primeira demonstração interativa (página HTML). |
+| `7-aplicativo/` | Protótipo do aplicativo para celular (site instalável): confere um link colado ou compartilhado pelo WhatsApp, com o mesmo núcleo da extensão. |
 
 Os arquivos `.html` do canvas e do protótipo abrem em qualquer navegador. Eles foram feitos para a plataforma de artefatos, então não têm cabeçalho HTML completo; mesmo assim funcionam.
 
@@ -37,6 +38,7 @@ Veja [`CONTINUAR.md`](CONTINUAR.md): como baixar, instalar, rodar os testes e as
 ## Novidades da 3.3.0
 
 - Para ser **confiável**, o site agora precisa de **90% ou mais** de confiança (antes: mais de 80%).
+- **Protótipo do aplicativo para celular** em `7-aplicativo/` (veja o README da pasta).
 - Planta simples e acessível do projeto (WCAG 2.2 e NBR 9050:2020) em `3-apresentacao/planta-e-golpe.html`.
 
 ## Novidades da 3.0.0
