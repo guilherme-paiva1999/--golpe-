@@ -5,7 +5,7 @@
 git clone https://github.com/guilherme-paiva1999/--golpe-.git e-golpe
 cd e-golpe
 ```
-Precisa do Git e de estar logado no GitHub (`gh auth login`) para enviar mudanças.
+O repositório é **público**: qualquer pessoa pode clonar, sem conta. Para **enviar** mudanças, precisa do Git, estar logado no GitHub (`gh auth login`) e ter sido adicionado como colaborador (Settings › Collaborators).
 
 ## 2. Instalar a extensão no Chrome
 `chrome://extensions` → ligar **Modo do desenvolvedor** → **Carregar sem compactação** → escolher a pasta `1-extensao-codigo`.
@@ -59,7 +59,8 @@ As capturas de tela ficam em `teste-real/capturas/` (não vão para o GitHub).
   três botões). O visual de "cartaz de campanha" da v3.1 foi descartado por estar poluído.
 - **Aplicativo e extensão juntos** (3.4.0): o aplicativo confere o link antes de abrir; a extensão cuida das páginas. Um código só: o aplicativo é a `verificar.html` da pasta da extensão.
 - **Pessoa de confiança**: os dados ficam só no computador; nada é enviado sozinho (abre o WhatsApp e a pessoa confirma).
-- Segredos (senhas, chaves, `.env`, bancos de dados) **nunca** vão para o GitHub. O repositório é **privado**: no outro computador, entre com a sua conta (`gh auth login`) antes de clonar.
+- Segredos (senhas, chaves, `.env`, bancos de dados) **nunca** vão para o GitHub. O repositório é **público** desde 06/11/2026: tudo o que for enviado fica visível para qualquer pessoa, inclusive o histórico. Antes de cada commit, confira se não há dados pessoais nem chaves.
+- A logo do Reclame Aqui (`icons/reclameaqui.png`) é marca registrada e fica visível no repositório público.
 
 ## 6. Ideias que ficaram para depois
 - "Cadastre sua marca" (citado no pitch de 3 minutos).
