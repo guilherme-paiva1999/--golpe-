@@ -1,0 +1,7 @@
+{
+  "name": "e-golpe-teste-real",
+  "private": true,
+  "description": "Teste da extensão É Golpe? num Google Chrome de verdade (Playwright).",
+  "scripts": { "test": "node testar.js" },
+  "dependencies": { "playwright-core": "1.56.1" }
+}

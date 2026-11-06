@@ -16,6 +16,10 @@ Versão da extensão neste pacote: **3.2.0**.
 
 Os arquivos `.html` do canvas e do protótipo abrem em qualquer navegador. Eles foram feitos para a plataforma de artefatos, então não têm cabeçalho HTML completo; mesmo assim funcionam.
 
+## Para continuar em outro computador
+
+Veja [`CONTINUAR.md`](CONTINUAR.md): como baixar, instalar, rodar os testes e as decisões já tomadas.
+
 ## Links
 
 - Código no GitHub: https://github.com/guilherme-paiva1999/--golpe- (histórico completo de commits)

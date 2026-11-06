@@ -19,3 +19,8 @@ node_modules/
 *.zip
 !2-extensao-pronta-para-instalar/e-golpe-extensao.zip
 entrega/
+
+# Teste real: dependências e capturas geradas
+teste-real/node_modules/
+teste-real/capturas/
+teste-real/package-lock.json
