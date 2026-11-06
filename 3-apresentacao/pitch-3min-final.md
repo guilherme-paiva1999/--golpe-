@@ -11,33 +11,30 @@ Pois é. Quase todo mundo. E é por isso que a gente está aqui.
 ## 0:20 · O problema (35 s)
 Segundo a Fundação Seade, **82% das pessoas com 60 anos ou mais** em São Paulo já sofreram tentativas de golpe pela internet.
 E a Serasa mostra o outro lado: **48% dos brasileiros já desistiram de uma compra on-line** porque não confiaram no site.
-O golpe rouba quem compra. E a desconfiança rouba quem vende de verdade: o pequeno criador, a marca independente, o artesão,
-que perde a venda porque o cliente não sabe se a loja dele é real.
+O golpe rouba quem compra. E a desconfiança rouba quem vende de verdade: o pequeno criador, o artesão, a marca independente.
 
 ## 0:55 · A ligação com a indústria criativa (30 s)
-Na indústria criativa, o patrimônio é a marca e a criação. E é exatamente isso que o golpista copia:
-a loja com fotos roubadas, o ingresso falso de show, o curso clonado.
-Segundo o CERT.br, em 2026 o **varejo foi o setor com mais páginas falsas** no Brasil.
-Proteger quem compra é também proteger quem cria.
+Na indústria criativa, o patrimônio é a marca e a criação. E é isso que o golpista copia:
+a loja com fotos roubadas, o ingresso falso, o curso clonado. Em 2026, o varejo foi o setor com mais páginas falsas, segundo o CERT.br.
+Proteger quem compra é proteger quem cria.
 
 ## 1:25 · A solução (40 s)
-O **Isso é Golpe?** é uma extensão do navegador e um aplicativo de celular que trabalham juntos, com uma regra simples:
-**todo site começa suspeito e só é confiável se provar, com 90% ou mais de confiança.**
-No celular, a pessoa recebe um link no WhatsApp, toca em Compartilhar e confere **antes de abrir**.
-No computador, a extensão age sozinha, mas **só onde tem dinheiro**: loja, pagamento, Pix, promoção. Em site de notícia ou vídeo, ela fica quieta.
-Ela consulta a **Receita Federal**: se a loja tem CNPJ, se a empresa está ativa, **há quanto tempo existe** e se ela é **registrada para vender**.
-Loja sem CNPJ é bloqueada. E o motivo aparece em **palavras simples**.
+O **Isso é Golpe?** é um aplicativo e uma extensão do navegador, com uma regra simples:
+**todo site começa suspeito e só é confiável com 90% ou mais de confiança.**
+No celular, a pessoa toca em Compartilhar no link do WhatsApp e confere **antes de abrir**.
+No computador, a extensão age sozinha, **só onde tem dinheiro**: loja, Pix, pagamento.
+Ela consulta a **Receita Federal**: se a empresa existe, está ativa, **há quanto tempo** e se é **registrada para vender**.
+Loja sem CNPJ é bloqueada, com o motivo em **palavras simples**.
 
 ## 2:05 · O que nos diferencia (30 s)
-O Chrome e os antivírus protegem contra vírus. A gente vai além, com quatro coisas que eles não têm:
-1. **Feito para o Brasil:** CNPJ na Receita, Pix, Procon, consumidor.gov.br e o botão que abre o **Reclame Aqui com o site já preenchido**.
-2. **A marca honesta prova que é verdadeira:** o pequeno criador com CNPJ ativo e site antigo passa sem alerta.
+O Chrome e os antivírus protegem contra vírus. A gente vai além:
+1. **Feito para o Brasil:** Receita Federal, Pix, Procon e o **Reclame Aqui já preenchido**.
+2. **A marca honesta prova que é verdadeira** e vende sem alerta.
 3. **Pessoa de confiança:** num clique, o idoso pergunta para o filho no WhatsApp: "isso é golpe?".
-4. **Acessível de verdade:** letras grandes, aviso em voz alta, leitor de tela e cores para daltonismo.
+4. **Acessível:** letras grandes, aviso em voz alta e leitor de tela.
 
 ## 2:35 · Fechamento (15 s)
-O protótipo já funciona e foi testado em sites reais.
-O próximo passo é o **"Cadastre sua marca"**: o criador registra o site oficial, e qualquer cópia dispara o alerta.
+O protótipo já funciona e foi testado em sites reais. O próximo passo é o **"Cadastre sua marca"**: qualquer cópia dispara o alerta.
 Toda vez que alguém vai pagar, aparece a pergunta: isso é golpe? **A gente responde.**
 
 ---
