@@ -23,9 +23,17 @@ python3 -m http.server 8080
 ```
 Abra `http://localhost:8080/verificar.html` e use o modo de celular do navegador (F12, ícone do celular).
 
+## Endereço do aplicativo
+**https://guilherme-paiva1999.github.io/--golpe-/**
+
+Publicado pelo GitHub Pages com a automação `.github/workflows/publicar-aplicativo.yml`: a cada envio para a `main` que mude
+`1-extensao-codigo/`, o site é atualizado sozinho em 1 a 2 minutos (acompanhe em **Actions** no GitHub).
+Só vão os arquivos do aplicativo; as páginas de teste ficam de fora, porque imitam logins falsos e poderiam ser marcadas como golpe.
+
+Para ligar (uma vez só): **Settings › Pages › Build and deployment › Source: GitHub Actions**. Depois, em **Actions ›
+Publicar aplicativo › Run workflow**, publique a primeira vez.
+
 ## Instalar no celular
-O celular precisa abrir o aplicativo por **https**. Publique a pasta `1-extensao-codigo/` num serviço de sites grátis
-(Netlify, Cloudflare Pages ou GitHub Pages). O endereço principal já leva para `verificar.html`.
 - **Android:** abra no Chrome, toque nos três pontinhos e em **Instalar aplicativo**. Depois disso, o **É Golpe?** aparece no Compartilhar do WhatsApp.
 - **iPhone:** abra no Safari, toque em Compartilhar e em **Adicionar à Tela de Início**. No iPhone não há "Compartilhar com": copie o link e toque em **Colar**.
 

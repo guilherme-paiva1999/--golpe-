@@ -24,6 +24,7 @@ Veja [`CONTINUAR.md`](CONTINUAR.md): como baixar, instalar, rodar os testes e as
 ## Links
 
 - Código no GitHub: https://github.com/guilherme-paiva1999/--golpe- (histórico completo de commits)
+- Aplicativo (GitHub Pages): https://guilherme-paiva1999.github.io/--golpe-/
 - Canvas online: https://claude.ai/artifact/TsDp8xN4Fo1cE6e6m6fBu2
 - Protótipo interativo online: https://claude.ai/artifact/Pjj9iQcpdWSEbqNVqBePTK
 
