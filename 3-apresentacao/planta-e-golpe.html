@@ -1,0 +1,108 @@
+<title>Planta do É Golpe?</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: fundo azul de planta liso, 4 etapas numeradas em linha e 3 resultados grandes.
+   Acessibilidade: WCAG 2.2 (contraste 7:1 ou mais no texto, sem depender só da cor, reflow em 320px,
+   espaçamento de texto livre) e NBR 9050:2020 (fonte sem serifa, caixa alta e baixa, símbolo + palavra, fundo sem ruído). */
+:root{
+  --bg:#12284a;      /* fundo liso */
+  --box:#1c3966;     /* caixa das etapas: branco sobre ela = 11,5:1 */
+  --text:#ffffff;    /* branco sobre o fundo = 14,7:1 */
+  --soft:#dbe6f7;    /* sobre o fundo = 11,7:1; sobre a caixa = 9,1:1 */
+  --ink:#0a1830;     /* texto escuro sobre os resultados */
+  --ok:#93e2b8;      /* tinta sobre ele = 11,6:1 */
+  --warn:#ffd47e;    /* tinta sobre ele = 12,6:1 */
+  --bad:#ffab9e;     /* tinta sobre ele = 9,8:1 */
+  --border:#ffffff;
+  --f:"Atkinson Hyperlegible",Verdana,Arial,sans-serif;
+  color-scheme:dark;
+}
+@media (prefers-contrast:more){
+  :root{--bg:#000;--box:#000;--soft:#fff;--ok:#b5f5d2;--warn:#ffe3a6;--bad:#ffcdc5;--ink:#000}
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--f);font-size:1.25rem;line-height:1.5}
+.wrap{max-width:1200px;margin:0 auto;padding-block:40px 56px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:grid;gap:36px}
+header{display:grid;gap:10px;justify-items:center;text-align:center}
+h1{font-weight:700;font-size:clamp(2.2rem,6vw,3.6rem);line-height:1.15;margin:0;text-wrap:balance}
+.lede{margin:0;font-size:clamp(1.3rem,2.6vw,1.6rem);color:var(--soft);max-width:36ch;text-wrap:balance}
+h2.sec{font-size:1.6rem;font-weight:700;margin:0 0 14px;text-align:center}
+ol.steps,ul.ends,ul.help{list-style:none;margin:0;padding:0}
+ol.steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:28px}
+.step{position:relative;border:3px solid var(--border);background:var(--box);padding:22px 20px 24px;
+  display:grid;gap:10px;align-content:start;border-radius:6px}
+.step:not(:last-child)::after{content:"";position:absolute;right:-24px;top:50%;width:0;height:0;
+  border-top:10px solid transparent;border-bottom:10px solid transparent;border-left:14px solid var(--border);transform:translateY(-50%)}
+.num{display:inline-grid;place-items:center;width:3rem;height:3rem;border-radius:50%;
+  background:var(--text);color:var(--bg);font-weight:700;font-size:1.6rem;line-height:1}
+.step h3{font-size:1.5rem;font-weight:700;margin:0;line-height:1.25}
+.step p{margin:0;color:var(--soft)}
+ul.ends{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.end{color:var(--ink);padding:22px;border-radius:6px;border:3px solid var(--border);display:grid;
+  grid-template-columns:auto 1fr;gap:6px 16px;align-items:center}
+.end.ok{background:var(--ok)} .end.warn{background:var(--warn)} .end.bad{background:var(--bad)}
+.end svg{grid-row:span 3;width:64px;height:64px}
+.end strong{font-size:1.9rem;line-height:1.1}
+.end .pct{font-weight:700;font-size:1.35rem}
+.end span{min-width:0}
+.helpbox{border:3px dashed var(--border);border-radius:6px;padding:22px}
+ul.help{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 24px;text-align:center}
+.foot{margin:0;text-align:center;color:var(--soft);font-size:1.05rem}
+@media (max-width:900px){
+  ol.steps{grid-template-columns:1fr;gap:34px}
+  .step:not(:last-child)::after{right:auto;left:50%;top:auto;bottom:-26px;transform:translateX(-50%);
+    border-left:10px solid transparent;border-right:10px solid transparent;border-top:14px solid var(--border);border-bottom:0}
+  ul.ends,ul.help{grid-template-columns:1fr}
+}
+</style>
+
+<div class="wrap" lang="pt-BR">
+  <header>
+    <h1>Como o É Golpe? funciona</h1>
+    <p class="lede">Todo site começa suspeito. Ele só passa se provar que é confiável.</p>
+  </header>
+
+  <section aria-labelledby="t-etapas">
+    <h2 class="sec" id="t-etapas">O caminho de um site</h2>
+    <ol class="steps">
+      <li class="step"><span class="num" aria-hidden="true">1</span><h3>Você abre um site</h3><p>Link do WhatsApp, anúncio ou e-mail.</p></li>
+      <li class="step"><span class="num" aria-hidden="true">2</span><h3>Confere antes de abrir</h3><p>O endereço está numa lista de golpes? Imita banco ou gov.br?</p></li>
+      <li class="step"><span class="num" aria-hidden="true">3</span><h3>Lê a página</h3><p>Pressa, desconto exagerado, site novo, CNPJ que não existe.</p></li>
+      <li class="step"><span class="num" aria-hidden="true">4</span><h3>Dá uma nota</h3><p>Cada prova boa sobe a confiança. Cada sinal ruim desce.</p></li>
+    </ol>
+  </section>
+
+  <section aria-labelledby="t-result">
+    <h2 class="sec" id="t-result">E mostra o resultado</h2>
+    <ul class="ends">
+      <li class="end ok">
+        <svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" fill="#0a1830"/><path d="M18 33l9 9 19-20" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <strong>Confiável</strong><span class="pct">Acima de 90%</span><span>Navega normal.</span>
+      </li>
+      <li class="end warn">
+        <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 4L61 58H3z" fill="#0a1830" stroke-linejoin="round"/><rect x="29" y="22" width="6" height="20" rx="3" fill="#fff"/><circle cx="32" cy="49" r="3.5" fill="#fff"/></svg>
+        <strong>Atenção</strong><span class="pct">De 30% a 90%</span><span>Aviso: pare e pense antes de pagar.</span>
+      </li>
+      <li class="end bad">
+        <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M20 3h24l17 17v24L44 61H20L3 44V20z" fill="#0a1830"/><path d="M22 22l20 20M42 22L22 42" stroke="#fff" stroke-width="6" stroke-linecap="round"/></svg>
+        <strong>Perigo</strong><span class="pct">Abaixo de 30%</span><span>A página é bloqueada.</span>
+      </li>
+    </ul>
+  </section>
+
+  <section class="helpbox" aria-labelledby="t-ajuda">
+    <h2 class="sec" id="t-ajuda">Na dúvida, a pessoa tem ajuda</h2>
+    <ul class="help">
+      <li>Perguntar para alguém de confiança pelo WhatsApp</li>
+      <li>Ver a empresa no Reclame Aqui</li>
+      <li>Letras grandes e aviso em voz alta</li>
+    </ul>
+  </section>
+
+  <p class="foot">Página feita seguindo a WCAG 2.2 e a ABNT NBR 9050:2020: alto contraste, fonte fácil de ler, símbolo e palavra em cada resultado.</p>
+</div>
+<script>document.documentElement.lang="pt-BR";</script>
