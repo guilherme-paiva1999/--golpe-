@@ -45,7 +45,7 @@ function falar(texto) {
 }
 
 function mostrarMotivos() {
-  const lista = motivos.slice(0, config.modoSimples ? 3 : 8);
+  const lista = motivos.slice(0, config.modoSimples ? 3 : 5);
   $('motivos').replaceChildren(...lista.map(li));
   $('caixaMotivos').hidden = !lista.length;
 }
@@ -55,9 +55,7 @@ function mostrarConfianca(confianca, limite) {
   $('confNum').textContent = confianca + '%';
   $('confBarra').style.width = confianca + '%';
   $('confLimite').style.left = 'calc(' + limite + '% - 2px)';
-  $('confLimiteTxt').textContent = 'confiável acima de ' + limite + '%';
-  $('resumo').textContent = 'Para ser considerado confiável, o site precisa passar de ' + limite + '%. Este tem ' + confianca + '%' +
-    (confianca < 30 ? ': muito baixa. Tem cara de golpe.' : confianca <= limite ? ': não é confiável. Não pague nem digite dados.' : '.');
+  $('resumo').textContent = 'confiável só acima de ' + limite + '%';
 }
 
 function mostrarVerificacao(v) {
@@ -67,15 +65,14 @@ function mostrarVerificacao(v) {
     const [ic, rot] = ICONES[it.efeito] || ICONES.neutro;
     const e = document.createElement('li');
     e.className = it.efeito;
-    const i = document.createElement('span'); i.className = 'ic'; i.setAttribute('aria-hidden', 'true'); i.textContent = ic;
+    const i = document.createElement('span'); i.className = 'ic'; i.setAttribute('role', 'img'); i.setAttribute('aria-label', rot); i.textContent = ic;
     const corpo = document.createElement('span');
-    const r = document.createElement('span'); r.className = 'rot'; r.textContent = it.titulo + ' (' + rot.toLowerCase() + '): ';
+    const r = document.createElement('span'); r.className = 'rot'; r.textContent = it.titulo + ': ';
     corpo.append(r, it.texto);
     e.append(i, corpo);
     return e;
   }));
   $('caixaVerif').hidden = false;
-  if (config.modoSimples) $('detalhesVerif').open = false;   // modo simples: só o essencial, detalhes num clique
 }
 
 function prepararPessoa() {
@@ -94,12 +91,11 @@ function prepararPessoa() {
   if (email) {
     const b = whats ? $('perguntarEmail') : $('perguntar');
     b.hidden = false;
-    if (!whats) $('perguntar').querySelector('.sub2').textContent = 'Manda o link deste site por e-mail';
-    else b.textContent = 'Perguntar para ' + nome + ' por e-mail';
+    if (!whats) $('perguntarTxt').textContent = 'Perguntar para ' + nome + ' por e-mail';
     b.addEventListener('click', () => { location.href = email; });
   }
   $('copiarMsg').addEventListener('click', async () => {
-    try { await navigator.clipboard.writeText(msg); $('copiarMsg').textContent = 'Mensagem copiada: cole no aplicativo que preferir'; }
+    try { await navigator.clipboard.writeText(msg); $('copiarMsg').textContent = 'Mensagem copiada'; }
     catch (e) { $('copiarMsg').textContent = 'Não foi possível copiar'; }
   });
 }
@@ -150,6 +146,7 @@ $('voltar').addEventListener('click', async () => {
 $('ra').addEventListener('click', async () => {
   if (url) {
     const dominio = url.hostname.replace(/^www\./, '');
+    $('raSub').hidden = false;
     try { await navigator.clipboard.writeText(dominio); $('raSub').textContent = 'Endereço copiado (' + dominio + '): cole no campo do Reclame Aqui'; }
     catch (e) { $('raSub').textContent = 'Digite no Reclame Aqui: ' + dominio; }
   }
