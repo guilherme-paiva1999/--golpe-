@@ -1,7 +1,7 @@
 # É Golpe? · tudo o que foi produzido
 
 Extensão do Chrome que avisa sobre golpes, feita para o Hackathon "Negócios em Transformação" (UniSenac, Senac, Sebrae).
-Versão da extensão neste pacote: **3.11.0**.
+Versão da extensão neste pacote: **3.12.0**.
 
 ## O que tem em cada pasta
 
@@ -35,6 +35,14 @@ Veja [`CONTINUAR.md`](CONTINUAR.md): como baixar, instalar, rodar os testes e as
 3. **Carregar sem compactação** e escolha a pasta com o `manifest.json`.
 4. Na primeira vez abre a tela de boas-vindas: escolha a acessibilidade e, se quiser, a pessoa de confiança.
 5. Recarregue as abas abertas. O popup tem botões para testar os avisos.
+
+## Novidades da 3.12.0
+
+- A inteligência artificial agora **lê a página**, e não só o nome do site. Foi o modelo com mais acerto no teste:
+  regressão logística com o texto da página e 39 características (preços, Pix, formulários, CNPJ, políticas...).
+  Em sites que ele nunca viu: AUC 0,92 (o modelo do nome tinha ~0,8); pega cerca de metade dos golpes com 2% de falsos alertas.
+  Ele **soma pontos e nunca bloqueia sozinho**. O texto é lido no próprio computador e não é enviado para lugar nenhum.
+- Onde não há página para ler (aplicativo e checagem antes de abrir), continua o modelo do nome do site.
 
 ## Novidades da 3.11.0
 

@@ -7,8 +7,9 @@
    - Consulta de idade do domínio só quando já existe suspeita local
    ===================================================================== */
 
-// Modelo de aprendizado de máquina (nome do site). Nos testes em Node, o modelo.js é carregado à parte.
-if (typeof importScripts === 'function') importScripts('modelo.js');
+// Modelos de aprendizado de máquina: nome do site (modelo.js) e página (modelo-pagina.js, v3.12).
+// Nos testes em Node, eles são carregados à parte.
+if (typeof importScripts === 'function') importScripts('modelo.js', 'modelo-pagina.js');
 
 // ---------- Configuração ----------
 const CONFIG_PADRAO = { limite: 3, consultaIdade: false, imagens: false, modoSimples: false, rigor: 'alto',
@@ -396,6 +397,55 @@ async function sinalML(dominio) {
   return { p, pontos: 0, motivo: null };
 }
 
+// ---------- Aprendizado de máquina (página inteira), v3.12 ----------
+// Regressão logística que lê o texto e 39 características da página (8-treino-ml/). Foi o modelo com mais acerto
+// no teste honesto (sites que ele nunca viu): AUC 0,92, contra 0,87 da rede neural. Limiares do teste:
+// a partir de limiar2 pega ~51% dos golpes com 2% de falsos alertas; a partir de limiar1, ~30% com 1%.
+// Ele SOMA pontos e nunca decide sozinho. Onde não há página para ler (aplicativo, antes de abrir), vale o modelo do nome.
+let modeloPaginaCarregando = null;
+function garantirModeloPagina() {
+  if (typeof carregarModeloPagina !== 'function') return Promise.resolve(false);
+  if (modeloPaginaPronto()) return Promise.resolve(true);
+  if (!modeloPaginaCarregando) {
+    modeloPaginaCarregando = fetch(chrome.runtime.getURL('ml/modelo-pagina.json')).then((r) => r.json())
+      .then((j) => { carregarModeloPagina(j); return true; })
+      .catch(() => { modeloPaginaCarregando = null; return false; });
+  }
+  return modeloPaginaCarregando;
+}
+
+// As medidas vêm da página (content.js): só aceita números e textos do tamanho esperado.
+function limparMedidas(m) {
+  if (!m || typeof m !== 'object') return null;
+  const n = (k) => (Number.isFinite(m[k]) && m[k] >= 0 ? Math.min(m[k], 1e9) : 0);
+  const t = (k, max) => (typeof m[k] === 'string' ? m[k].slice(0, max) : '');
+  return { title: t('title', 500), lang: t('lang', 20), texto: t('texto', 6000), nTexto: n('nTexto'), nLinks: n('nLinks'),
+    extLinks: Math.min(n('extLinks'), n('nLinks')), nForms: n('nForms'), nInputs: n('nInputs'), senha: m.senha === true,
+    nIframes: n('nIframes'), nImgs: n('nImgs'), nScripts: n('nScripts'), html: n('html'), compraUI: m.compraUI === true, cartao: m.cartao === true };
+}
+
+// Características do endereço, iguais às do treino (8-treino-ml/caracteristicas.js).
+async function enderecoParaModelo(host, protocolo) {
+  host = host.replace(/^www\./, '');
+  const dom = dominioRaiz(host);
+  const ip = ehIPv4(dom);
+  const pNome = ip || !(await garantirModelo()) ? 0.5 : (probGolpe(dom) ?? 0.5);
+  const end = { https: protocolo === 'https:' ? 1 : 0, br: dom.endsWith('.br') ? 1 : 0, pontosHost: Math.min(avaliarHost(host).pontos, 100) / 100,
+    ml: pNome, gratis: sufixo(host, HOSPEDAGEM) ? 1 : 0, subdominios: Math.min(host.split('.').length - dom.split('.').length, 4), ip: ip ? 1 : 0 };
+  return end;
+}
+
+async function sinalPagina(host, protocolo, medidas) {
+  if (!medidas || !(await garantirModeloPagina())) return null;
+  const p = probGolpePagina(medidas, await enderecoParaModelo(host, protocolo));
+  if (p === null || !Number.isFinite(p)) return null;
+  const pct = Math.round(p * 100);
+  const { limiar1, limiar2 } = { limiar1: 0.959, limiar2: 0.853, ...modeloPaginaLimiares() };
+  if (p >= limiar1) return { p, pontos: 25, pagina: true, motivo: 'Nossa inteligência artificial (aprendizado de máquina) leu esta página e achou muito parecida com páginas de golpe (' + pct + '%).' };
+  if (p >= limiar2) return { p, pontos: 15, pagina: true, motivo: 'Nossa inteligência artificial (aprendizado de máquina) leu esta página e achou parecida com páginas de golpe (' + pct + '%).' };
+  return { p, pontos: 0, pagina: true, motivo: null };
+}
+
 // ---------- Análise completa ----------
 async function estaPermitido(host) {
   const { permitidos = [] } = await chrome.storage.session.get('permitidos');
@@ -711,7 +761,7 @@ function situacaoCnpj(cnpjUsado, empresa, rdap) {
   return empresa.existe && empresa.ativa ? 'ativo' : 'irregular';
 }
 
-async function avaliarPagina(host, protocolo, sinais) {
+async function avaliarPagina(host, protocolo, sinais, medidas = null) {
   const pre = await analisar(host, protocolo, { rapido: true });
   if (pre.conhecido || pre.permitido || pre.pontos >= 100) return pre;     // provado, liberado ou já na lista
   const cfg = await lerConfig();
@@ -723,7 +773,8 @@ async function avaliarPagina(host, protocolo, sinais) {
   // A idade só é consultada quando a página mostra venda, dinheiro, senha ou pressão (privacidade).
   const precisaIdade = comercio || sinais.senha || sinais.pressao || sinais.formExterno || sinais.espionagem || cfg.consultaIdade;
   const gratuito = sufixo(host, HOSPEDAGEM);                  // subdomínio grátis: a idade é do serviço, não da loja
-  const ml = gratuito ? null : await sinalML(r.dominio);
+  // v3.12: com a página em mãos, vale o modelo da página (lê o conteúdo); sem ela, o do nome do site.
+  const ml = (await sinalPagina(host, protocolo, medidas)) || (gratuito ? null : await sinalML(r.dominio));
   if (ml && ml.pontos) { r.pontos += ml.pontos; r.motivos.push(ml.motivo); }
   const rdap = (precisaIdade && !gratuito && !ehIPv4(r.dominio)) ? await consultarRdap(r.dominio) : null;
   const dias = rdap ? rdap.dias : null;
@@ -985,7 +1036,7 @@ async function tratar(msg, sender) {
       sinais.cnpj = /^\d{14}$/.test(String(msg.sinais.cnpj || '')) ? String(msg.sinais.cnpj) : '';
       sinais.marcas = Array.isArray(msg.sinais.marcas) ? msg.sinais.marcas.filter((k) => Object.hasOwn(OFICIAIS_PAGINA, k)).slice(0, 5) : [];
       const host = msg.host.toLowerCase();
-      const res = await avaliarPagina(host, msg.protocolo, sinais);
+      const res = await avaliarPagina(host, msg.protocolo, sinais, limparMedidas(msg.medidas));
       if (sender.tab) selo(sender.tab.id, res.provado ? 'ok' : estadoSelo(res));
       if (res.nivel === 'perigo' && sender.tab && typeof msg.url === 'string') {
         try {

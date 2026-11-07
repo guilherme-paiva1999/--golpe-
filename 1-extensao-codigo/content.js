@@ -406,6 +406,21 @@
       marcas: (senha || pagamento) ? marcasDaPagina() : [], cnpj };
   }
 
+  // v3.12: medidas para o modelo da página (as mesmas da coleta de treino). Ficam no computador:
+  // vão só para a própria extensão (background), nunca para servidor nenhum.
+  function medidasDaPagina() {
+    const t = document.body ? document.body.innerText : '';
+    const a = document.querySelectorAll('a[href]');
+    let ext = 0;
+    for (let i = 0; i < a.length; i++) { try { if (new URL(a[i].href).hostname !== location.hostname) ext++; } catch (e) { /* */ } }
+    return { title: document.title.slice(0, 500), lang: (document.documentElement.lang || '').slice(0, 20), texto: t.slice(0, 6000), nTexto: t.length,
+      nLinks: a.length, extLinks: ext, nForms: document.forms.length, nInputs: document.querySelectorAll('input').length,
+      senha: !!document.querySelector('input[type=password]'), nIframes: document.querySelectorAll('iframe').length,
+      nImgs: document.images.length, nScripts: document.scripts.length, html: document.documentElement.outerHTML.length,
+      compraUI: botaoDeCompra(),
+      cartao: !!document.querySelector('input[autocomplete^="cc-"], input[name*="card" i], input[name*="cartao" i], input[name*="cvv" i]') };
+  }
+
   function mostrarAvisoPagamento() {
     const simples = !!config.modoSimples;
     const { host, root } = criarCaixa({
@@ -441,7 +456,8 @@
     const gatilho = paginaDeDinheiro(sinais);
     if (!gatilho || chave === ultimoEnvio) return;
     ultimoEnvio = chave;
-    const res = await enviar({ tipo: 'avaliar-pagina', host: location.hostname, protocolo: location.protocol, url: location.href, sinais });
+    const res = await enviar({ tipo: 'avaliar-pagina', host: location.hostname, protocolo: location.protocol, url: location.href, sinais,
+      medidas: medidasDaPagina() });
     if (res) { siteRes = res; if (res.nivel !== 'ok') mostrarAvisoSite(res); }
   }
 

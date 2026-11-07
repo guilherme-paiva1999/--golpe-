@@ -152,6 +152,13 @@ const conferir = (nome, cond, extra) => { console.log((cond ? 'OK   ' : 'FALHA '
   const ia = (await bv.evaluate(() => chrome.runtime.sendMessage({ tipo: 'investigar', url: 'https://nubank-atualizar-cadastro.xyz/' }))).itens.find((i) => i.titulo === 'Inteligência artificial');
   conferir('modelo de ML ligado na extensão', ia && ia.efeito === 'contra', ia && ia.texto);
 
+  // 7) v3.12: modelo da página rodando dentro do Chrome (página de golpe real da coleta de treino)
+  const amostra = JSON.parse(fs.readFileSync(path.join(EXT, 'ml/amostras-paginas-reais.json'), 'utf8')).find((e) => e.rotulo === 'golpe' && e.p > 0.99);
+  const resPg = await bv.evaluate((a) => chrome.runtime.sendMessage({ tipo: 'avaliar-pagina', host: a.host, protocolo: a.protocolo,
+    sinais: { venda: true, pagamento: true }, medidas: a.pagina }), amostra);
+  const motivoPg = resPg && resPg.motivos.find((m) => /leu esta página/.test(m));
+  conferir('modelo da página ligado na extensão', !!motivoPg, motivoPg);
+
   console.log(falhas ? falhas + ' FALHA(S)' : 'tudo certo');
   await ctx.close(); srv.close();
   process.exit(falhas ? 1 : 0);

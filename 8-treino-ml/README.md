@@ -38,3 +38,15 @@ de 0,815 para 0,895 e quase para entre 75% e 100%.
 logística com o texto da página + as características. Mesmo assim, ainda há viés (sites reais são páginas iniciais grandes;
 golpes são páginas pequenas), então os números de verdade devem ser menores. O que mais falta são dados: páginas de lojas
 reais (produto e pagamento, não só a inicial), mais golpes atuais, e a idade e o CNPJ de cada site no treino.
+
+## Modelo final na extensão (v3.12.0)
+
+`final.py` treina e exporta `1-extensao-codigo/ml/modelo-pagina.json`. Antes, a limpeza passou a tirar também os
+**golpes que redirecionaram para outro site** (68 casos: página de venda de domínio da GoDaddy, Instagram, o site verdadeiro,
+página de erro), que ensinavam errado. Ficaram 1.195 páginas (299 golpes, 896 reais).
+
+- Regressão logística (`class_weight='balanced'`, C=4) com TF-IDF de pedaços de 3 a 5 letras do título + texto (até 4.000
+  caracteres) e 39 características padronizadas. Fora: o caminho do endereço (viés) e idade/CNPJ (não consultados no treino).
+- Vocabulário: 5.000, 10.000, 20.000 e 40.000 deram o mesmo acerto (AUC 0,915 a 0,922); ficou o de 5.000 (126 KB).
+- Teste por domínio: **AUC 0,92**; com limiar 0,835 (2% de falsos alertas) pega 52,5% dos golpes; com 0,945 (1%), 36%.
+- Paridade: `node ml/testar_modelo_pagina.js` confere que o JavaScript dá a mesma probabilidade que o Python.

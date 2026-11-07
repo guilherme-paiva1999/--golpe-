@@ -27,6 +27,8 @@ for r in fe:
     texto = (pg.get('title') or '') + ' \n ' + (pg.get('texto') or '')
     if r['rotulo'] == 'golpe' and (len((pg.get('texto') or '').strip()) < 60 or MORTO.search(pg.get('title') or '') or MORTO.search((pg.get('texto') or '')[:300])):
         cortados += 1; continue                       # golpe que já saiu do ar ou virou outra coisa: rótulo não confiável
+    if r['rotulo'] == 'golpe' and raiz(re.sub(r'^https?://', '', r['url']).split('/')[0].split(':')[0]) != raiz(pg.get('host')):
+        cortados += 1; continue                       # golpe que redirecionou para outro site (GoDaddy, Instagram, site verdadeiro)
     X.append(list(r['x'].values())); Y.append(1 if r['rotulo'] == 'golpe' else 0); G.append(raiz(r['host'] or c['url'])); T.append(texto[:4000])
 X = np.array(X, float); Y = np.array(Y); G = np.array(G)
 nomes = list(fe[0]['x'].keys()) if fe[0]['x'] else list(next(r for r in fe if r['x'])['x'].keys())

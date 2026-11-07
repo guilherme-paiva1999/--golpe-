@@ -180,6 +180,17 @@ node ml/testar_gov_marca.js && node ml/testar_pontuacao.js
 A extensão e o aplicativo passaram a se chamar **Isso é golpe?** (antes: "É Golpe?"), igual aos slides e ao pitch:
 nome no Chrome, popup, boas-vindas, tela de bloqueio, aplicativo, aviso no Reclame Aqui e mensagens para a pessoa de confiança.
 
+## v3.12: a inteligência artificial lê a página
+
+- `modelo-pagina.js` + `ml/modelo-pagina.json` (126 KB): regressão logística com o texto da página (pedaços de 3 a 5 letras,
+  TF-IDF, 5.000 pedaços) e 39 características. Treino em `8-treino-ml/final.py` (1.195 páginas: 299 golpes no ar e 896 sites reais).
+- Escolhido na comparação com rede neural, floresta e boosting (`8-treino-ml/README.md`). Teste por domínio: AUC 0,92;
+  com 2% de falsos alertas pega 52% dos golpes (+15 pontos); com 1%, 36% (+25 pontos). **Soma pontos, nunca bloqueia sozinho.**
+- O `content.js` manda as medidas da página (`medidasDaPagina`) junto com os sinais, só em páginas de dinheiro. Ficam no
+  computador: vão só para o background da própria extensão. O background valida tudo (`limparMedidas`).
+- Sem medidas (aplicativo, checagem antes de abrir, tela de bloqueio), vale o modelo do nome do site (`modelo.js`).
+- Testes: `node ml/testar_modelo_pagina.js` (JavaScript = Python, 40/40) e `node ml/testar_modelo_pagina_extensao.js` (ponta a ponta).
+
 ## v3.10: sites que prometem espionar ou clonar a conta de outra pessoa
 Num site real (`www.sppy.site`, "Clonar perfil agora… 100% anônimo, sem notificar o usuário"), a extensão via o endereço suspeito
 (terminação .site, 41 dias de vida), mas ficava quieta, porque a página não pedia pagamento logo de cara. Agora a página conta como

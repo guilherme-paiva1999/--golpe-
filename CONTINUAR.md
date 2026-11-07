@@ -24,6 +24,8 @@ node ml/testar_empresa.js
 node ml/testar_gov_marca.js
 node ml/testar_pontuacao.js
 node ml/testar_cnpj.js
+node ml/testar_modelo_pagina.js
+node ml/testar_modelo_pagina_extensao.js
 ```
 Teste real num Google Chrome (abre um Chrome escondido com perfil temporário, precisa de internet):
 ```
@@ -54,8 +56,10 @@ As capturas de tela ficam em `teste-real/capturas/` (não vão para o GitHub).
   que abre o Detector oficial com o endereço já preenchido (`reclameaqui.js`, 3.5.0); quem clica em verificar é a pessoa. A logo veio do Wikimedia Commons (domínio público), mas é marca registrada: para uso comercial,
   pedir autorização.
 - **Confiança em porcentagem**, aparece na hora (sem "carregando"). **Só é confiável com 90% ou mais** (rigor normal: 60% ou mais). Mudou de 80% para 90% na 3.3.0.
-- **Aprendizado de máquina** só soma pontos, nunca bloqueia sozinho, e olha só o domínio principal (pega ~10% dos golpes com
-  ~1% de falsos alertas; detalhes no README da extensão).
+- **Aprendizado de máquina** só soma pontos, nunca bloqueia sozinho. Desde a 3.12.0, nas páginas de dinheiro vale o
+  **modelo da página** (regressão logística com texto + características; AUC 0,92, ~52% dos golpes com 2% de falsos alertas).
+  A **rede neural foi testada e não ganhou** do clássico com estes dados (`8-treino-ml/README.md`). Sem página para ler,
+  vale o modelo do nome do site (~10% dos golpes com ~1% de falsos alertas).
 - **Visual** da tela de bloqueio e dos avisos: sóbrio e limpo (vermelho-escuro, octógono com X, "PERIGO", lista de motivos,
   três botões). O visual de "cartaz de campanha" da v3.1 foi descartado por estar poluído.
 - **Aplicativo e extensão juntos** (3.4.0): o aplicativo confere o link antes de abrir; a extensão cuida das páginas. Um código só: o aplicativo é a `verificar.html` da pasta da extensão.
