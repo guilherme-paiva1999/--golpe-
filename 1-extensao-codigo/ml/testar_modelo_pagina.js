@@ -1,6 +1,7 @@
 // Paridade: o JavaScript da extensão (modelo-pagina.js) dá a mesma probabilidade que o Python do treino?
 // Uso: node ml/testar_modelo_pagina.js
 const fs = require('fs'), path = require('path');
+global.alfTexto = require('../alfabetos.js').alfTexto;   // v3.13
 const M = require('../modelo-pagina.js');
 M.carregarModeloPagina(JSON.parse(fs.readFileSync(path.join(__dirname, 'modelo-pagina.json'), 'utf8')));
 const am = JSON.parse(fs.readFileSync(path.join(__dirname, 'amostras-pagina.json'), 'utf8'));

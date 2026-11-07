@@ -1,91 +1,114 @@
 {
- "teste_geral": {
-  "acuracia": 0.8099,
-  "precisao": 0.8763,
-  "recall": 0.7205,
-  "falsos_positivos": 0.1011,
-  "n": 23997,
+ "teste_geral_com_gerados": {
+  "acuracia": 0.8207,
+  "precisao": 0.8893,
+  "recall": 0.7385,
+  "falsos_positivos": 0.0947,
+  "n": 24647,
   "limiar": 0.5,
-  "auc": 0.8887
+  "auc": 0.8991
+ },
+ "teste_geral": {
+  "acuracia": 0.8148,
+  "precisao": 0.8801,
+  "recall": 0.721,
+  "falsos_positivos": 0.0947,
+  "n": 23855,
+  "limiar": 0.5,
+  "auc": 0.8924
  },
  "teste_dificil_cauda": {
-  "acuracia": 0.7896,
-  "precisao": 0.9049,
-  "recall": 0.7205,
-  "falsos_positivos": 0.11,
-  "n": 20203,
+  "acuracia": 0.7951,
+  "precisao": 0.9088,
+  "recall": 0.721,
+  "falsos_positivos": 0.1012,
+  "n": 20080,
   "limiar": 0.5,
-  "auc": 0.8816
+  "auc": 0.8853
  },
  "somente_br": {
-  "acuracia": 0.7277,
-  "precisao": 0.8207,
-  "recall": 0.6711,
-  "falsos_positivos": 0.1964,
-  "n": 393,
+  "acuracia": 0.7469,
+  "precisao": 0.7528,
+  "recall": 0.7016,
+  "falsos_positivos": 0.2115,
+  "n": 399,
   "limiar": 0.5,
-  "auc": 0.8126
+  "auc": 0.8311
  },
  "limiar_fp_0.01": {
-  "acuracia": 0.7778,
-  "precisao": 0.9824,
-  "recall": 0.5644,
-  "falsos_positivos": 0.0101,
-  "n": 23997,
-  "limiar": 0.8244718421610217,
-  "auc": 0.8887
+  "acuracia": 0.7801,
+  "precisao": 0.9818,
+  "recall": 0.5626,
+  "falsos_positivos": 0.01,
+  "n": 23855,
+  "limiar": 0.8346572704522643,
+  "auc": 0.8924
  },
  "limiar_fp_0.005": {
-  "acuracia": 0.7671,
-  "precisao": 0.9906,
-  "recall": 0.5378,
-  "falsos_positivos": 0.0051,
-  "n": 23997,
-  "limiar": 0.8756895870079489,
-  "auc": 0.8887
+  "acuracia": 0.7673,
+  "precisao": 0.9903,
+  "recall": 0.5312,
+  "falsos_positivos": 0.005,
+  "n": 23855,
+  "limiar": 0.8891985755795611,
+  "auc": 0.8924
  },
- "precisao_com_1pct_de_golpes": 0.0672,
- "precisao_com_5pct_de_golpes": 0.2728,
+ "precisao_com_1pct_de_golpes": 0.0714,
+ "precisao_com_5pct_de_golpes": 0.2861,
+ "cirilico": {
+  "sites_reais_em_cirilico_no_teste": 123,
+  "falsos_alertas_em_sites_reais_em_cirilico_limiar_1pct": 0.0,
+  "golpes_gerados_com_letras_disfarcadas_no_teste": 792,
+  "pegos_limiar_1pct": 0.9924,
+  "pegos_limiar_05pct": 0.9886,
+  "golpes_reais_com_cirilico": {
+   "accounts.autoscout24.com.суджанские-вести.рф": 0.996,
+   "accounts.gоogle.cf": 0.9997,
+   "mail-tracking.енимо.001.рус": 0.998,
+   "роббиуильямс.robbiewilliamsmusic.ru": 0.9975,
+   "волос.online": 0.7475
+  }
+ },
  "sinais_mais_importantes": [
   [
-   "n_sub",
-   0.317
+   "n_tokens",
+   0.454
   ],
   [
    "tld_risco",
-   0.215
+   0.193
   ],
   [
-   "n_tokens",
-   0.198
-  ],
-  [
-   "len_host",
-   0.069
-  ],
-  [
-   "len_reg",
-   0.035
-  ],
-  [
-   "max_label",
-   0.03
+   "n_sub",
+   0.096
   ],
   [
    "len_sld",
-   0.021
-  ],
-  [
-   "dig_host",
-   0.021
-  ],
-  [
-   "kw",
-   0.016
+   0.045
   ],
   [
    "tok_medio",
-   0.011
+   0.036
+  ],
+  [
+   "len_host",
+   0.029
+  ],
+  [
+   "mistura_alfabetos",
+   0.017
+  ],
+  [
+   "dig_host",
+   0.017
+  ],
+  [
+   "max_label",
+   0.016
+  ],
+  [
+   "kw",
+   0.015
   ]
  ]
 }

@@ -2,9 +2,10 @@
 // Uso: node caracteristicas.js coleta.jsonl extras.json saida.jsonl
 // extras.json: { host: { dias, cnpj: 'ativo'|'irregular'|'nenhum'|'pf' } } vindo de RDAP/BrasilAPI.
 const fs = require('fs'), vm = require('vm'), path = require('path');
-const EXT = '/home/user/--golpe-/1-extensao-codigo';
+const EXT = path.join(__dirname, '..', '1-extensao-codigo');
 const ctx = { console }; vm.createContext(ctx);
-vm.runInContext(fs.readFileSync(path.join(EXT, 'modelo.js'), 'utf8') + ';this.M={carregarModelo,probGolpe};', ctx);
+const ALF = fs.readFileSync(path.join(EXT, 'alfabetos.js'), 'utf8');   // v3.13: letras cirílicas
+vm.runInContext(ALF + fs.readFileSync(path.join(EXT, 'modelo.js'), 'utf8') + ';this.M={carregarModelo,probGolpe,alfTexto};', ctx);
 ctx.M.carregarModelo(JSON.parse(fs.readFileSync(path.join(EXT, 'ml/modelo.json'), 'utf8')));
 // Regras de endereço da extensão (avaliarHost), sem chrome
 const noop = () => {}, ev = { addListener: noop };
@@ -12,7 +13,7 @@ const bctx = { console, URL, AbortSignal, TextDecoder, fetch: async () => { thro
   chrome: { runtime: { onInstalled: ev, onStartup: ev, onMessage: ev, id: 'x', getPlatformInfo: noop }, alarms: { get: async () => ({}), create: noop, onAlarm: ev },
     webNavigation: { onBeforeNavigate: ev }, storage: { local: { get: async () => ({}), set: async () => {} }, session: { get: async () => ({}), set: async () => {} } }, action: {} } };
 vm.createContext(bctx);
-vm.runInContext(fs.readFileSync(path.join(EXT, 'background.js'), 'utf8') + ';this.B={avaliarHost,dominioRaiz,sufixo,HOSPEDAGEM,ehIPv4};', bctx);
+vm.runInContext(ALF + fs.readFileSync(path.join(EXT, 'background.js'), 'utf8') + ';this.B={avaliarHost,dominioRaiz,sufixo,HOSPEDAGEM,ehIPv4};', bctx);
 const B = bctx.B;
 
 const PAGAMENTO = [/chave\s+pix/i, /pague\s+(agora|com\s+pix)/i, /finalizar\s+(a\s+)?compra/i, /boleto\s+banc[áa]rio/i,
@@ -35,7 +36,8 @@ const lg = (x) => Math.log10(1 + (x || 0));
 
 function caracteristicas(r, extras) {
   const pg = r.pagina || {};
-  const t = pg.texto || '';
+  const alf = ctx.M.alfTexto(pg.texto || '');
+  const t = alf.texto;                              // v3.13: "Nеtfliх" (letras russas) lido como "Netflix"
   const host = (pg.host || (() => { try { return new URL(r.final || r.url).hostname; } catch (e) { return ''; } })()).toLowerCase().replace(/^www\./, '');
   const dom = B.dominioRaiz(host);
   const h = B.avaliarHost(host);
@@ -66,7 +68,8 @@ function caracteristicas(r, extras) {
     premio: /parab[ée]ns|voc[êe]\s+(foi\s+)?(ganhou|sorteado|selecionad)|resgat(e|ar)\s+(seu|o)\s+(pr[êe]mio|saldo|valor)/i.test(t) ? 1 : 0,
     ingles: /\b(the|your|account|password|verify|sign in)\b/i.test(t) && !/\b(você|não|para|com|sua)\b/i.test(t) ? 1 : 0,
     compraUI: pg.compraUI ? 1 : 0, cartao: pg.cartao ? 1 : 0,
-    espiao: /(clonar|espionar|espiar|hackear|rastrear)/i.test(t) && /(de\s+qualquer\s+pessoa|sem\s+notificar|100%\s+an[ôo]nimo)/i.test(t) ? 1 : 0
+    espiao: /(clonar|espionar|espiar|hackear|rastrear)/i.test(t) && /(de\s+qualquer\s+pessoa|sem\s+notificar|100%\s+an[ôo]nimo)/i.test(t) ? 1 : 0,
+    misturaAlfabetos: Math.min(alf.mistas + ctx.M.alfTexto(pg.title || '').mistas, 5), cirilico: alf.cirilico
   };
 }
 module.exports = { caracteristicas };

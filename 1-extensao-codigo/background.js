@@ -8,8 +8,8 @@
    ===================================================================== */
 
 // Modelos de aprendizado de máquina: nome do site (modelo.js) e página (modelo-pagina.js, v3.12).
-// Nos testes em Node, eles são carregados à parte.
-if (typeof importScripts === 'function') importScripts('modelo.js', 'modelo-pagina.js');
+// alfabetos.js (v3.13): lê letras cirílicas disfarçadas ("аррӏе.com", "Nеtfliх"). Nos testes em Node, são carregados à parte.
+if (typeof importScripts === 'function') importScripts('alfabetos.js', 'modelo.js', 'modelo-pagina.js');
 
 // ---------- Configuração ----------
 const CONFIG_PADRAO = { limite: 3, consultaIdade: false, imagens: false, modoSimples: false, rigor: 'alto',
@@ -300,6 +300,27 @@ function detectarMarca(host, dominio) {
   return null;
 }
 
+// Letra que não é latina nem cirílica (grega, por exemplo): tratada como disfarce, como antes da v3.13.
+function outroAlfabeto(s) { return [...s].some((c) => { const n = c.codePointAt(0); return n > 0x24f && (n < 0x400 || n > 0x52f) && c !== '.' ; }); }
+
+// v3.13: o endereço lido em letras latinas ("аррӏе.com" -> "apple.com") é uma marca conhecida?
+// Além das marcas brasileiras, as globais mais imitadas com letras russas (as mesmas do modelo, modelo.js).
+const MARCAS_DISFARCE = { ...MARCAS, apple: ['apple.com', 'icloud.com'], google: ['google.com', 'google.com.br'], microsoft: ['microsoft.com', 'live.com', 'office.com'],
+  paypal: ['paypal.com'], amazon: ['amazon.com.br', 'amazon.com'], facebook: ['facebook.com'], instagram: ['instagram.com'], whatsapp: ['whatsapp.com'],
+  linkedin: ['linkedin.com'], dropbox: ['dropbox.com'], binance: ['binance.com'], coinbase: ['coinbase.com'], steam: ['steampowered.com', 'steamcommunity.com'],
+  santander: ['santander.com.br', 'santander.com'], shopee: ['shopee.com.br', 'shopee.com'] };
+function marcaNoEsqueleto(esqueleto) {
+  const dom = dominioRaiz(esqueleto);
+  for (const [marca, oficiais] of Object.entries(MARCAS_DISFARCE)) if (oficiais.includes(dom)) return { marca, oficial: oficiais[0] };
+  const tokens = esqueleto.split(/[.\-]/).filter(Boolean);
+  for (const [marca, oficiais] of Object.entries(MARCAS_DISFARCE)) {
+    for (const t of tokens) {
+      if (t === marca || (marca.length >= 6 && (t.includes(marca) || (Math.abs(t.length - marca.length) <= 1 && lev(t, marca) === 1)))) return { marca, oficial: oficiais[0] };
+    }
+  }
+  return null;
+}
+
 function avaliarHost(host) {
   const dominio = dominioRaiz(host);
   const motivos = [];
@@ -307,14 +328,23 @@ function avaliarHost(host) {
   const somar = (p, m) => { pontos += p; motivos.push(m); };
 
   if (ehIPv4(host)) somar(40, 'O endereço é um número (IP) em vez de um nome de site.');
-  if (host.includes('xn--')) somar(30, 'O endereço usa letras disfarçadas para parecer outro site.');
+  if (host.includes('xn--')) {
+    // v3.13: lê o endereço como a pessoa vê. Letras russas iguais às latinas imitando uma marca = golpe quase certo.
+    const a = typeof alfHost === 'function' ? alfHost(host) : null;
+    const disfarce = a && a.esqueleto !== a.unicode ? marcaNoEsqueleto(a.esqueleto) : null;
+    if (disfarce) somar(70, 'O endereço imita "' + disfarce.marca + '" trocando letras por letras russas iguais. O site oficial é ' + disfarce.oficial + '.');
+    else if (!a || a.mistura || a.tudoParecido || outroAlfabeto(a.unicode)) somar(30, 'O endereço usa letras disfarçadas para parecer outro site.');
+    else if (a.cirilico > 0) somar(10, 'O endereço está escrito em outro alfabeto (russo). Confira se é mesmo o site que você queria.');
+  }
 
   const marca = ehIPv4(host) ? null : detectarMarca(host, dominio);
   if (marca) somar(50, 'O endereço parece imitar "' + marca.marca + '", mas o site oficial é ' + marca.oficial + '.');
 
   const tld = host.split('.').pop();
   if (TLDS_RISCO.includes(tld)) somar(15, 'A terminação .' + tld + ' é muito usada em golpes.');
-  if ((dominio.match(/-/g) || []).length >= 2) somar(10, 'O nome do site tem vários hífens, comum em endereços falsos.');
+  // v3.13: conta os hífens do nome como a pessoa vê (o "xn--" do endereço em outro alfabeto não conta).
+  const nomeVisto = typeof alfDecodificarHost === 'function' ? alfDecodificarHost(dominio) : dominio;
+  if ((nomeVisto.match(/-/g) || []).length >= 2) somar(10, 'O nome do site tem vários hífens, comum em endereços falsos.');
   if (host.split('.').length - dominio.split('.').length >= 3) somar(10, 'O endereço tem muitos subdomínios, o que pode esconder o site real.');
   if (ENCURTADORES.includes(dominio)) somar(20, 'Link encurtado esconde o destino real.');
   if (PALAVRAS_HOST.some((p) => host.includes(p))) somar(10, 'O endereço tem palavras de pressão ou de acesso a conta.');
@@ -372,9 +402,12 @@ async function idadeEmDias(dominio) {
 // ---------- Aprendizado de máquina (nome do site) ----------
 // Medido em 40 mil sites do ranking Tranco e 40 mil golpes do Phishing.Database (aplicado ao domínio principal):
 // a partir de 0,876 pega ~10% dos golpes com ~1% de falsos alertas (0% nos .br); a partir de 0,95, ~6% com 0,2%.
+// v3.13 (retreinado com nomes em cirílico): limiares refeitos para dar a MESMA taxa de falsos alertas do modelo
+// anterior em 15 mil sites do Tranco que ficaram fora do treino (0,881 e 0,949). Endereços com letras russas
+// disfarçadas: pega 99% dos gerados no teste; sites russos de verdade (.рф): 0% de falsos alertas.
 // Por isso o modelo SOMA pontos e nunca decide sozinho. Ele olha só o domínio principal: subdomínios
 // (www., g1.) confundem o modelo, porque os sites normais do treino quase não tinham subdomínio.
-const ML_LIMIAR = 0.8757, ML_LIMIAR_FORTE = 0.95;
+const ML_LIMIAR = 0.881, ML_LIMIAR_FORTE = 0.949;
 let modeloCarregando = null;
 function garantirModelo() {
   if (typeof carregarModelo !== 'function') return Promise.resolve(false);
@@ -398,7 +431,7 @@ async function sinalML(dominio) {
 }
 
 // ---------- Aprendizado de máquina (página inteira), v3.12 ----------
-// Regressão logística que lê o texto e 39 características da página (8-treino-ml/). Foi o modelo com mais acerto
+// Regressão logística que lê o texto e 41 características da página (8-treino-ml/; 41 desde a v3.13, com o alfabeto cirílico). Foi o modelo com mais acerto
 // no teste honesto (sites que ele nunca viu): AUC 0,92, contra 0,87 da rede neural. Limiares do teste:
 // a partir de limiar2 pega ~51% dos golpes com 2% de falsos alertas; a partir de limiar1, ~30% com 1%.
 // Ele SOMA pontos e nunca decide sozinho. Onde não há página para ler (aplicativo, antes de abrir), vale o modelo do nome.

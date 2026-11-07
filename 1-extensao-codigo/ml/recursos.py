@@ -1,6 +1,7 @@
 """Sinais calculados só a partir do nome do site (host). Os mesmos sinais existem em
 modelo.js dentro da extensão, então o que é treinado aqui é o que roda no navegador."""
 import math, re
+import alfabetos as ALF
 
 SUFIXOS_COMPOSTOS = {'com.br','net.br','org.br','gov.br','edu.br','mil.br','co.uk','org.uk',
                      'com.au','com.ar','com.pt','com.mx','co.za'}
@@ -25,7 +26,8 @@ ESPIONAGEM = re.compile(r'(social|phone|mobile|cell|whats?app|insta(gram)?|face(
 
 NOMES = ['len_host','n_labels','len_reg','len_sld','n_sub','dig_host','dig_sld','hif_sld','hif_host',
   'max_label','entropia','vogais','cons_run','trocas_dig','tld_risco','tld_len','is_ip','puny','hospedagem',
-  'kw','marca_falsa','marca_typo','n_tokens','tok_medio','tok_max','dig_run','unicos','espiao']
+  'kw','marca_falsa','marca_typo','n_tokens','tok_medio','tok_max','dig_run','unicos','espiao',
+  'cirilico','mistura_alfabetos','tudo_parecido','marca_homografo']   # v3.13: alfabeto cirílico
 
 def raiz(host):
     p = host.split('.')
@@ -90,4 +92,13 @@ def calcular(host, tld_risco):
       sum(p in host for p in PALAVRAS), falsa, typo, len(tokens),
       sum(len(t) for t in tokens)/len(tokens) if tokens else 0, max((len(t) for t in tokens), default=0),
       maior_run(host, str.isdigit), len(set(sld))/len(sld) if sld else 0,
-      int(bool(ESPIONAGEM.search(host)))]
+      int(bool(ESPIONAGEM.search(host)))] + alfabeto(host)
+
+OFICIAIS = {d for v in MARCAS.values() for d in v}
+def alfabeto(host):
+    """v3.13: letras cirílicas no endereço. marca_homografo = o endereço, lido em letras latinas, é uma marca conhecida."""
+    a = ALF.host(host); homog = 0
+    if a['esqueleto'] != a['unicode']:
+        sk = a['esqueleto']; skdom = raiz(sk)
+        homog = int(skdom in OFICIAIS or any(marca(sk, skdom)))
+    return [a['cirilico'], a['mistura'], a['tudoParecido'], homog]

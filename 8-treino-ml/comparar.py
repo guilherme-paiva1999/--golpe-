@@ -11,6 +11,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import roc_auc_score
 from scipy.sparse import hstack, csr_matrix
 warnings.filterwarnings('ignore')
+import os; AQUI = os.path.dirname(os.path.abspath(sys.argv[0])); sys.path.insert(0, os.path.join(AQUI, '..', '1-extensao-codigo', 'ml')); import alfabetos as ALF   # v3.13: letras cirílicas
 
 col = {json.loads(l)['url']: json.loads(l) for l in open('coleta.jsonl')}
 fe = [json.loads(l) for l in open('feats.jsonl')]
@@ -20,7 +21,7 @@ def raiz(h):
     p = (h or '').lower().replace('www.', '').split('.')
     return '.'.join(p[-3:]) if len(p) >= 3 and p[-2] in ('com', 'net', 'org', 'gov', 'edu') and len(p[-1]) == 2 else '.'.join(p[-2:])
 
-X, Y, G, T, cortados = [], [], [], [], 0
+X, Y, G, T, BRUTO, cortados = [], [], [], [], [], 0
 for r in fe:
     if r['rotulo'] not in ('golpe', 'real') or not r['x']: continue
     c = col[r['url']]; pg = c.get('pagina') or {}
@@ -29,7 +30,7 @@ for r in fe:
         cortados += 1; continue                       # golpe que já saiu do ar ou virou outra coisa: rótulo não confiável
     if r['rotulo'] == 'golpe' and raiz(re.sub(r'^https?://', '', r['url']).split('/')[0].split(':')[0]) != raiz(pg.get('host')):
         cortados += 1; continue                       # golpe que redirecionou para outro site (GoDaddy, Instagram, site verdadeiro)
-    X.append(list(r['x'].values())); Y.append(1 if r['rotulo'] == 'golpe' else 0); G.append(raiz(r['host'] or c['url'])); T.append(texto[:4000])
+    X.append(list(r['x'].values())); Y.append(1 if r['rotulo'] == 'golpe' else 0); G.append(raiz(r['host'] or c['url'])); T.append(ALF.texto(texto[:4000])['texto']); BRUTO.append(pg.get('texto') or '')
 X = np.array(X, float); Y = np.array(Y); G = np.array(G)
 nomes = list(fe[0]['x'].keys()) if fe[0]['x'] else list(next(r for r in fe if r['x'])['x'].keys())
 print(f'páginas usadas: {len(Y)} (golpes {Y.sum()}, reais {(Y==0).sum()}); golpes descartados por estarem fora do ar: {cortados}')

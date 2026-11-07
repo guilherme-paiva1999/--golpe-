@@ -4,6 +4,7 @@
    Os sinais abaixo são os mesmos de ml/recursos.py (o que foi treinado é o
    que roda aqui). Teste de paridade: node ml/testar_modelo.js
    Uso: carregarModelo(json) uma vez; depois probGolpe(host) -> 0 a 1.
+   Precisa de alfabetos.js carregado antes (letras cirílicas, v3.13).
    ===================================================================== */
 
 const ML_SUFIXOS = ['com.br', 'net.br', 'org.br', 'gov.br', 'edu.br', 'mil.br', 'co.uk', 'org.uk',
@@ -115,11 +116,26 @@ function mlRecursos(hostOriginal, tldRisco, tldPadrao) {
     tokens.length ? tokens.reduce((s, t) => s + t.length, 0) / tokens.length : 0,
     tokens.length ? Math.max(...tokens.map((t) => t.length)) : 0,
     mlMaiorRun(host, ehDigito), sld.length ? new Set(sld).size / sld.length : 0,
-    ML_ESPIONAGEM.test(host) ? 1 : 0
+    ML_ESPIONAGEM.test(host) ? 1 : 0,
+    ...mlAlfabeto(host)
   ];
 }
 
+// v3.13: letras cirílicas no endereço (alfabetos.js). marca_homografo = lido em letras latinas, o endereço é uma marca conhecida.
+const ML_OFICIAIS = new Set(Object.values(ML_MARCAS).flat());
+function mlAlfabeto(host) {
+  const a = alfHost(host);
+  let homog = 0;
+  if (a.esqueleto !== a.unicode) {
+    const sk = a.esqueleto, skdom = mlRaiz(sk);
+    const [f, t] = mlMarca(sk, skdom);
+    homog = ML_OFICIAIS.has(skdom) || f || t ? 1 : 0;
+  }
+  return [a.cirilico, a.mistura, a.tudoParecido, homog];
+}
+
 let MODELO = null;
+function mlLimiares() { return MODELO ? { limiar: MODELO.limiar_fp1, forte: MODELO.limiar_fp05 } : {}; }
 function carregarModelo(json) { MODELO = json; }
 function modeloPronto() { return !!MODELO; }
 

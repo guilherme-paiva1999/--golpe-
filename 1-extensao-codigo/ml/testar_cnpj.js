@@ -4,7 +4,7 @@ const noop = () => {}, ev = { addListener: noop };
 const chrome = { runtime: { onInstalled: ev, onStartup: ev, onMessage: ev, id: 'x', getPlatformInfo: noop }, alarms: { get: async () => ({}), create: noop, onAlarm: ev },
   webNavigation: { onBeforeNavigate: ev }, storage: { local: { get: async () => ({}), set: async () => {} }, session: { get: async () => ({}), set: async () => {} } }, action: {} };
 const ctx = { chrome, console, AbortSignal, URL, TextDecoder, fetch: async () => { throw 0; } }; vm.createContext(ctx);
-vm.runInContext(fs.readFileSync(path.join(__dirname, '../background.js'), 'utf8') + ';this.T={avaliarPagina,situacaoCnpj};' +
+vm.runInContext(fs.readFileSync(path.join(__dirname,'../alfabetos.js'),'utf8')+fs.readFileSync(path.join(__dirname,'../background.js'),'utf8') + ';this.T={avaliarPagina,situacaoCnpj};' +
   'estaNaLista=async()=>false;' +
   'consultarRdap=async(d)=>(self.__rdap[d]||{dias:2000,cnpj:null,pf:false});' +
   'consultarCnpj=async(c)=>(c in self.__cnpj?self.__cnpj[c]:null);', Object.assign(ctx, { self: ctx }));

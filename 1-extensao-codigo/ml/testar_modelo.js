@@ -2,7 +2,7 @@
 // Antes: python3 gerar_paridade.py
 const fs=require('fs'),vm=require('vm'),path=require('path');
 const ctx={console};vm.createContext(ctx);
-vm.runInContext(fs.readFileSync(path.join(__dirname,'../modelo.js'),'utf8')+';this.T={carregarModelo,probGolpe}',ctx);
+vm.runInContext(fs.readFileSync(path.join(__dirname,'../alfabetos.js'),'utf8')+fs.readFileSync(path.join(__dirname,'../modelo.js'),'utf8')+';this.T={carregarModelo,probGolpe}',ctx);
 ctx.T.carregarModelo(JSON.parse(fs.readFileSync(path.join(__dirname,'modelo.json'),'utf8')));
 const amostra=JSON.parse(fs.readFileSync(path.join(__dirname,'amostra_paridade.json'),'utf8'));
 let ok=0;for(const {host,p} of amostra){const q=ctx.T.probGolpe(host);const b=Math.abs(q-p)<1e-9;ok+=b;

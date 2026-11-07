@@ -8,20 +8,50 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import roc_auc_score
 from scipy.sparse import hstack, csr_matrix
 warnings.filterwarnings('ignore')
-exec(open('comparar.py').read().split("gkf = GroupKFold")[0])
+import os
+exec(open(os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), 'comparar.py'), encoding='utf-8').read().split("gkf = GroupKFold")[0])
 # Fora: o caminho do endereço (viés da coleta) e as que ficaram constantes no treino (idade e CNPJ não foram consultados).
 FORA = {'caminho', 'idadeLog', 'idadeDesconhecida', 'idadeMenos90', 'cnpjAtivo', 'cnpjIrregular', 'pessoaFisica'}
 idx = [i for i, n in enumerate(nomes) if n not in FORA]
 X = X[:, idx]; NOMES = [nomes[i] for i in idx]
 print(len(NOMES), 'características numéricas')
+# ---- v3.13: alfabeto cirílico ----
+# Golpes reais disfarçam palavras com letras russas iguais às latinas ("Nеtfliх"). Na coleta há poucos casos, então,
+# SÓ NO TREINO, cada página de golpe ganha uma cópia com 1 a 4 palavras disfarçadas assim. O texto que o modelo lê
+# volta a ser o mesmo (as letras são trocadas de volta), mudam só as características misturaAlfabetos e cirilico.
+# As medidas de acerto são sempre nas páginas reais, nunca nas cópias.
+import random
+PARA_CIR = {'a': 'а', 'c': 'с', 'e': 'е', 'o': 'о', 'p': 'р', 'x': 'х', 'y': 'у', 'i': 'і'}
+iMist, iCir = NOMES.index('misturaAlfabetos'), NOMES.index('cirilico')
+def disfarcar(texto, rng):
+    palavras = [m for m in re.finditer(r'[A-Za-z]{4,}', texto) if any(c in PARA_CIR for c in m.group(0))]
+    if not palavras: return None
+    escolha = rng.sample(palavras, min(len(palavras), rng.choice([1, 2, 2, 3, 4])))
+    out = list(texto)
+    for m in escolha:
+        pos = [m.start() + i for i, c in enumerate(m.group(0)) if c in PARA_CIR]
+        for p in rng.sample(pos, min(len(pos), rng.choice([1, 1, 2]))): out[p] = PARA_CIR[out[p]]
+    return ''.join(out)
+def aumentar(idx, semente=0):
+    rng = random.Random(semente); xs, ts = [], []
+    for i in idx:
+        if Y[i] != 1: continue
+        d = disfarcar(BRUTO[i], rng)
+        if d is None: continue
+        a = ALF.texto(d); x = X[i].copy(); x[iMist] = min(a['mistas'], 5); x[iCir] = a['cirilico']
+        xs.append(x); ts.append(T[i])
+    return np.array(xs), ts
+
 def vet(mf): return TfidfVectorizer(analyzer='char_wb', ngram_range=(3, 5), min_df=3, max_features=mf, sublinear_tf=True, dtype=np.float64)
 def oof(mf, C=4):
     p = np.zeros(len(Y))
     for tr, te in GroupKFold(5).split(X, Y, G):
-        v = vet(mf); sc = StandardScaler().fit(X[tr])
-        At = hstack([v.fit_transform([T[i] for i in tr]), csr_matrix(sc.transform(X[tr]))]).tocsr()
+        xa, ta = aumentar(tr)
+        Xtr = np.vstack([X[tr], xa]); Ytr = np.concatenate([Y[tr], np.ones(len(xa), int)]); Ttr = [T[i] for i in tr] + ta
+        v = vet(mf); sc = StandardScaler().fit(Xtr)
+        At = hstack([v.fit_transform(Ttr), csr_matrix(sc.transform(Xtr))]).tocsr()
         Ae = hstack([v.transform([T[i] for i in te]), csr_matrix(sc.transform(X[te]))]).tocsr()
-        p[te] = LogisticRegression(max_iter=4000, class_weight='balanced', C=C).fit(At, Y[tr]).predict_proba(Ae)[:, 1]
+        p[te] = LogisticRegression(max_iter=4000, class_weight='balanced', C=C).fit(At, Ytr).predict_proba(Ae)[:, 1]
     return p
 melhor = None
 for mf in (5000, 10000, 20000, 40000):
@@ -32,9 +62,12 @@ mf, auc, p = melhor
 lim2, lim1 = float(np.quantile(p[Y == 0], 0.98)), float(np.quantile(p[Y == 0], 0.99))
 print(f'escolhido: {mf} (AUC {auc:.3f}); limiares 2% FP {lim2:.3f}, 1% FP {lim1:.3f}; pega {(p[Y==1]>lim2).mean():.1%} e {(p[Y==1]>lim1).mean():.1%}')
 # Treino final com tudo
-v = vet(mf); sc = StandardScaler().fit(X)
-A = hstack([v.fit_transform(T), csr_matrix(sc.transform(X))]).tocsr()
-lr = LogisticRegression(max_iter=4000, class_weight='balanced', C=4).fit(A, Y)
+xa, ta = aumentar(range(len(Y)))
+XA = np.vstack([X, xa]); YA = np.concatenate([Y, np.ones(len(xa), int)]); TA = T + ta
+print(f'cópias de golpe com letras disfarçadas (só no treino): {len(xa)}')
+v = vet(mf); sc = StandardScaler().fit(XA)
+A = hstack([v.fit_transform(TA), csr_matrix(sc.transform(XA))]).tocsr()
+lr = LogisticRegression(max_iter=4000, class_weight='balanced', C=4).fit(A, YA)
 nv = len(v.vocabulary_); coef = lr.coef_[0]
 vocab = [None] * nv
 for g, i in v.vocabulary_.items(): vocab[i] = g

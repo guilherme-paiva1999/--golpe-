@@ -24,6 +24,9 @@ HOSTS = ['google.com', 'www.nubank.com.br', 'nubank-atualizar-cadastro.xyz', 're
  '192.168.0.10', 'xn--nbank-wva.com', 'wa-spy-app.net', 'loja-ceramica-artesanal.com.br', 'casasbahia-black-friday.top',
  'bit.ly', 'banco-do-brasil-2via-boleto.com', 'uol.com.br', 'estadao.com.br', 'correios-rastreio-taxa.site',
  'meu-inss-beneficio.com', 'github.io', 'mitchellkrogza.github.io', 'abc123xyz987.tk', 'santander.com.br',
- 'a.b.c.d.e.f.example.com', 'detran-sp-multas.org', 'apple-id-unlock.icloud-support.co', 'netflx.com']
-json.dump([{'host': h, 'p': prob(h)} for h in HOSTS], open(os.path.join(AQUI, 'amostra_paridade.json'), 'w'), indent=1)
+ 'a.b.c.d.e.f.example.com', 'detran-sp-multas.org', 'apple-id-unlock.icloud-support.co', 'netflx.com',
+ # v3.13: letras cirílicas (аррӏе.com, gоogle.cf, nubаnk.com.br, мвд.рф, дом.рф, рауреаl.com, login.аmazon.com.br.verify.top)
+ 'xn--80ak6aa92e.com', 'xn--gogle-jye.cf', 'xn--nubnk-6ve.com.br', 'xn--b1aew.xn--p1ai', 'xn--d1aqf.xn--p1ai', 'xn--l-7sbat7cbu.com',
+ 'login.xn--mazon-3ve.com.br.verify.top']
+json.dump([{'host': h, 'p': prob(h)} for h in HOSTS], open(os.path.join(AQUI, 'amostra_paridade.json'), 'w', encoding='utf-8'), indent=1)
 print(len(HOSTS), 'hosts')

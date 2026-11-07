@@ -1,7 +1,7 @@
 # É Golpe? · tudo o que foi produzido
 
 Extensão do Chrome que avisa sobre golpes, feita para o Hackathon "Negócios em Transformação" (UniSenac, Senac, Sebrae).
-Versão da extensão neste pacote: **3.12.0**.
+Versão da extensão neste pacote: **3.13.0**.
 
 ## O que tem em cada pasta
 
@@ -35,6 +35,14 @@ Veja [`CONTINUAR.md`](CONTINUAR.md): como baixar, instalar, rodar os testes e as
 3. **Carregar sem compactação** e escolha a pasta com o `manifest.json`.
 4. Na primeira vez abre a tela de boas-vindas: escolha a acessibilidade e, se quiser, a pessoa de confiança.
 5. Recarregue as abas abertas. O popup tem botões para testar os avisos.
+
+## Novidades da 3.13.0
+
+- Os dois modelos de inteligência artificial foram **treinados também com o alfabeto cirílico** (letras russas). Golpistas trocam
+  letras por letras russas idênticas: `аррӏе.com` parece "apple.com" e "Nеtfliх" parece "Netflix". Agora a extensão lê como a pessoa lê.
+- Endereço com letras russas imitando uma marca (Apple, Google, Nubank...) é **bloqueado antes de abrir**. Site russo de verdade
+  (`.рф`) não é tratado como golpe.
+- Acerto nos dados reais igual ou um pouco melhor que antes; detalhes no README da extensão (seção v3.13).
 
 ## Novidades da 3.12.0
 

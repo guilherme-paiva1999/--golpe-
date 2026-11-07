@@ -24,6 +24,7 @@ node ml/testar_empresa.js
 node ml/testar_gov_marca.js
 node ml/testar_pontuacao.js
 node ml/testar_cnpj.js
+node ml/testar_alfabetos.js
 node ml/testar_modelo_pagina.js
 node ml/testar_modelo_pagina_extensao.js
 ```
@@ -60,6 +61,10 @@ As capturas de tela ficam em `teste-real/capturas/` (não vão para o GitHub).
   **modelo da página** (regressão logística com texto + características; AUC 0,92, ~52% dos golpes com 2% de falsos alertas).
   A **rede neural foi testada e não ganhou** do clássico com estes dados (`8-treino-ml/README.md`). Sem página para ler,
   vale o modelo do nome do site (~10% dos golpes com ~1% de falsos alertas).
+- **Alfabeto cirílico** (3.13.0): `alfabetos.js` lê letras russas disfarçadas no endereço e na página; os dois modelos foram
+  retreinados com isso. Os golpes de endereço com letras disfarçadas usados no treino são **gerados** (as listas abertas têm só 5).
+  Letras russas imitando marca = 70 pontos (bloqueia). Para retreinar: `ml/treinar.py` (nome) e `8-treino-ml/final.py` (página);
+  no Windows, rode o Python com `PYTHONUTF8=1`.
 - **Visual** da tela de bloqueio e dos avisos: sóbrio e limpo (vermelho-escuro, octógono com X, "PERIGO", lista de motivos,
   três botões). O visual de "cartaz de campanha" da v3.1 foi descartado por estar poluído.
 - **Aplicativo e extensão juntos** (3.4.0): o aplicativo confere o link antes de abrir; a extensão cuida das páginas. Um código só: o aplicativo é a `verificar.html` da pasta da extensão.

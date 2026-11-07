@@ -2,6 +2,8 @@
   'use strict';
   if (window.__pgCarregado) return;
   window.__pgCarregado = true;
+  // v3.13: palavras com letras russas disfarçadas ("Pіx", "Nеtfliх") são lidas em letras latinas pelas regras (alfabetos.js).
+  const latino = (t) => (typeof alfTexto === 'function' ? alfTexto(t).texto : t);
 
   // ---------- Estado e configuração ----------
   let ativo = true;
@@ -331,7 +333,7 @@
   };
   function marcasDaPagina() {
     const cab = [document.title, ...[...document.querySelectorAll('h1, h2')].slice(0, 6).map((e) => e.textContent)].join(' \n ');
-    return Object.keys(MARCAS_PAGINA).filter((k) => MARCAS_PAGINA[k].test(cab));
+    return Object.keys(MARCAS_PAGINA).filter((k) => MARCAS_PAGINA[k].test(latino(cab)));
   }
 
   function cnpjOk(d) {
@@ -367,7 +369,7 @@
   }
 
   function lerSinais() {
-    const texto = (document.body ? document.body.innerText : '').slice(0, 100000);
+    const texto = latino((document.body ? document.body.innerText : '').slice(0, 100000));
     const campoCartao = !!document.querySelector('input[autocomplete^="cc-"], input[name*="card" i], input[name*="cartao" i], input[name*="cvv" i], input[id*="cvv" i]');
     const senha = !!document.querySelector('input[type="password"]');
     const pagamento = campoCartao || PAGAMENTO.some((p) => p.test(texto));
@@ -500,7 +502,7 @@
     if (rotuloCurto(container, ROTULOS_IA)) pontos += 3;
     if (rotuloCurto(container, PATROCINADO)) pontos += 1;
     if (temLinkEncurtado(container)) pontos += 1;
-    const texto = (container.textContent || '').slice(0, 6000);   // textContent não força layout
+    const texto = latino((container.textContent || '').slice(0, 6000));   // textContent não força layout
     pontos += SINAIS_GOLPE.filter((p) => p.test(texto)).length;
     return pontos;
   }

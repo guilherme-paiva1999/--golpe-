@@ -2,12 +2,15 @@
 /* =====================================================================
    Aprendizado de máquina: classificador da PÁGINA (ml/modelo-pagina.json).
    Regressão logística que lê o texto da página (pedaços de 3 a 5 letras, TF-IDF)
-   e 39 características (preços, Pix, formulários, políticas, CNPJ, endereço...).
+   e 41 características (preços, Pix, formulários, políticas, CNPJ, endereço, letras russas...).
    Treinada em 1.234 páginas reais (8-treino-ml/). No teste por domínio (o modelo
    nunca viu o site): AUC 0,92; com 2% de falsos alertas pega cerca de metade dos golpes.
    Por isso ele SOMA pontos e nunca decide sozinho.
    O cálculo abaixo reproduz o scikit-learn (TfidfVectorizer char_wb + StandardScaler).
    Teste de paridade: node ml/testar_modelo_pagina.js
+   v3.13: letras cirílicas (alfabetos.js, carregado antes). Palavras que misturam os dois alfabetos
+   ("Nеtfliх") são lidas em letras latinas ("Netflix") pelo texto e pelas regras, e duas características
+   novas contam essas palavras e quanto do texto está em cirílico.
    ===================================================================== */
 
 let MP = null;          // modelo carregado
@@ -59,7 +62,8 @@ const mpLg = (x) => Math.log10(1 + (x || 0));
 
 // pg: medidas da página (content.js); end: características do endereço, calculadas no background.
 function caracteristicasPagina(pg, end) {
-  const t = pg.texto || '';
+  const alf = alfTexto(pg.texto || '');
+  const t = alf.texto;
   const cnpjs = [...t.matchAll(MP_CNPJ)].map((m) => m[0].replace(/\D/g, ''));
   return {
     https: end.https, br: end.br, pontosHost: end.pontosHost, ml: end.ml, gratis: end.gratis, subdominios: end.subdominios, ip: end.ip,
@@ -77,12 +81,14 @@ function caracteristicasPagina(pg, end) {
     premio: /parab[ée]ns|voc[êe]\s+(foi\s+)?(ganhou|sorteado|selecionad)|resgat(e|ar)\s+(seu|o)\s+(pr[êe]mio|saldo|valor)/i.test(t) ? 1 : 0,
     ingles: /\b(the|your|account|password|verify|sign in)\b/i.test(t) && !/\b(você|não|para|com|sua)\b/i.test(t) ? 1 : 0,
     compraUI: pg.compraUI ? 1 : 0, cartao: pg.cartao ? 1 : 0,
-    espiao: /(clonar|espionar|espiar|hackear|rastrear)/i.test(t) && /(de\s+qualquer\s+pessoa|sem\s+notificar|100%\s+an[ôo]nimo)/i.test(t) ? 1 : 0
+    espiao: /(clonar|espionar|espiar|hackear|rastrear)/i.test(t) && /(de\s+qualquer\s+pessoa|sem\s+notificar|100%\s+an[ôo]nimo)/i.test(t) ? 1 : 0,
+    misturaAlfabetos: Math.min(alf.mistas + alfTexto(pg.title || '').mistas, 5), cirilico: alf.cirilico
   };
 }
 
 // Texto que o modelo lê: título + texto visível, até 4.000 caracteres (como no treino).
-function textoDoModelo(pg) { return Array.from((pg.title || '') + ' \n ' + (pg.texto || '')).slice(0, 4000).join(''); }
+// v3.13: palavras de alfabeto misturado já em letras latinas ("Nеtfliх" -> "Netflix").
+function textoDoModelo(pg) { return alfTexto(Array.from((pg.title || '') + ' \n ' + (pg.texto || '')).slice(0, 4000).join('')).texto; }
 
 // Probabilidade de golpe (0 a 1) a partir do texto e das características já calculadas.
 function probGolpeTexto(texto, x) {

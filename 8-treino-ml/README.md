@@ -39,6 +39,17 @@ logística com o texto da página + as características. Mesmo assim, ainda há 
 golpes são páginas pequenas), então os números de verdade devem ser menores. O que mais falta são dados: páginas de lojas
 reais (produto e pagamento, não só a inicial), mais golpes atuais, e a idade e o CNPJ de cada site no treino.
 
+## Alfabeto cirílico (v3.13.0)
+
+O mesmo treino, agora lendo letras russas disfarçadas (`1-extensao-codigo/alfabetos.js` e `ml/alfabetos.py`):
+- O texto que o modelo lê passa pelo "esqueleto" latino ("Nеtfliх" vira "Netflix"); entram `misturaAlfabetos` e `cirilico` (41 características).
+- Na coleta há 1 golpe com palavras disfarçadas e páginas reais com menus em russo. Por isso, **só no treino**, cada golpe ganha uma
+  cópia com 1 a 4 palavras disfarçadas (`final.py`, função `aumentar`). O acerto é sempre medido nas páginas reais.
+- Resultado (teste por domínio): AUC 0,916; com 2% de falsos alertas pega 55,2%; com 1%, 38,1%.
+- `amostras_reais.py` gera as páginas de exemplo do teste ponta a ponta (inclui a página real do "Nеtfliх").
+- Como rodar: `gzip -dc dados/coleta.jsonl.gz > coleta.jsonl`, `node caracteristicas.js coleta.jsonl nada.json feats.jsonl` e
+  `python final.py modelo-pagina.json amostras-pagina.json` (no Windows, com `PYTHONUTF8=1`).
+
 ## Modelo final na extensão (v3.12.0)
 
 `final.py` treina e exporta `1-extensao-codigo/ml/modelo-pagina.json`. Antes, a limpeza passou a tirar também os

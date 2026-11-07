@@ -180,6 +180,31 @@ node ml/testar_gov_marca.js && node ml/testar_pontuacao.js
 A extensão e o aplicativo passaram a se chamar **Isso é golpe?** (antes: "É Golpe?"), igual aos slides e ao pitch:
 nome no Chrome, popup, boas-vindas, tela de bloqueio, aplicativo, aviso no Reclame Aqui e mensagens para a pessoa de confiança.
 
+## v3.13: alfabeto cirílico (letras russas disfarçadas)
+
+Golpistas trocam letras latinas por letras russas idênticas: o endereço `аррӏе.com` (no computador, `xn--80ak6aa92e.com`) aparece
+como "apple.com"; na página, "Nеtfliх" e "Pіx" parecem normais, mas não batem com filtros comuns. Havia um caso real na coleta
+(`ficos.com.br`, "Nеtfliх") e 5 endereços com cirílico no Phishing.Database.
+
+- **`alfabetos.js`** (cópia em Python: `ml/alfabetos.py`): decodifica o endereço (punycode), mede quanto é cirílico, acha palavras
+  que **misturam** os dois alfabetos e devolve o "esqueleto" em letras latinas. O russo de verdade (`мвд.рф`, "Личный кабинет")
+  fica como está. Carregado no background, no content script e no aplicativo.
+- **Regra do endereço:** letras russas imitando uma marca (`аррӏе.com`, `gоogle.cf`, `nubаnk.com.br`) = **70 pontos (perigo, bloqueia
+  antes de abrir)**, com o motivo "O endereço imita "apple" trocando letras por letras russas iguais". Outros disfarces: 30 (como
+  antes). Site escrito em russo de verdade (`.рф`): 10 pontos (antes eram 30). Os hífens do "xn--" não contam mais como "vários hífens".
+- **Modelo do nome do site, retreinado** com 4 características novas (`cirilico`, `mistura_alfabetos`, `tudo_parecido`,
+  `marca_homografo`), 567 sites reais com nome em cirílico (Umbrella + Tranco) e 4.000 golpes **gerados** com letras disfarçadas
+  (as listas abertas quase não têm exemplos; gerar é fazer o mesmo que o golpista faz). Teste com sites que o modelo nunca viu:
+  dados reais **AUC 0,892** (antes 0,889); golpes gerados com letras disfarçadas: pega **99%**; sites reais em cirílico: **0%** de
+  falsos alertas. Limiares refeitos para a mesma taxa de falsos alertas de antes em 15 mil sites do Tranco fora do treino: 0,881 e 0,949.
+- **Modelo da página, retreinado:** palavras de alfabeto misturado são lidas em letras latinas ("Nеtfliх" vira "Netflix") e 2
+  características novas (`misturaAlfabetos`, `cirilico`), 41 no total. No treino, cada página de golpe ganhou uma cópia com 1 a 4
+  palavras disfarçadas (só no treino; o acerto é medido nas páginas reais). Teste por domínio: **AUC 0,916**; com 2% de falsos
+  alertas pega **55%** dos golpes (antes 52,5%); com 1%, 38% (antes 36%). A página real do "Nеtfliх" dá 99,6%.
+- As regras do `content.js` (Pix, pagamento, pressão, marcas na página, posts) também leem o texto em letras latinas.
+- Testes: `node ml/testar_alfabetos.js` (JavaScript = Python, 101/101), `ml/testar_modelo.js` (45/45, com endereços em cirílico),
+  `ml/testar_gov_marca.js` (casos de cirílico) e `ml/testar_modelo_pagina_extensao.js` (página com letras disfarçadas continua golpe).
+
 ## v3.12: a inteligência artificial lê a página
 
 - `modelo-pagina.js` + `ml/modelo-pagina.json` (126 KB): regressão logística com o texto da página (pedaços de 3 a 5 letras,

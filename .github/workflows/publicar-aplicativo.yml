@@ -34,7 +34,7 @@ jobs:
           cd 1-extensao-codigo
           mkdir -p ../_site/ml ../_site/dados ../_site/icons ../_site/icones
           cp index.html verificar.html verificar.css verificar.js ponte.js manifest.webmanifest app-sw.js \
-             background.js modelo.js pessoa.js ../_site/
+             background.js alfabetos.js modelo.js pessoa.js ../_site/
           cp ml/modelo.json ../_site/ml/
           cp dados/consumidor.json ../_site/dados/
           cp icons/reclameaqui.png ../_site/icons/

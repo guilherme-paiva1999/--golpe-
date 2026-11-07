@@ -3,7 +3,7 @@ const fs=require('fs'),vm=require('vm'),path=require('path');
 const noop=()=>{},ev={addListener:noop};
 const chrome={runtime:{onInstalled:ev,onStartup:ev,onMessage:ev,id:'x',getPlatformInfo:noop},alarms:{get:async()=>({}),create:noop,onAlarm:ev},webNavigation:{onBeforeNavigate:ev},storage:{local:{get:async()=>({}),set:async()=>{}},session:{get:async()=>({}),set:async()=>{}}},action:{}};
 const ctx={chrome,console,AbortSignal,URL,TextDecoder,fetch:async()=>{throw 0},Date};vm.createContext(ctx);
-vm.runInContext(fs.readFileSync(path.join(__dirname,'../background.js'),'utf8')+';this.T={aplicarEmpresa,aplicarConsumidor,normalizarNome,pontuarConfianca,cnaeVende}',ctx);
+vm.runInContext(fs.readFileSync(path.join(__dirname,'../alfabetos.js'),'utf8')+fs.readFileSync(path.join(__dirname,'../background.js'),'utf8')+';this.T={aplicarEmpresa,aplicarConsumidor,normalizarNome,pontuarConfianca,cnaeVende}',ctx);
 const T=ctx.T;let ok=0,n=0;const t=(nome,v,e)=>{n++;const b=JSON.stringify(v)===JSON.stringify(e);ok+=b;console.log((b?'OK  ':'ERRO'),nome.padEnd(60),JSON.stringify(v));};
 t('normaliza "Magazine Luiza S/A"',T.normalizarNome('Magazine Luiza S/A'),'magazineluizasa');
 t('normaliza "Pão de Açúcar"',T.normalizarNome('Pão de Açúcar'),'paodeacucar');

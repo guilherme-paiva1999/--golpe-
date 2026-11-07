@@ -2,7 +2,7 @@ const fs=require('fs'),vm=require('vm');
 const noop=()=>{},ev={addListener:noop};
 const chrome={runtime:{onInstalled:ev,onStartup:ev,onMessage:ev,id:'x',getPlatformInfo:noop},alarms:{get:async()=>({}),create:noop,onAlarm:ev},webNavigation:{onBeforeNavigate:ev},storage:{local:{get:async()=>({}),set:async()=>{}},session:{get:async()=>({}),set:async()=>{}}},action:{}};
 const ctx={chrome,console,AbortSignal,URL,TextDecoder,fetch:async()=>{throw 0}};vm.createContext(ctx);
-vm.runInContext(fs.readFileSync(require('path').join(__dirname,'../background.js'),'utf8')+';this.T={pontuarPagina,nivelPorRigor,avaliarHost}',ctx);
+vm.runInContext(fs.readFileSync(require('path').join(__dirname,'../alfabetos.js'),'utf8')+fs.readFileSync(require('path').join(__dirname,'../background.js'),'utf8')+';this.T={pontuarPagina,nivelPorRigor,avaliarHost}',ctx);
 const T=ctx.T, S=(o)=>Object.assign({pagamento:false,pressao:false,desconto:false,formExterno:false,senha:false,semContato:false},o);
 const casos=[
  ['loja NOVA (10 dias) + pagamento + pressão',S({pagamento:true,pressao:true}),10,'perigo','atencao'],
