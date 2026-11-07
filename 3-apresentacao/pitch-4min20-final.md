@@ -32,7 +32,7 @@ e se é **registrada para vender**.
 **[Mostre o vídeo ou a extensão: abra a loja de teste sem CNPJ.]**
 Olha o que acontece numa loja sem CNPJ: a página é bloqueada antes de a pessoa digitar o cartão.
 Aparece a confiança em porcentagem, o motivo em palavras simples e três botões:
-voltar, perguntar para alguém de confiança e verificar no **Reclame Aqui, que já abre com o site preenchido**.
+voltar, perguntar para alguém de confiança e verificar no **Reclame Aqui, que já abre na nota do site**.
 
 ## 2:40 · O que nos diferencia (40 s)
 O Chrome e os antivírus protegem contra vírus. A gente vai além:

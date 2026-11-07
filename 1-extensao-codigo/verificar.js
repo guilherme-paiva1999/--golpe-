@@ -253,12 +253,9 @@ $('cadastrarPessoa').addEventListener('click', abrirAjustes);
 $('voltarAjustes').addEventListener('click', () => history.back());
 $('ouvir').addEventListener('click', falarResultado);
 $('atualizarListas').addEventListener('click', () => baixarListas(true));
+// v3.14: o link abre direto a nota do site no Detector do Reclame Aqui (no computador e no celular).
 $('reclameAqui').addEventListener('click', () => {
-  if (!atual) return;
-  const host = atual.host.replace(/^www\./, '');
-  if (navigator.clipboard) navigator.clipboard.writeText(host).catch(() => {});
-  // Dentro da extensão, o reclameaqui.js preenche o Detector sozinho. No celular, o endereço fica copiado para colar.
-  if (EGolpeModo === 'extensao') chrome.storage.local.set({ raPendente: { host, t: Date.now() } }).catch(() => {});
+  if (atual) $('reclameAqui').href = self.EGolpeRA.link(atual.host);
 });
 $('notaRA').addEventListener('change', async () => {
   if (!atual) return;

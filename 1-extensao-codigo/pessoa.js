@@ -41,3 +41,16 @@ self.EGolpePessoa = {
     return !!(pessoa && String(pessoa.nome || '').trim() && (this.telefone(pessoa.telefone) || this.emailValido(pessoa.email)));
   }
 };
+
+/* v3.14: link direto para a nota do site no Detector de Site Confiável do Reclame Aqui
+   (https://www.reclameaqui.com.br/detector-site-confiavel/<site>). É um link público do próprio Reclame Aqui:
+   a pessoa clica no nosso botão e a página dele abre já com o veredito. Nada é lido nem clicado por nós.
+   Site que o Reclame Aqui ainda não conhece: ele começa a análise e pede "não sou um robô" para a própria pessoa. */
+self.EGolpeRA = {
+  DETECTOR: 'https://www.reclameaqui.com.br/detector-site-confiavel/',
+  link(host) {
+    const h = String(host || '').trim().toLowerCase().replace(/^www\./, '');
+    return /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(h) ? this.DETECTOR + h : this.DETECTOR;
+  }
+};
+if (typeof module !== 'undefined') module.exports = { EGolpePessoa: self.EGolpePessoa, EGolpeRA: self.EGolpeRA };

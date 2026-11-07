@@ -10,7 +10,7 @@ Na indústria criativa, o patrimônio é a marca e a criação. E é exatamente 
 
 O Isso é Golpe? é um aplicativo de celular e uma extensão do navegador que trabalham juntos, com uma regra simples: todo site começa suspeito e só é confiável se provar, com 90% ou mais de confiança. No celular, a pessoa toca em Compartilhar no link do WhatsApp e confere antes de abrir. No computador, a extensão age sozinha, só onde tem dinheiro: loja, Pix, pagamento. Em site de notícia, ela fica quieta. E consulta a Receita Federal: se a empresa está ativa, há quanto tempo existe, porque empresa aberta ontem é alerta, e se é registrada para vender.
 
-Olha o que acontece numa loja sem CNPJ: a página é bloqueada antes de a pessoa digitar o cartão. Aparece a confiança em porcentagem, o motivo em palavras simples e três botões: voltar, perguntar para alguém de confiança e verificar no Reclame Aqui, que já abre com o site preenchido.
+Olha o que acontece numa loja sem CNPJ: a página é bloqueada antes de a pessoa digitar o cartão. Aparece a confiança em porcentagem, o motivo em palavras simples e três botões: voltar, perguntar para alguém de confiança e verificar no Reclame Aqui, que já abre na nota do site.
 
 O Chrome e os antivírus protegem contra vírus. A gente vai além. Primeiro, somos feitos para o Brasil: Receita Federal, Pix, Procon e Reclame Aqui. E a loja estrangeira recebe um aviso próprio: ela está fora dos nossos cuidados. Segundo, a marca honesta prova que é verdadeira e vende sem alerta. Terceiro, a pessoa de confiança: num clique, o idoso pergunta para o filho no WhatsApp: isso é golpe? E quarto, é pensado para quem tem dificuldade: letras grandes, aviso em voz alta, leitor de tela e cores para daltonismo.
 

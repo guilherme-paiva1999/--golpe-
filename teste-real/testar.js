@@ -83,6 +83,16 @@ const conferir = (nome, cond, extra) => { console.log((cond ? 'OK   ' : 'FALHA '
   conferir('botão perguntar para Maria', (await pg.isVisible('#perguntar')) && (await pg.textContent('#perguntarTxt')).includes('Maria'));
   const ra = await pg.$eval('#ra', (b) => b.getBoundingClientRect().height);
   conferir('botão do Reclame Aqui com altura boa (>= 56px)', ra >= 56, Math.round(ra) + 'px');
+  // v3.14: o botão do Reclame Aqui abre direto a nota do site no Detector
+  const antesRA = new Set(ctx.pages());
+  const errosRA = [];
+  pg.on('pageerror', (e) => errosRA.push(e.message));
+  await pg.click('#ra');
+  let novaRA = null;
+  for (let i = 0; i < 40 && !novaRA; i++) { await espera(250); novaRA = ctx.pages().find((p) => !antesRA.has(p) && p.url() !== 'about:blank') || null; }
+  const urlRA = novaRA ? novaRA.url() : 'nenhuma aba nova ' + ctx.pages().map((p) => p.url()).join(' , ') + ' ' + errosRA.join(' ');
+  conferir('Reclame Aqui abre direto a nota do site', urlRA.startsWith('https://www.reclameaqui.com.br/detector-site-confiavel/nubank-atualizar-cadastro.xyz'), urlRA);
+  if (novaRA) await novaRA.close().catch(() => {});
   const itens = await pg.$$eval('#verif li', (l) => l.map((x) => x.textContent));
   conferir('verificação completa com 7 itens', itens.length === 7, '\n      ' + itens.join('\n      '));
   conferir('modo daltônico na tela', await pg.$eval('body', (b) => b.classList.contains('daltonico')));

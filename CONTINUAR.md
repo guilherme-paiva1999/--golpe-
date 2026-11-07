@@ -54,7 +54,8 @@ As capturas de tela ficam em `teste-real/capturas/` (não vão para o GitHub).
 - **Só fontes abertas** que permitem uso comercial: Phishing.Database (MIT), URLhaus (CC0), Procon-SP, RDAP, BrasilAPI,
   consumidor.gov.br. O **OpenPhish foi retirado** porque o feed grátis não permite uso comercial.
 - **Reclame Aqui** não é consultado automaticamente (sem API pública e o site proíbe robôs). A pessoa clica no botão verde,
-  que abre o Detector oficial com o endereço já preenchido (`reclameaqui.js`, 3.5.0); quem clica em verificar é a pessoa. A logo veio do Wikimedia Commons (domínio público), mas é marca registrada: para uso comercial,
+  que abre o Detector oficial **direto na nota do site** pelo link público `detector-site-confiavel/<site>` (3.14.0; antes o `reclameaqui.js`
+  preenchia o campo). Nada é lido nem clicado por nós; em site novo, o Reclame Aqui pede "não sou um robô" para a pessoa. A logo veio do Wikimedia Commons (domínio público), mas é marca registrada: para uso comercial,
   pedir autorização.
 - **Confiança em porcentagem**, aparece na hora (sem "carregando"). **Só é confiável com 90% ou mais** (rigor normal: 60% ou mais). Mudou de 80% para 90% na 3.3.0.
 - **Aprendizado de máquina** só soma pontos, nunca bloqueia sozinho. Desde a 3.12.0, nas páginas de dinheiro vale o

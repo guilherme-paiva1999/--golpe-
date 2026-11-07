@@ -19,4 +19,10 @@ const site=(p,nota)=>T.nivelPorRigor(T.aplicarRA(nota?{nota}:null,false,p,[]),'a
 t('site comum (15 pontos) + RA "Não recomendado"',site(15,'nao_recomendado'),'atencao');
 t('site comum (30 pontos) + RA "Ótimo"',site(30,'otimo'),'ok');
 t('nota inválida não muda nada',T.aplicarRA({nota:'xyz'},true,50,[]),50);
+// v3.14: o botão abre direto a nota do site no Detector do Reclame Aqui
+const pctx={console};pctx.self=pctx;vm.createContext(pctx);vm.runInContext(fs.readFileSync(path.join(__dirname,'../pessoa.js'),'utf8'),pctx);
+const D='https://www.reclameaqui.com.br/detector-site-confiavel/';
+t('link direto sem www',pctx.EGolpeRA.link('www.kabum.com.br'),D+'kabum.com.br');
+t('link direto de site desconhecido',pctx.EGolpeRA.link('ofertas-relampago-tv.shop'),D+'ofertas-relampago-tv.shop');
+t('endereço estranho abre só o Detector',pctx.EGolpeRA.link('a b/../x'),D);
 console.log(ok+'/'+n+' como esperado');

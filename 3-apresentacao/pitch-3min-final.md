@@ -28,7 +28,7 @@ Loja sem CNPJ é bloqueada, com o motivo em **palavras simples**.
 
 ## 2:05 · O que nos diferencia (30 s)
 O Chrome e os antivírus protegem contra vírus. A gente vai além:
-1. **Feito para o Brasil:** Receita Federal, Pix, Procon e o **Reclame Aqui já preenchido**.
+1. **Feito para o Brasil:** Receita Federal, Pix, Procon e o **Reclame Aqui direto na nota do site**.
 2. **A marca honesta prova que é verdadeira** e vende sem alerta.
 3. **Pessoa de confiança:** num clique, o idoso pergunta para o filho no WhatsApp: "isso é golpe?".
 4. **Acessível:** letras grandes, aviso em voz alta e leitor de tela.

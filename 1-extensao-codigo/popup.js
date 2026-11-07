@@ -55,9 +55,7 @@ async function prepararRA() {
   const chave = Object.keys(reclameAqui).find((d) => host === d || host.endsWith('.' + d));
   if (chave) $('notaRA').value = reclameAqui[chave].nota;
   $('btnRA').addEventListener('click', async () => {
-    try { await navigator.clipboard.writeText(host); } catch (e) { /* sem área de transferência */ }
-    await chrome.storage.local.set({ raPendente: { host, t: Date.now() } });   // reclameaqui.js preenche o Detector
-    chrome.tabs.create({ url: 'https://www.reclameaqui.com.br/detector-site-confiavel/' });
+    chrome.tabs.create({ url: self.EGolpeRA.link(host) });   // v3.14: abre direto a nota do site
   });
   $('notaRA').addEventListener('change', async () => {
     const r = await chrome.runtime.sendMessage({ tipo: 'ra', url: aba.url, nota: $('notaRA').value });

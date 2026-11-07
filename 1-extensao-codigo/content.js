@@ -245,10 +245,9 @@
     const ra = el('button', {
       type: 'button', class: 'b ra',
       onclick: () => {
-        try { navigator.clipboard.writeText(dominioRA).catch(() => {}); } catch (e) { /* sem área de transferência */ }
-        try { chrome.storage.local.set({ raPendente: { host: dominioRA, t: Date.now() } }); } catch (e) { /* extensão recarregada */ }
-        window.open('https://www.reclameaqui.com.br/detector-site-confiavel/', '_blank', 'noopener');
-        textoRA.textContent = 'Abrindo o Reclame Aqui com o endereço preenchido';
+        // v3.14: abre direto a nota deste site no Detector do Reclame Aqui.
+        window.open(self.EGolpeRA.link(dominioRA), '_blank', 'noopener');
+        textoRA.textContent = 'Abrindo a nota no Reclame Aqui';
       }
     }, chip, textoRA);
     const acoes = el('div', { class: 'acoes' }, voltar);

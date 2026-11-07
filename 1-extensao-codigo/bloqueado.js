@@ -166,15 +166,14 @@ $('voltar').addEventListener('click', async () => {
   } catch (e) { window.close(); }
 });
 
-$('ra').addEventListener('click', async () => {
-  if (url) {
-    const dominio = url.hostname.replace(/^www\./, '');
+// v3.14: abre direto a nota deste site no Detector do Reclame Aqui.
+$('ra').addEventListener('click', () => {
+  const dominio = url ? url.hostname.replace(/^www\./, '') : '';
+  if (dominio) {
     $('raSub').hidden = false;
-    try { await navigator.clipboard.writeText(dominio); } catch (e) { /* sem área de transferência */ }
-    await chrome.storage.local.set({ raPendente: { host: dominio, t: Date.now() } });   // reclameaqui.js preenche o Detector
-    $('raSub').textContent = 'O Reclame Aqui vai abrir com ' + dominio + ' já preenchido. Se não aparecer, cole o endereço (já copiado).';
+    $('raSub').textContent = 'Abrindo a nota de ' + dominio + ' no Reclame Aqui. Se for um site novo para eles, confirme que você não é um robô.';
   }
-  chrome.tabs.create({ url: 'https://www.reclameaqui.com.br/detector-site-confiavel/' });
+  chrome.tabs.create({ url: self.EGolpeRA.link(dominio) });
 });
 
 $('cadastrar').addEventListener('click', (e) => { e.preventDefault(); chrome.runtime.openOptionsPage(); });

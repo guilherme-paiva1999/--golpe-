@@ -180,6 +180,17 @@ node ml/testar_gov_marca.js && node ml/testar_pontuacao.js
 A extensão e o aplicativo passaram a se chamar **Isso é golpe?** (antes: "É Golpe?"), igual aos slides e ao pitch:
 nome no Chrome, popup, boas-vindas, tela de bloqueio, aplicativo, aviso no Reclame Aqui e mensagens para a pessoa de confiança.
 
+## v3.14: Reclame Aqui abre direto na nota do site
+
+O Detector de Site Confiável tem um endereço público por site: `https://www.reclameaqui.com.br/detector-site-confiavel/<site>`.
+Os botões verdes (tela de bloqueio, aviso na página, popup e aplicativo) agora abrem esse endereço, e a pessoa já vê o veredito
+(conferido com `magazineluiza.com.br`: "Confiável, 5 de 5 escudos, RA1000"). Para um site que o Reclame Aqui ainda não conhece,
+a página dele começa a análise e pede "não sou um robô" para a própria pessoa.
+- Não é robô: é um link do próprio Reclame Aqui que a pessoa abre com o clique dela. Nada é lido, preenchido ou clicado por nós.
+- Funciona também no celular (antes o endereço só era copiado para colar).
+- Saiu o `reclameaqui.js` (preenchia o campo do Detector) e o "raPendente". O link fica em `pessoa.js` (`EGolpeRA.link`).
+- Testes: `node ml/testar_reclameaqui.js` (link direto) e o teste no Chrome confere que o botão abre a nota do site.
+
 ## v3.13: alfabeto cirílico (letras russas disfarçadas)
 
 Golpistas trocam letras latinas por letras russas idênticas: o endereço `аррӏе.com` (no computador, `xn--80ak6aa92e.com`) aparece
@@ -261,7 +272,7 @@ completa já aberta. Loja sem CNPJ com preços em R$ ou em português, mesmo em 
 - **Um número só na tela de bloqueio.** Quando a loja é bloqueada pela página, a tela mostra a mesma porcentagem que causou o bloqueio
   (antes ela recalculava outra). A lista de provas continua embaixo.
 
-## v3.5: Reclame Aqui com o endereço já preenchido
+## v3.5: Reclame Aqui com o endereço já preenchido (substituído na v3.14 pelo link direto da nota)
 Ao clicar em **"Verificar no Reclame Aqui"** (popup, tela de bloqueio, aviso na página ou "Verificar um link"), a extensão guarda
 o endereço por 2 minutos e abre o Detector de Site Confiável. O `reclameaqui.js`, que só roda na página do Detector, escreve o
 endereço no campo e mostra um aviso pequeno. Ele **não envia** o formulário nem lê o resultado: a pessoa clica no botão do próprio
