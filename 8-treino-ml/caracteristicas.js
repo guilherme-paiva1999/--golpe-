@@ -64,7 +64,9 @@ function caracteristicas(r, extras) {
     login: /\b(entrar|login|acessar\s+(sua\s+)?conta|fa[çc]a\s+login|sign\s?in|log\s?in)\b/i.test(t) ? 1 : 0,
     urgenciaConta: /(conta|cart[ãa]o|cpf)\s+(ser[áa]\s+)?(bloquead|suspens|cancelad)|atualiz(e|ar)\s+(seus\s+)?dados|regulariz/i.test(t) ? 1 : 0,
     premio: /parab[ée]ns|voc[êe]\s+(foi\s+)?(ganhou|sorteado|selecionad)|resgat(e|ar)\s+(seu|o)\s+(pr[êe]mio|saldo|valor)/i.test(t) ? 1 : 0,
-    ingles: /\b(the|your|account|password|verify|sign in)\b/i.test(t) && !/\b(você|não|para|com|sua)\b/i.test(t) ? 1 : 0
+    ingles: /\b(the|your|account|password|verify|sign in)\b/i.test(t) && !/\b(você|não|para|com|sua)\b/i.test(t) ? 1 : 0,
+    compraUI: pg.compraUI ? 1 : 0, cartao: pg.cartao ? 1 : 0,
+    espiao: /(clonar|espionar|espiar|hackear|rastrear)/i.test(t) && /(de\s+qualquer\s+pessoa|sem\s+notificar|100%\s+an[ôo]nimo)/i.test(t) ? 1 : 0
   };
 }
 module.exports = { caracteristicas };
