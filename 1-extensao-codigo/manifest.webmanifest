@@ -1,6 +1,6 @@
 {
-  "name": "É Golpe?",
-  "short_name": "É Golpe?",
+  "name": "Isso é golpe?",
+  "short_name": "Isso é golpe?",
   "description": "Recebeu um link? Confira se é golpe antes de abrir.",
   "lang": "pt-BR",
   "start_url": "verificar.html",

@@ -1,5 +1,5 @@
 'use strict';
-/* É Golpe? · tela "Verificar um link". É o aplicativo do celular e também uma tela da extensão (aberta pelo popup).
+/* Isso é golpe? · tela "Verificar um link". É o aplicativo do celular e também uma tela da extensão (aberta pelo popup).
    As regras, as listas, os pesos, o modelo de aprendizado de máquina e as consultas vêm do próprio background.js
    da extensão, carregado nesta página (veja ponte.js). Não há cópia: muda num lugar, muda nos dois.
    Divisão de trabalho: esta tela confere o LINK antes de abrir; a extensão confere cada PÁGINA depois que ela abre.
@@ -127,7 +127,7 @@ async function mostrarResultado(res) {
   if (precisa && temPessoa) {
     const n = EGolpePessoa.primeiroNome(p.nome);
     $('perguntar').textContent = 'Perguntar para ' + n + ' se é golpe';
-    $('perguntar').href = EGolpePessoa.linkWhats(p, 'Oi, ' + n + '! Recebi este link e o É Golpe? disse que pode ser golpe. ' +
+    $('perguntar').href = EGolpePessoa.linkWhats(p, 'Oi, ' + n + '! Recebi este link e o Isso é golpe? disse que pode ser golpe. ' +
       'Você pode ver para mim antes de eu abrir?\n\n' + res.url + '\n\n(Cuidado ao abrir: se puder, confira antes no Reclame Aqui.)');
   }
   $('abrirSite').textContent = res.nivel === 'ok' ? 'Abrir o site' : 'Abrir o site mesmo assim';
@@ -289,7 +289,7 @@ $('abrirSite').addEventListener('click', () => {
   if (EGolpeModo === 'aplicativo' && 'serviceWorker' in navigator) navigator.serviceWorker.register('app-sw.js').catch(() => {});
   $('juntosEstado').textContent = EGolpeModo === 'extensao'
     ? 'Você está usando a extensão: ela já protege as páginas deste computador.'
-    : 'No computador, instale também a extensão É Golpe? no Chrome.';
+    : 'No computador, instale também a extensão Isso é golpe? no Chrome.';
   if (EGolpeModo === 'extensao') $('dicaCompartilhar').hidden = true;
   // Link que chegou pelo "Compartilhar" do Android (share_target no manifest).
   const q = new URLSearchParams(location.search);

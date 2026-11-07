@@ -19,13 +19,13 @@ self.EGolpePessoa = {
   },
   mensagem(nome, url) {
     const n = this.primeiroNome(nome);
-    return 'Oi' + (n ? ', ' + n : '') + '! O É Golpe? bloqueou um site que eu tentei abrir e eu fiquei na dúvida. ' +
+    return 'Oi' + (n ? ', ' + n : '') + '! O Isso é golpe? bloqueou um site que eu tentei abrir e eu fiquei na dúvida. ' +
       'Você pode ver para mim se isso é golpe?\n\n' + url + '\n\n' +
       '(Cuidado ao abrir: se puder, confira antes no Reclame Aqui.)';
   },
   mensagemTeste(nome) {
     const n = this.primeiroNome(nome);
-    return 'Oi' + (n ? ', ' + n : '') + '! Coloquei você como minha pessoa de confiança no É Golpe?, ' +
+    return 'Oi' + (n ? ', ' + n : '') + '! Coloquei você como minha pessoa de confiança no Isso é golpe?, ' +
       'uma extensão que avisa sobre sites de golpe. Se eu achar um site suspeito, vou te mandar o link para você me ajudar a ver se é golpe.';
   },
   linkWhats(pessoa, texto) {

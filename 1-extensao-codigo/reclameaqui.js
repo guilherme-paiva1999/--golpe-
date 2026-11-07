@@ -1,6 +1,6 @@
 'use strict';
 /* Reclame Aqui: preenche o Detector de Site Confiável com o site que a pessoa pediu para verificar.
-   Só roda na página do Detector e só depois de a pessoa clicar em "Verificar no Reclame Aqui" no É Golpe?
+   Só roda na página do Detector e só depois de a pessoa clicar em "Verificar no Reclame Aqui" no Isso é golpe?
    (o botão guarda o endereço em "raPendente" por 2 minutos). Não envia o formulário nem lê o resultado:
    a consulta continua sendo da pessoa, que clica no botão do próprio Reclame Aqui.
    O endereço também segue copiado na área de transferência, caso o campo não seja encontrado. */
@@ -42,7 +42,7 @@
   const sombra = caixa.attachShadow({ mode: 'closed' });
   const p = document.createElement('p');
   p.setAttribute('role', 'status');
-  p.textContent = 'O É Golpe? preencheu o endereço ' + host + '. Confira e clique no botão de verificar do Reclame Aqui.';
+  p.textContent = 'O Isso é golpe? preencheu o endereço ' + host + '. Confira e clique no botão de verificar do Reclame Aqui.';
   const estilo = document.createElement('style');
   estilo.textContent = 'p{position:fixed;left:16px;right:16px;bottom:16px;z-index:2147483647;margin:0 auto;max-width:560px;' +
     'background:#12284a;color:#fff;font:600 17px/1.4 Arial,sans-serif;padding:14px 18px;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.3)}';
