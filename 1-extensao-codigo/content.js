@@ -7,7 +7,7 @@
 
   // ---------- Estado e configuração ----------
   let ativo = true;
-  let config = { limite: 3, imagens: false, modoSimples: false, vozAutomatica: false, daltonico: false };
+  let config = { limite: 3, imagens: false, modoSimples: false, vozAutomatica: false, daltonico: false, raAuto: false };
   let pessoa = null;                       // pessoa de confiança (fica só neste computador)
   let siteRes = null;
   let avisoSite = null;
@@ -170,7 +170,8 @@
   // ---------- 1) Aviso sobre o site: tela cheia vermelha com PARE ----------
   const PASSOS = {
     perigo: 'Feche esta página. Não digite senha, CPF nem dados do cartão. Se chegou por mensagem, apague a mensagem.',
-    atencao: 'Antes de pagar, abra o site oficial digitando o endereço você mesmo e confira o CNPJ da loja.'
+    atencao: 'Já conferimos o CNPJ e o dono deste endereço para você (veja abaixo). Só pague se estiver tudo certo.',
+    atencaoSemConf: 'Não digite senha nem dados do cartão enquanto não tiver certeza de que este é o endereço certo.'
   };
 
   // Desenhos fixos do cartaz (texto estático da extensão, nunca vindo da página).
@@ -260,8 +261,19 @@
         onclick: () => { if (link.startsWith('mailto:')) location.href = link; else window.open(link, '_blank', 'noopener'); }
       }, desenho('balao'), el('span', {}, 'Perguntar para ' + P.primeiroNome(pessoa.nome) + ' se é golpe')));
     }
+    // v3.15: abre o site oficial da marca imitada (endereço escrito na extensão, nunca tirado da página)
+    const oficial = res.oficial && /^[a-z0-9.-]+$/.test(res.oficial.host || '') ? res.oficial : null;
+    if (oficial) {
+      acoes.append(el('button', {
+        type: 'button', class: 'b',
+        onclick: () => window.open('https://' + oficial.host + '/', '_blank', 'noopener')
+      }, el('span', {}, 'Abrir o site oficial (' + oficial.host + ')')));
+    }
     acoes.append(ra);
-    const textoVoz = 'Pare. ' + titulo + '. ' + (confTexto ? confTexto + ' ' : '') + motivos.join(' ') + ' O que fazer: ' + PASSOS[nivel];
+    const conferencia = Array.isArray(res.conferencia) ? res.conferencia.filter((x) => typeof x === 'string').slice(0, 3) : [];
+    const passoTexto = nivel === 'atencao' && !conferencia.length ? PASSOS.atencaoSemConf : PASSOS[nivel];
+    const textoVoz = 'Pare. ' + titulo + '. ' + (confTexto ? confTexto + ' ' : '') + motivos.join(' ') + ' O que fazer: ' + passoTexto +
+      (conferencia.length ? ' ' + conferencia.join(' ') : '');
     const ouvir = botaoOuvir(textoVoz);
     if (ouvir) ouvir.className = 'leve';
 
@@ -277,8 +289,9 @@
           el('div', { class: 'conf-linha' }, el('span', { class: 'num' }, confNum + '%'), el('span', {}, 'de confiança'),
             el('span', { class: 'conf-txt' }, '· confiável só com ' + limiteConf + '% ou mais')),
           barraConf(confNum, limiteConf))]),
-        el('p', { class: 'texto' }, PASSOS[nivel]),
+        el('p', { class: 'texto' }, passoTexto),
         el('ul', { class: 'lista' }, ...motivos.map((m) => el('li', {}, m))),
+        ...(conferencia.length ? [el('div', { class: 'passo' }, el('b', {}, 'Já conferimos por você: '), ...conferencia.map((l) => el('div', {}, l)))] : []),
         acoes,
         ...(ouvir ? [ouvir] : []),
         continuar));
@@ -287,6 +300,7 @@
     avisoSite = host;
     voltar.focus({ preventScroll: true });                       // Enter = ação segura; leitor de tela anuncia o alerta
     if (config.vozAutomatica) enviar({ tipo: 'falar', texto: textoVoz });
+    if (config.raAuto && res.comercio) enviar({ tipo: 'abrir-ra' });      // v3.15 (opcional): nota do Reclame Aqui em outra aba
   }
 
   // ---------- 2) Página pedindo pagamento ----------
@@ -376,7 +390,9 @@
     // v3.8: loja de verdade tem BOTÃO de compra ou link de carrinho. "R$" e "comprar" soltos no texto aparecem em notícias
     // (cotações, "vendido por R$ 22 milhões") e faziam sites de notícias parecerem lojas.
     const compraUI = botaoDeCompra();
-    const venda = preco >= 1 && compraUI;
+    // v3.15: em site de fora do Brasil (.com etc.), carrinho ou botão de compra já bastam para contar como loja:
+    // muitas lojas internacionais mostram os preços só depois de um clique, e o aviso de "site internacional" precisa aparecer.
+    const venda = compraUI && (preco >= 1 || !/\.br$/i.test(location.hostname));
     const contador = !!document.querySelector('[class*="countdown" i], [id*="countdown" i], [class*="timer" i], [id*="timer" i]');
     const pressao = contador || PRESSAO.some((p) => p.test(texto));
     let formExterno = false, gateway = false;
@@ -389,9 +405,10 @@
       } catch (e) { /* endereço inválido */ }
     });
     let cnpjValido = false, cnpjInvalido = false, cnpj = '';
+    const cnpjs = [];
     for (const m of texto.matchAll(new RegExp(CNPJ.source, 'g'))) {
       const d = m[0].replace(/\D/g, '');
-      if (cnpjOk(d)) { cnpjValido = true; if (!cnpj) cnpj = d; } else cnpjInvalido = true;
+      if (cnpjOk(d)) { cnpjValido = true; if (!cnpj) cnpj = d; if (cnpjs.length < 5 && !cnpjs.includes(d)) cnpjs.push(d); } else cnpjInvalido = true;
     }
     if (cnpjValido) cnpjInvalido = false;
     const raiz = location.hostname.replace(/^www\./, '');
@@ -404,7 +421,7 @@
     const brasil = preco >= 1 || /^pt/i.test(document.documentElement.lang || '');
     return { pagamento, pressao, desconto: descontoExagerado(texto), formExterno, senha, venda, brasil, espionagem: paginaEspiao(texto),
       semContato: pagamento && !(CNPJ.test(texto) || contato), cnpjValido, cnpjInvalido, contato, emailMesmoDominio, politicas, gateway,
-      marcas: (senha || pagamento) ? marcasDaPagina() : [], cnpj };
+      marcas: (senha || pagamento) ? marcasDaPagina() : [], cnpj, cnpjs };
   }
 
   // v3.12: medidas para o modelo da página (as mesmas da coleta de treino). Ficam no computador:

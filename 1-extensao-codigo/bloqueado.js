@@ -126,6 +126,8 @@ async function iniciar() {
   document.body.classList.toggle('grande', !!config.modoSimples);
   document.documentElement.classList.toggle('daltonico', !!config.daltonico);
   document.body.classList.toggle('daltonico', !!config.daltonico);
+  // v3.15 (opcional, desligado por padrão): abre a nota do site no Reclame Aqui em outra aba assim que o bloqueio aparece
+  if (config.raAuto && url) chrome.tabs.create({ url: self.EGolpeRA.link(url.hostname), active: false }).catch(() => {});
 
   if (!url) {
     $('host').textContent = 'Endereço inválido';
@@ -147,6 +149,17 @@ async function iniciar() {
       mostrarConfianca(res.conta.confianca, res.conta.limite || limiteDaConfig());
       if (res.conta.cnpj === 'estrangeira') avisoEstrangeira();
     } else mostrarConfianca(Math.max(0, 100 - Math.max(70, pontos)), limiteDaConfig());
+    // v3.15: o que a extensão já conferiu (CNPJ) e o botão do site oficial da marca imitada
+    const conta = res && res.conta;
+    if (conta && Array.isArray(conta.conferencia) && conta.conferencia.length) {
+      $('caixaConf').hidden = false;
+      for (const l of conta.conferencia.slice(0, 3)) { const li = document.createElement('li'); li.textContent = String(l); $('confLinhas').appendChild(li); }
+    }
+    if (conta && conta.oficial && /^[a-z0-9.-]+$/.test(conta.oficial.host || '')) {
+      $('oficial').hidden = false;
+      $('oficial').textContent = 'Abrir o site oficial (' + conta.oficial.host + ')';
+      $('oficial').addEventListener('click', () => chrome.tabs.create({ url: 'https://' + conta.oficial.host + '/' }));
+    }
   } catch (e) { motivos = []; mostrarConfianca(0, limiteDaConfig()); }
   mostrarMotivos();
   if (config.vozAutomatica) falar(textoParaOuvir());

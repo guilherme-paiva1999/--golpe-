@@ -38,6 +38,9 @@
   .fora svg{flex:none;width:44px;height:44px}
   #motivos{margin:24px 0 0;padding-left:24px}
   #motivos li{margin:2px 0}
+  #caixaConf{margin:16px 0 0;padding:10px 14px;border:2px solid currentColor;border-radius:6px}
+  .conf-titulo{margin:0 0 4px;font-weight:bold}
+  #confLinhas{margin:0;padding-left:22px}
 
   .botoes{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
   button{font:inherit;cursor:pointer;border-radius:8px}
@@ -89,6 +92,7 @@
   <p class="texto" id="texto">Ele tem sinais fortes de golpe. Se você chegou aqui por uma mensagem, e-mail ou anúncio, apague-os e acesse o serviço digitando o endereço oficial.</p>
 
   <section id="caixaMotivos"><ul id="motivos"></ul></section>
+  <section id="caixaConf" hidden><p class="conf-titulo">Já conferimos por você:</p><ul id="confLinhas"></ul></section>
 
   <div class="botoes">
     <button id="voltar" class="b" type="button">Voltar para a segurança</button>
@@ -96,6 +100,7 @@
       <svg viewBox="0 0 60 60" aria-hidden="true"><path d="M30 5C15 5 4 15 4 28c0 7 3 13 9 17l-3 11 12-7c2.5.6 5 .9 8 .9 15 0 26-10 26-22S45 5 30 5z" fill="#fff"/></svg>
       <span id="perguntarTxt">Perguntar se é golpe</span>
     </button>
+    <button id="oficial" class="b" type="button" hidden></button>
     <button id="ra" class="b" type="button"><span class="logo-ra" aria-hidden="true"><img src="icons/reclameaqui.png" alt=""></span>Verificar no Reclame Aqui</button>
   </div>
   <p class="nota" id="raSub" hidden></p>

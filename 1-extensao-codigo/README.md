@@ -180,6 +180,26 @@ node ml/testar_gov_marca.js && node ml/testar_pontuacao.js
 A extensão e o aplicativo passaram a se chamar **Isso é golpe?** (antes: "É Golpe?"), igual aos slides e ao pitch:
 nome no Chrome, popup, boas-vindas, tela de bloqueio, aplicativo, aviso no Reclame Aqui e mensagens para a pessoa de confiança.
 
+## v3.15: a extensão faz a conferência que o aviso mandava a pessoa fazer
+
+O aviso dizia "abra o site oficial digitando o endereço e confira o CNPJ da loja". Agora isso é feito pela extensão:
+- **Conferência do CNPJ** ("Já conferimos por você"): consulta o CNPJ na Receita Federal (BrasilAPI) e mostra na tela de aviso e de bloqueio:
+  nome da empresa, situação e tempo de abertura. Compara o CNPJ da página com o do **dono do domínio no registro.br**: se forem de
+  empresas diferentes (os 8 primeiros números), avisa e tira 15 pontos. Rodapé com vários CNPJs (loja e financeira do cartão):
+  vale o que é do dono do domínio. Antes pegava o primeiro (no Magazine Luiza, o da Luizacred, e o aviso dizia que "a empresa não tem
+  atividade de comércio").
+- **Site oficial:** quando o endereço ou a página imita uma marca conhecida (Nubank, Itaú, Apple...), a tela ganha o botão
+  "Abrir o site oficial (nubank.com.br)". O endereço vem da tabela da extensão, nunca da página.
+- **Empresa antiga pesa mais:** com 10 anos ou mais, +20 se o CNPJ é o do dono do domínio (confirmado no registro.br) e +8 se só está
+  escrito na página (qualquer um pode escrever o CNPJ de outra empresa); de 5 a 10 anos, +12 e +5.
+- **Site internacional** (endereço que não termina em .br): a loja ganha o aviso "Este é um site internacional" (-10 pontos, nível
+  atenção, sem bloquear). Fora do .br, carrinho ou botão de compra já bastam para a página contar como loja (muitas lojas
+  internacionais só mostram os preços depois de um clique).
+- **Reclame Aqui sozinho (opcional, desligado):** no popup, "Abrir o Reclame Aqui sozinho quando aparecer um aviso" abre a nota da loja em
+  outra aba, uma vez por site e por dia. O Reclame Aqui não deixa a página dele aparecer dentro da nossa tela (`x-frame-options:
+  SAMEORIGIN`), por isso é outra aba. Fica desligado porque envia o endereço da loja ao Reclame Aqui sem o clique da pessoa.
+- Testes: `node ml/testar_cnpj.js` (20), `ml/testar_empresa.js` (26); o teste no Chrome confere o botão do site oficial.
+
 ## v3.14: Reclame Aqui abre direto na nota do site
 
 O Detector de Site Confiável tem um endereço público por site: `https://www.reclameaqui.com.br/detector-site-confiavel/<site>`.

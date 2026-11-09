@@ -13,7 +13,7 @@ if (typeof importScripts === 'function') importScripts('alfabetos.js', 'modelo.j
 
 // ---------- Configuração ----------
 const CONFIG_PADRAO = { limite: 3, consultaIdade: false, imagens: false, modoSimples: false, rigor: 'alto',
-  perfis: [], vozAutomatica: false, daltonico: false };
+  perfis: [], vozAutomatica: false, daltonico: false, raAuto: false };
 const TTL_CACHE_MS = 6 * 3600 * 1000;
 const LIMITE_PERIGO = 70;
 const LIMITE_ATENCAO = 30;
@@ -746,7 +746,10 @@ function aplicarEmpresa(info, comercio, valor, motivos, vendeProdutos) {
     // Empresas novas são usadas em golpes: menos de 6 meses pesa muito, menos de 1 ano pesa um pouco; 5 anos ou mais ajuda.
     if (dias !== null && dias >= 0 && dias < 180) { d -= 15; motivos.push('A empresa foi aberta há menos de 6 meses.'); }
     else if (dias !== null && dias < 365) { d -= 5; motivos.push('A empresa tem menos de 1 ano.'); }
-    else if (dias !== null && dias >= 5 * 365) d += 5;
+    // Empresa antiga ajuda. Se o CNPJ é o do dono do domínio (confirmado no registro.br), ajuda muito mais: qualquer um
+    // pode escrever um CNPJ de outra empresa na página, mas não consegue registrar o domínio em nome dela.
+    else if (dias !== null && dias >= 10 * 365) d += info.confirmado ? 20 : 8;
+    else if (dias !== null && dias >= 5 * 365) d += info.confirmado ? 12 : 5;
     // A página vende produtos, mas a empresa não tem nenhuma atividade de comércio ou indústria registrada.
     if (vendeProdutos && Array.isArray(info.cnaes) && info.cnaes.length && !info.cnaes.some(cnaeVende)) {
       d -= 10;
@@ -794,6 +797,45 @@ function situacaoCnpj(cnpjUsado, empresa, rdap) {
   return empresa.existe && empresa.ativa ? 'ativo' : 'irregular';
 }
 
+// ---------- v3.15: conferência automática do CNPJ e do site oficial ----------
+// O aviso mandava a pessoa "abrir o site oficial digitando o endereço e conferir o CNPJ da loja". Agora a extensão faz isso:
+// consulta o CNPJ na Receita Federal (BrasilAPI), compara com o dono do domínio no registro.br e, quando a página imita
+// uma marca conhecida, oferece um botão que abre o endereço oficial da marca (escrito na extensão, nunca tirado da página).
+const mascaraCnpj = (c) => String(c).replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+function oficialDaMarca(host, marcas, dominio) {
+  for (const k of marcas || []) {
+    const o = OFICIAIS_PAGINA[k];
+    if (o && !o[1].some((d) => host === d || host.endsWith('.' + d))) return { nome: o[0], host: o[1][0] };
+  }
+  const m = detectarMarca(host, dominio);
+  return m ? { nome: m.marca, host: m.oficial } : null;
+}
+// Devolve as linhas "já conferimos por você" e se o CNPJ da página não bate com o dono do domínio.
+function conferenciaCnpj({ cnpjPagina, cnpjRegistro, empresa, doRegistro }) {
+  const linhas = [];
+  const usado = cnpjPagina || cnpjRegistro || '';
+  let diverge = false;
+  if (!usado) {
+    linhas.push('Procuramos o CNPJ na página e no registro do site e não achamos nenhum.');
+    return { linhas, diverge };
+  }
+  const onde = doRegistro ? 'do dono do site no registro.br' : 'mostrado na página';
+  if (!empresa) linhas.push('CNPJ ' + mascaraCnpj(usado) + ' (' + onde + '): a Receita Federal não respondeu agora, confira de novo mais tarde.');
+  else if (empresa.existe === false) linhas.push('CNPJ ' + mascaraCnpj(usado) + ' (' + onde + '): não existe na Receita Federal.');
+  else if (!empresa.ativa) linhas.push('CNPJ ' + mascaraCnpj(usado) + ' (' + onde + '): situação "' + (empresa.situacao || 'irregular') + '" na Receita Federal.');
+  else {
+    const idade = textoIdadeEmpresa(diasDeEmpresa(empresa));
+    linhas.push('CNPJ ' + mascaraCnpj(usado) + ' (' + onde + ') conferido na Receita Federal: ' + (empresa.fantasia || empresa.razao || 'sem nome') +
+      ', ativa' + (idade ? ', ' + idade : '') + '.');
+  }
+  // O CNPJ que a página mostra precisa ser do dono do domínio (mesma empresa: os 8 primeiros números iguais).
+  if (cnpjPagina && cnpjRegistro && cnpjPagina.slice(0, 8) !== cnpjRegistro.slice(0, 8)) {
+    diverge = true;
+    linhas.push('Atenção: o CNPJ da página (' + mascaraCnpj(cnpjPagina) + ') não é o da empresa dona do endereço do site (' + mascaraCnpj(cnpjRegistro) + ').');
+  }
+  return { linhas, diverge };
+}
+
 async function avaliarPagina(host, protocolo, sinais, medidas = null) {
   const pre = await analisar(host, protocolo, { rapido: true });
   if (pre.conhecido || pre.permitido || pre.pontos >= 100) return pre;     // provado, liberado ou já na lista
@@ -812,9 +854,19 @@ async function avaliarPagina(host, protocolo, sinais, medidas = null) {
   const rdap = (precisaIdade && !gratuito && !ehIPv4(r.dominio)) ? await consultarRdap(r.dominio) : null;
   const dias = rdap ? rdap.dias : null;
   // CNPJ: o da página; se a página não mostra, o do responsável pelo domínio (registro.br).
-  const cnpjUsado = /^\d{14}$/.test(sinais.cnpj || '') ? sinais.cnpj : (rdap && rdap.cnpj) || '';
+  // v3.15: rodapés mostram vários CNPJs (a loja, o banco do cartão da loja...). Vale o que é do dono do domínio no registro.br;
+  // se nenhum for, o primeiro da página (como antes).
+  let cnpjPagina = /^\d{14}$/.test(sinais.cnpj || '') ? sinais.cnpj : '';
+  if (rdap && rdap.cnpj && Array.isArray(sinais.cnpjs)) {
+    const doDono = sinais.cnpjs.find((c) => c.slice(0, 8) === rdap.cnpj.slice(0, 8));
+    if (doDono) cnpjPagina = doDono;
+  }
+  const cnpjUsado = cnpjPagina || (rdap && rdap.cnpj) || '';
   const empresa = cnpjUsado ? await consultarCnpj(cnpjUsado) : null;
-  if (empresa && !sinais.cnpj) empresa.doRegistro = true;
+  if (empresa && !cnpjPagina) empresa.doRegistro = true;
+  // v3.15: CNPJ confirmado = é o do dono do domínio no registro.br (o da página bate com o do registro, ou veio do registro)
+  if (empresa && rdap && rdap.cnpj && cnpjUsado.slice(0, 8) === rdap.cnpj.slice(0, 8)) empresa.confirmado = true;
+  const oficial = oficialDaMarca(host, sinais.marcas, r.dominio);          // v3.15
   const consumidor = await buscarConsumidor([r.dominio.split('.')[0], empresa && empresa.fantasia, empresa && empresa.razao].filter(Boolean));
 
   if (comercio) {
@@ -823,10 +875,22 @@ async function avaliarPagina(host, protocolo, sinais, medidas = null) {
     const motivos = [...r.motivos, ...c.motivos];
     c.confianca = aplicarRA(await notaRA(r.dominio), true, c.confianca, motivos);
     c.confianca = aplicarEmpresa(empresa, true, c.confianca, motivos, !!sinais.venda);
+    // v3.15: o CNPJ da página tem que ser da empresa dona do domínio (registro.br). Se for de outra, desconfia.
+    const conf = conferenciaCnpj({ cnpjPagina, cnpjRegistro: (rdap && rdap.cnpj) || '',
+      empresa, doRegistro: !!(empresa && empresa.doRegistro) });
+    if (conf.diverge) { c.confianca = Math.max(0, c.confianca - 15); motivos.push('O CNPJ mostrado na página não é o da empresa dona do endereço do site.'); }
     c.confianca = aplicarConsumidor(consumidor, true, c.confianca, motivos);
     let nivel = c.confianca >= limite ? 'ok' : (c.confianca < 30 ? 'perigo' : 'atencao');
     if (falsa) nivel = 'perigo';                       // marca falsa é decisiva, mesmo em site antigo
     if (sinais.espionagem) { nivel = 'perigo'; motivos.unshift(MOTIVO_ESPIAO); }   // v3.10
+    // v3.15: loja com endereço de fora do Brasil (.com etc.) é avisada como INTERNACIONAL, mesmo com preços em R$, português e CNPJ
+    // (ex.: br.louisvuitton.com). Não bloqueia por isso: só tira 10 pontos e explica o que muda numa compra assim.
+    const internacional = !r.dominio.endsWith('.br') && !ehIPv4(r.dominio);
+    if (internacional) {
+      c.confianca = Math.max(0, c.confianca - 10);
+      motivos.push('Este é um site internacional: o endereço não termina em .br. Confira quem vende no Brasil (CNPJ), o prazo de entrega, a troca e a garantia antes de pagar.');
+      if (nivel === 'ok') nivel = 'atencao';          // o aviso aparece, mas sem bloquear
+    }
     // Loja sem CNPJ ativo é bloqueada (v3.6). A porcentagem calculada continua a mesma e aparece na tela de bloqueio.
     let cnpj = situacaoCnpj(cnpjUsado, empresa, rdap);
     // Loja estrangeira (v3.7): fora do .br, sem CNPJ e sem preços em R$ nem página em português. Também é bloqueada,
@@ -845,7 +909,7 @@ async function avaliarPagina(host, protocolo, sinais, medidas = null) {
       motivos.unshift('O CNPJ desta loja não existe ou não está ativo na Receita Federal.');
     }
     return { nivel, pontos: 100 - c.confianca, confianca: c.confianca, limite, comercio: true, cnpj,
-      motivos, dominio: r.dominio, conhecido: false, provado: nivel === 'ok', dias };
+      motivos, dominio: r.dominio, conhecido: false, provado: nivel === 'ok' && !internacional, dias, conferencia: conf.linhas, oficial, internacional };
   }
   let pontos = r.pontos + (protocolo === 'http:' ? 10 : 0);
   const motivos = [...r.motivos];
@@ -861,7 +925,7 @@ async function avaliarPagina(host, protocolo, sinais, medidas = null) {
   }
   const nivel = nivelPorRigor(res.pontos, cfg.rigor);
   return { nivel, pontos: res.pontos, motivos: res.motivos, dominio: r.dominio, conhecido: false,
-    provado: nivel === 'ok' && dias !== null && dias >= 365, dias };
+    provado: nivel === 'ok' && dias !== null && dias >= 365, dias, oficial };
 }
 
 // ---------- Verificação completa (tela de bloqueio) ----------
@@ -968,7 +1032,7 @@ function bloquear(tabId, url, motivos, conta) {
   // guarda os motivos para a tela de bloqueio (alguns vêm da página, não só do endereço)
   if (motivos && motivos.length) chrome.storage.session.set({ ['motivos:' + url]: motivos.slice(0, 6) }).catch(() => {});
   // e a porcentagem que causou o bloqueio, para a tela mostrar o mesmo número
-  if (conta && typeof conta.confianca === 'number') chrome.storage.session.set({ ['conta:' + url]: conta }).catch(() => {});
+  if (conta && (typeof conta.confianca === 'number' || conta.oficial)) chrome.storage.session.set({ ['conta:' + url]: conta }).catch(() => {});
   const alvo = chrome.runtime.getURL('bloqueado.html') + '?u=' + encodeURIComponent(url);
   return chrome.tabs.update(tabId, { url: alvo }).catch(() => {});
 }
@@ -979,7 +1043,11 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (d) => {
   try { u = new URL(d.url); } catch (e) { return; }
   if (u.protocol !== 'http:' && u.protocol !== 'https:') return;
   const res = await analisar(u.hostname.toLowerCase(), u.protocol, { rapido: true });
-  if (res.nivel === 'perigo') bloquear(d.tabId, d.url, res.motivos);
+  if (res.nivel === 'perigo') {
+    const h = u.hostname.toLowerCase();
+    const of = ehIPv4(h) ? null : oficialDaMarca(h, [], dominioRaiz(h));     // v3.15: botão do site oficial da marca imitada
+    bloquear(d.tabId, d.url, res.motivos, of ? { oficial: of } : null);
+  }
 }, { url: [{ schemes: ['http', 'https'] }] });
 
 // ---------- Metadados de imagem (opcional, precisa de permissão) ----------
@@ -1067,6 +1135,7 @@ async function tratar(msg, sender) {
       const sinais = {};
       for (const k of SINAIS_CHAVES) sinais[k] = msg.sinais[k] === true;
       sinais.cnpj = /^\d{14}$/.test(String(msg.sinais.cnpj || '')) ? String(msg.sinais.cnpj) : '';
+      sinais.cnpjs = Array.isArray(msg.sinais.cnpjs) ? msg.sinais.cnpjs.map(String).filter((c) => /^\d{14}$/.test(c)).slice(0, 5) : [];
       sinais.marcas = Array.isArray(msg.sinais.marcas) ? msg.sinais.marcas.filter((k) => Object.hasOwn(OFICIAIS_PAGINA, k)).slice(0, 5) : [];
       const host = msg.host.toLowerCase();
       const res = await avaliarPagina(host, msg.protocolo, sinais, limparMedidas(msg.medidas));
@@ -1074,7 +1143,9 @@ async function tratar(msg, sender) {
       if (res.nivel === 'perigo' && sender.tab && typeof msg.url === 'string') {
         try {
           if (new URL(msg.url).hostname.toLowerCase() === host) {
-            bloquear(sender.tab.id, msg.url, res.motivos, res.comercio ? { confianca: res.confianca, limite: res.limite, cnpj: res.cnpj } : null);
+            bloquear(sender.tab.id, msg.url, res.motivos, res.comercio
+              ? { confianca: res.confianca, limite: res.limite, cnpj: res.cnpj, conferencia: res.conferencia, oficial: res.oficial }
+              : (res.oficial ? { oficial: res.oficial } : null));
           }
         } catch (e) { /* ignora */ }
       }
@@ -1132,6 +1203,21 @@ async function tratar(msg, sender) {
     case 'falar':
       falar(String(msg.texto || ''));
       return { ok: true };
+    case 'abrir-ra': {
+      // v3.15 (opcional, desligado por padrão): abre a nota da loja no Reclame Aqui, em outra aba, quando um aviso aparece.
+      // Só vale para o site da própria aba que pediu, uma vez por site e por dia. A pessoa continua sendo quem vê e quem confirma ("não sou um robô").
+      const cfgRA = await lerConfig();
+      if (!cfgRA.raAuto || !sender.tab || typeof sender.tab.url !== 'string') return { ok: false };
+      let h;
+      try { h = new URL(sender.tab.url).hostname.toLowerCase().replace(/^www\./, ''); } catch (e) { return { ok: false }; }
+      if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(h)) return { ok: false };
+      const chave = 'raAuto:' + h;
+      const ja = await chrome.storage.session.get(chave);
+      if (ja[chave]) return { ok: false };
+      await chrome.storage.session.set({ [chave]: Date.now() });
+      await chrome.tabs.create({ url: 'https://www.reclameaqui.com.br/detector-site-confiavel/' + h, active: false, openerTabId: sender.tab.id });
+      return { ok: true };
+    }
     case 'parar-fala':
       if (chrome.tts) chrome.tts.stop();
       return { ok: true };

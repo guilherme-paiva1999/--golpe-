@@ -83,6 +83,8 @@ const conferir = (nome, cond, extra) => { console.log((cond ? 'OK   ' : 'FALHA '
   conferir('botão perguntar para Maria', (await pg.isVisible('#perguntar')) && (await pg.textContent('#perguntarTxt')).includes('Maria'));
   const ra = await pg.$eval('#ra', (b) => b.getBoundingClientRect().height);
   conferir('botão do Reclame Aqui com altura boa (>= 56px)', ra >= 56, Math.round(ra) + 'px');
+  // v3.15: marca imitada pelo endereço: a tela de bloqueio oferece o site oficial
+  conferir('botão do site oficial (nubank.com.br) na tela de bloqueio', (await pg.isVisible('#oficial')) && (await pg.textContent('#oficial')).includes('nubank.com.br'), await pg.textContent('#oficial'));
   // v3.14: o botão do Reclame Aqui abre direto a nota do site no Detector
   const antesRA = new Set(ctx.pages());
   const errosRA = [];

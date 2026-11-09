@@ -8,9 +8,12 @@ const T=ctx.T;let ok=0,n=0;const t=(nome,v,e)=>{n++;const b=JSON.stringify(v)===
 t('normaliza "Magazine Luiza S/A"',T.normalizarNome('Magazine Luiza S/A'),'magazineluizasa');
 t('normaliza "Pão de Açúcar"',T.normalizarNome('Pão de Açúcar'),'paodeacucar');
 const ativa={existe:true,ativa:true,situacao:'ATIVA',fantasia:'Loja X',abertura:'2015-03-01'};
-t('loja (80) + CNPJ ativo, empresa de 2015 (+10, +5 por 5 anos ou mais)',T.aplicarEmpresa(ativa,true,80,[]),95);
+t('loja (80) + CNPJ ativo, empresa de 2015, 10 anos ou mais sem confirmar o dono do domínio (+10, +8)',T.aplicarEmpresa(ativa,true,80,[]),98);
+t('loja (50) + empresa de 2015 que É a dona do domínio (+10, +20)',T.aplicarEmpresa({...ativa,confirmado:true},true,50,[]),80);
+t('loja (50) + empresa de 2015 só escrita na página (+10, +8)',T.aplicarEmpresa(ativa,true,50,[]),68);
 const aberta=(dias,extra)=>Object.assign({},ativa,{abertura:new Date(Date.now()-dias*86400000).toISOString().slice(0,10)},extra||{});
 t('loja (80) + empresa com 8 meses (+10, −5)',T.aplicarEmpresa(aberta(240),true,80,[]),85);
+t('loja (50) + empresa de 7 anos dona do domínio (+10, +12)',T.aplicarEmpresa({...aberta(7*365),confirmado:true},true,50,[]),72);
 t('loja (80) + empresa com 3 anos (+10)',T.aplicarEmpresa(aberta(1100),true,80,[]),90);
 t('CNAE 4781-4/00 (varejo) permite vender',T.cnaeVende('4781400'),true);
 t('CNAE 4791-1/00 (varejo pela internet) permite vender',T.cnaeVende('4791100'),true);

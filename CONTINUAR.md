@@ -62,6 +62,8 @@ As capturas de tela ficam em `teste-real/capturas/` (não vão para o GitHub).
   **modelo da página** (regressão logística com texto + características; AUC 0,92, ~52% dos golpes com 2% de falsos alertas).
   A **rede neural foi testada e não ganhou** do clássico com estes dados (`8-treino-ml/README.md`). Sem página para ler,
   vale o modelo do nome do site (~10% dos golpes com ~1% de falsos alertas).
+- **Conferência automática** (3.15.0): o aviso mostra "Já conferimos por você" (CNPJ na Receita e dono do domínio no registro.br) e
+  o botão do site oficial quando imita uma marca. Reclame Aqui sozinho é opção desligada (envia o endereço da loja sem clique).
 - **Alfabeto cirílico** (3.13.0): `alfabetos.js` lê letras russas disfarçadas no endereço e na página; os dois modelos foram
   retreinados com isso. Os golpes de endereço com letras disfarçadas usados no treino são **gerados** (as listas abertas têm só 5).
   Letras russas imitando marca = 70 pontos (bloqueia). Para retreinar: `ml/treinar.py` (nome) e `8-treino-ml/final.py` (página);
