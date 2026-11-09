@@ -94,20 +94,27 @@
     .selo button{margin:10px 0 0;font-size:15px;padding:6px 12px;background:none;color:#fff;border:1px solid #fff}
     .tela.daltonico{--fundo:#1e3a5f}
     .tela.grande{font-size:23px}
-    .miolo{max-width:640px;margin:0 auto}
+    .miolo{max-width:1200px;margin:0 auto}
+    /* Tudo numa tela só: em cima o resumo; embaixo as duas listas e, na direita, o Reclame Aqui e os botões. Em tela estreita, empilha. */
+    .topo{max-width:760px}
+    .grade{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;margin-top:18px}
+    .grade .cartao{flex:1 1 320px;margin:0}
+    .lado{flex:0 1 380px;min-width:280px;margin-left:auto;display:flex;flex-direction:column;gap:14px}
+    .lado .racard{margin:0;flex-direction:column;gap:8px}
+    .miolo>.acoes{margin-top:20px}
     .tela .cab{display:flex;gap:20px;align-items:center}
     .tela .ico{width:64px;height:64px;flex:none}
     .rotulo{font-size:.85em;font-weight:bold;letter-spacing:.12em}
     .h1{margin:0;font-size:1.7em;font-weight:bold;line-height:1.2}
-    .tela .host{margin-top:20px;background:var(--escuro);border-radius:6px;padding:10px 14px;font:bold 1em Consolas,monospace;overflow-wrap:anywhere}
-    .tela .conf{margin-top:24px}
+    .tela .host{margin-top:14px;background:var(--escuro);border-radius:6px;padding:10px 14px;font:bold 1em Consolas,monospace;overflow-wrap:anywhere}
+    .tela .conf{margin-top:16px}
     .conf-linha{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
     .num{font-size:1.6em;font-weight:bold}
     .conf-txt{opacity:.85;font-size:.9em}
     .barra{position:relative;height:8px;margin-top:8px;background:var(--escuro);border-radius:4px}
     .barra i{display:block;height:100%;background:#fff;border-radius:4px}
     .barra b{position:absolute;top:-4px;bottom:-4px;width:2px;background:#fff;opacity:.7}
-    .tela .texto{margin:24px 0 0}
+    .tela .texto{margin:16px 0 0}
     .tela .lista{margin:24px 0 0;padding-left:24px}
     .tela .lista li{margin:2px 0}
     .acoes{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
@@ -375,6 +382,7 @@
       class: 'tela ' + nivel + (simples ? ' grande' : '') + (config.daltonico ? ' daltonico' : ''), role: confiavel ? 'dialog' : 'alertdialog', 'aria-modal': 'true', 'aria-labelledby': 'pg-tit'
     },
       el('div', { class: 'miolo' },
+       el('div', { class: 'topo' },
         el('div', { class: 'cab' }, desenho(nivel),
           el('div', {}, el('div', { class: 'rotulo' }, confiavel ? 'CONFIÁVEL' : perigo ? 'PERIGO' : 'ATENÇÃO'), el('div', { class: 'h1', id: 'pg-tit' }, titulo))),
         el('div', { class: 'host' }, location.hostname),
@@ -382,13 +390,12 @@
           el('div', { class: 'conf-linha' }, el('span', { class: 'num' }, confNum + '%'), el('span', {}, 'de confiança'),
             el('span', { class: 'conf-txt' }, '· confiável só com ' + limiteConf + '% ou mais')),
           barraConf(confNum, limiteConf))]),
-        el('p', { class: 'texto' }, passoTexto),
-        cartaoContra.el,
-        cartaoFavor.el,
-        raCard.el,
-        acoes,
-        ...(ouvir ? [ouvir] : []),
-        ...(confiavel ? [] : [continuar])));
+        el('p', { class: 'texto' }, passoTexto)),
+       el('div', { class: 'grade' }, cartaoContra.el, cartaoFavor.el,
+        el('div', { class: 'lado' }, raCard.el)),
+       acoes,
+       ...(ouvir ? [ouvir] : []),
+       ...(confiavel ? [] : [continuar])));
     root.appendChild(tela);
     document.documentElement.appendChild(host);
     avisoSite = host;

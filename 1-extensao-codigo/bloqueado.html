@@ -10,18 +10,27 @@
   :root{--fundo:#7f1d1d;--escuro:rgba(0,0,0,.25);--branco:#fff}
   html.daltonico{--fundo:#1e3a5f}
   html{background:var(--fundo)}
-  body{margin:0;min-height:100vh;background:var(--fundo);color:var(--branco);font:19px/1.6 Arial,Helvetica,sans-serif;padding:28px 20px 48px}
+  body{margin:0;min-height:100vh;background:var(--fundo);color:var(--branco);font:19px/1.6 Arial,Helvetica,sans-serif;padding:20px 20px 40px}
   body.grande{font-size:23px}
-  main{max-width:640px;margin:0 auto}
+  main{max-width:1200px;margin:0 auto}
+  /* Tudo numa tela só: em cima o resumo; embaixo as duas listas e, na direita, o Reclame Aqui e os botões. Em tela estreita, empilha. */
+  .topo{max-width:760px}
+  .grade{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;margin-top:18px}
+  #listas{display:contents}
+  .grade .cartao{flex:1 1 320px;margin:0}
+  .lado{flex:0 1 380px;min-width:280px;margin-left:auto;display:flex;flex-direction:column;gap:14px}
+  .lado .racard{margin:0}
+  .lado .racard{flex-direction:column;gap:8px}
+  .botoes{margin-top:20px}
 
   .cab{display:flex;gap:20px;align-items:center}
   .ico{width:64px;height:64px;flex:none}
   .rotulo{font-size:.85em;font-weight:bold;letter-spacing:.12em}
   h1{margin:0;font-size:1.7em;line-height:1.2}
   h1:focus{outline:none}
-  .host{margin-top:20px;background:var(--escuro);border-radius:6px;padding:10px 14px;font:bold 1em ui-monospace,Consolas,monospace;overflow-wrap:anywhere}
+  .host{margin-top:14px;background:var(--escuro);border-radius:6px;padding:10px 14px;font:bold 1em ui-monospace,Consolas,monospace;overflow-wrap:anywhere}
 
-  .conf{margin-top:24px}
+  .conf{margin-top:16px}
   .conf-linha{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
   #confNum{font-size:1.6em;font-weight:bold}
   #resumo{margin:0;opacity:.85;font-size:.9em}
@@ -31,7 +40,7 @@
   .barra b{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--branco);opacity:.7}
 
   p{margin:0}
-  .texto{margin-top:24px}
+  .texto{margin-top:16px}
   /* Loja estrangeira (v3.7): a frase principal em destaque, numa faixa clara com texto escuro (contraste alto). */
   .fora{display:flex;gap:14px;align-items:center;margin-top:24px;background:#fff8e6;color:#1a1200;border-left:8px solid #ffc65c;
     border-radius:10px;padding:16px 20px;font-size:1.45em;font-weight:800;line-height:1.25}
@@ -90,6 +99,7 @@
 </head>
 <body>
 <main role="alertdialog" aria-labelledby="titulo" aria-describedby="texto">
+<div class="topo">
   <div class="cab">
     <svg class="ico" viewBox="0 0 32 32" aria-hidden="true"><path d="M11 2h10l9 9v10l-9 9H11l-9-9V11z" fill="#fff"/><path d="M11.5 11.5l9 9M20.5 11.5l-9 9" stroke="#b42323" stroke-width="3.4" stroke-linecap="round"/></svg>
     <div>
@@ -106,11 +116,18 @@
 
   <p class="texto" id="texto">Ele tem sinais fortes de golpe. Se você chegou aqui por uma mensagem, e-mail ou anúncio, apague-os e acesse o serviço digitando o endereço oficial.</p>
 
+</div>
+
+<div class="grade">
   <section id="listas">
     <div class="cartao contra" id="cartaoContra" hidden><h3 id="tituloContra"></h3><ul id="listaContra"></ul></div>
     <div class="cartao favor" id="cartaoFavor" hidden><h3 id="tituloFavor"></h3><ul id="listaFavor"></ul></div>
   </section>
+  <aside class="lado">
   <a id="ra" class="racard" href="#" target="_blank" rel="noopener"><span class="logo-ra" aria-hidden="true"><img src="icons/reclameaqui.png" alt=""></span><span class="racorpo"><span id="raTopo" class="ratopo" hidden><span id="raNota"></span><span id="raEscudos" role="img" style="display:inline-flex"></span><span id="raTexto"></span></span><span class="raconfira">→ Confira você mesmo no Reclame Aqui</span></span></a>
+
+  </aside>
+</div>
 
   <div class="botoes">
     <button id="voltar" class="b" type="button">Voltar para a segurança</button>
@@ -120,6 +137,9 @@
     </button>
     <button id="oficial" class="b" type="button" hidden></button>
   </div>
+
+  <button id="continuar" type="button">Continuar mesmo assim (não recomendado)</button>
+
 
   <details id="detalhes">
     <summary>Ver a verificação completa</summary>
@@ -139,7 +159,6 @@
     </div>
   </details>
 
-  <button id="continuar" type="button">Continuar mesmo assim (não recomendado)</button>
 </main>
 <script src="pessoa.js"></script>
 <script src="bloqueado.js"></script>

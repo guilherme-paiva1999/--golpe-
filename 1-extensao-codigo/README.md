@@ -180,6 +180,13 @@ node ml/testar_gov_marca.js && node ml/testar_pontuacao.js
 A extensão e o aplicativo passaram a se chamar **Isso é golpe?** (antes: "É Golpe?"), igual aos slides e ao pitch:
 nome no Chrome, popup, boas-vindas, tela de bloqueio, aplicativo, aviso no Reclame Aqui e mensagens para a pessoa de confiança.
 
+## v3.18.4: tudo numa tela só (Reclame Aqui na direita)
+
+O aviso e a tela de bloqueio ocupavam só uma coluna estreita no meio da tela, e a pessoa precisava descer para ver o Reclame Aqui e os botões.
+Agora o espaço da tela é usado: **em cima** o resumo (título, endereço, porcentagem e frase); **embaixo, lado a lado**, a lista de pontos de
+atenção, a de pontos a favor e, **na direita, o cartão do Reclame Aqui**; e **por último, numa linha**, os botões (voltar, perguntar, site
+oficial) e o "continuar mesmo assim". Em tela estreita (celular, janela pequena) tudo empilha de novo. Conferido em 1366×768.
+
 ## v3.18.3: sites que trocam de página sem recarregar (caso H&M)
 
 Na H&M (`hm.com.br`) a página inicial não vende nada e a extensão fica quieta (é a regra: só age em páginas de compra). Mas ao clicar numa
