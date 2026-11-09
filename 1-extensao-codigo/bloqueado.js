@@ -15,7 +15,7 @@ let motivos = [];
 let verificacao = null;
 let contaDaPagina = null;   // a porcentagem que causou o bloqueio (loja), quando houver
 
-const limiteDaConfig = () => (config.rigor === 'normal' ? 60 : 90);
+const limiteDaConfig = () => (config.rigor === 'normal' ? 60 : 80);
 
 const ICONES ={ contra: ['✗', 'Contra'], favor: ['✓', 'A favor'], neutro: ['•', 'Informação'] };
 
@@ -84,7 +84,7 @@ function mostrarMotivos() {
   favor.slice(0, limite).forEach((t) => adicionarItem('favor', t));
 }
 
-// Mostra a porcentagem. Só é confiável quem CHEGA ao limite (90% ou mais no rigor padrão).
+// Mostra a porcentagem. Só é confiável quem CHEGA ao limite (80% ou mais no rigor padrão).
 function mostrarConfianca(confianca, limite) {
   $('confNum').textContent = confianca + '%';
   $('confBarra').style.width = confianca + '%';

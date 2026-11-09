@@ -618,7 +618,7 @@ function estadoSelo(res) {
 const SINAIS_CHAVES = ['pagamento', 'pressao', 'desconto', 'formExterno', 'senha', 'semContato', 'brasil', 'espionagem',
   'venda', 'cnpjValido', 'cnpjInvalido', 'contato', 'emailMesmoDominio', 'politicas', 'gateway'];
 
-// Loja (venda ou pedido de pagamento): começa com 0 e precisa PROVAR confiança: só é confiável com 90% ou mais.
+// Loja (venda ou pedido de pagamento): começa com 0 e precisa PROVAR confiança: só é confiável com 80% ou mais.
 // Provas somam; sinais ruins tiram. O que faltou vira o aviso.
 // opcoes.pesoPressao (0 a 1): quanto as palavras de pressão e o desconto exagerado pesam. Vale 1 por padrão; para empresa com
 // CNPJ ativo há muito tempo diminui (v3.16). Devolve também o que somou (positivos) e o que tirou (negativos), sem limite de 0 a 100.
@@ -868,8 +868,8 @@ function aplicarConsumidor(reg, comercio, valor, motivos) {
   return aplicarDelta(d, comercio, valor);
 }
 
-// Só é confiável quem CHEGA ao limite: 90% ou mais (rigor alto, o padrão; foi 80% da v3.16.4 à v3.18.0) ou 60% ou mais (rigor normal).
-function limiteConfianca(rigor) { return rigor === 'normal' ? 60 : 90; }
+// Só é confiável quem CHEGA ao limite: 80% ou mais, ou seja, 80 já conta (rigor alto, o padrão; foi 90% da v3.3 à v3.16 e na v3.18.1) ou 60% ou mais (rigor normal).
+function limiteConfianca(rigor) { return rigor === 'normal' ? 60 : 80; }
 
 // Situação do CNPJ de uma loja: 'ativo', 'irregular' (não existe, baixado, inapto...), 'nenhum' (não achamos CNPJ
 // na página nem no registro.br) ou 'sem-resposta' (a BrasilAPI não respondeu: nesse caso a regra não bloqueia).

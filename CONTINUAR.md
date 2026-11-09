@@ -60,7 +60,7 @@ As capturas de tela ficam em `teste-real/capturas/` (não vão para o GitHub).
   que abre o Detector oficial **direto na nota do site** pelo link público `detector-site-confiavel/<site>` (3.14.0; antes o `reclameaqui.js`
   preenchia o campo). Nada é lido nem clicado por nós; em site novo, o Reclame Aqui pede "não sou um robô" para a pessoa. A logo veio do Wikimedia Commons (domínio público), mas é marca registrada: para uso comercial,
   pedir autorização.
-- **Confiança em porcentagem**, aparece na hora (sem "carregando"). **Só é confiável com 90% ou mais** (rigor normal: 60% ou mais). Era 80% até a 3.2, 90% da 3.3 à 3.16, 80% da 3.16.4 à 3.18.0 e voltou a 90% na 3.18.1 (pedido do Guilherme).
+- **Confiança em porcentagem**, aparece na hora (sem "carregando"). **Só é confiável com 80% ou mais** ("maior ou igual": 80 já conta; rigor normal: 60% ou mais). Era 80% até a 3.2, 90% da 3.3 à 3.16, 80% da 3.16.4 à 3.18.0, 90% na 3.18.1 (não publicada) e voltou a 80% na 3.18.2 (pedido do Guilherme).
 - **Aprendizado de máquina** só soma pontos, nunca bloqueia sozinho. Desde a 3.12.0, nas páginas de dinheiro vale o
   **modelo da página** (regressão logística com texto + características; AUC 0,92, ~52% dos golpes com 2% de falsos alertas).
   A **rede neural foi testada e não ganhou** do clássico com estes dados (`8-treino-ml/README.md`). Sem página para ler,
