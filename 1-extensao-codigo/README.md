@@ -180,6 +180,16 @@ node ml/testar_gov_marca.js && node ml/testar_pontuacao.js
 A extensão e o aplicativo passaram a se chamar **Isso é golpe?** (antes: "É Golpe?"), igual aos slides e ao pitch:
 nome no Chrome, popup, boas-vindas, tela de bloqueio, aplicativo, aviso no Reclame Aqui e mensagens para a pessoa de confiança.
 
+## v3.16.2: escudos do Reclame Aqui, ligados por padrão, e um erro no ícone
+
+- **Escudos do Reclame Aqui no aviso e na tela de bloqueio**, ligados por padrão (dá para desligar no popup): "De acordo com o Reclame Aqui:
+  [escudos] 5 de 5 escudos (Confiável)" e, embaixo, "→ Confira você mesmo no Reclame Aqui". Os escudos são desenhados pela extensão (de 0 a 5).
+  Se o Reclame Aqui ainda não analisou o site, aparece só isso e o link. A permissão do site do Reclame Aqui agora vem no manifesto.
+  Conferido num Chrome normal (com tela): Magazine Luiza 5 de 5, KaBuM 4 de 5, site novo "ainda não analisou". Num Chrome sem tela, o
+  Cloudflare do Reclame Aqui barra a consulta (nesse caso a extensão não contorna: mostra só o link).
+- **Erro "setBadgeBackgroundColor ... Missing required property 'color'"** (página de erros da extensão): ao limpar o selo do ícone (estado
+  "nenhum", sem cor) a extensão pedia uma cor que não existe. Agora só pede a cor quando há uma.
+
 ## v3.16.1: consulta do CNPJ mais confiável
 
 No Magazine Luiza o aviso dizia "a Receita Federal não respondeu agora" e a confiança caía: a BrasilAPI levou 8,8 segundos para esse

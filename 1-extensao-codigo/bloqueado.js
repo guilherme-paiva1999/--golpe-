@@ -127,13 +127,32 @@ async function iniciar() {
   document.documentElement.classList.toggle('daltonico', !!config.daltonico);
   document.body.classList.toggle('daltonico', !!config.daltonico);
   // v3.16 (opcional, desligado por padrão): consulta a nota no Reclame Aqui em segundo plano e mostra aqui, com o link
-  if (config.raAuto && url) {
+  if (config.raAuto !== false && url) {
     chrome.runtime.sendMessage({ tipo: 'ra-nota' }).then((ra) => {
       if (!ra || !ra.ok || !/^https:\/\/www\.reclameaqui\.com\.br\/detector-site-confiavel\/[a-z0-9.-]+$/.test(ra.link || '')) return;
-      $('raNota').textContent = ra.bloqueado ? 'O Reclame Aqui não deixou consultar a nota automaticamente.'
-        : ra.nota === undefined
-        ? 'O Reclame Aqui ainda não tem uma análise pronta para este site.'
-        : 'Segundo o Reclame Aqui: ' + ra.rotulo + ' (' + ra.nota + ' de 5 escudos).';
+      if (ra.bloqueado) $('raNota').textContent = 'O Reclame Aqui não deixou consultar a nota automaticamente.';
+      else if (ra.nota === undefined) $('raNota').textContent = 'O Reclame Aqui ainda não analisou este site.';
+      else {
+        $('raNota').textContent = 'De acordo com o Reclame Aqui:';
+        const n = Math.max(0, Math.min(5, Number(ra.nota) || 0));
+        $('raEscudos').setAttribute('aria-label', n + ' de 5 escudos');
+        for (let i = 0; i < 5; i++) {
+          const e = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          e.setAttribute('viewBox', '0 0 24 28'); e.setAttribute('width', '26'); e.setAttribute('height', '30'); e.setAttribute('aria-hidden', 'true'); e.style.marginRight = '4px';
+          const c = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          c.setAttribute('d', 'M12 1.5 21.5 5v8.2c0 6-4 10.3-9.5 13.3C6.5 23.5 2.5 19.2 2.5 13.2V5z');
+          c.setAttribute('fill', i < n ? '#2e9e4f' : 'none'); c.setAttribute('stroke', '#fff'); c.setAttribute('stroke-width', '1.8');
+          e.appendChild(c);
+          if (i < n) {
+            const v = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            v.setAttribute('d', 'M7.5 13.5l3.2 3.2 6-6.4'); v.setAttribute('fill', 'none'); v.setAttribute('stroke', '#fff');
+            v.setAttribute('stroke-width', '2.4'); v.setAttribute('stroke-linecap', 'round'); v.setAttribute('stroke-linejoin', 'round');
+            e.appendChild(v);
+          }
+          $('raEscudos').appendChild(e);
+        }
+        $('raTexto').textContent = n + ' de 5 escudos (' + ra.rotulo + ')';
+      }
       $('raLink').href = ra.link;
       $('caixaRA').hidden = false;
     }).catch(() => {});

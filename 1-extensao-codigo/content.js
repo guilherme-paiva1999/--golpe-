@@ -7,7 +7,7 @@
 
   // ---------- Estado e configuração ----------
   let ativo = true;
-  let config = { limite: 3, imagens: false, modoSimples: false, vozAutomatica: false, daltonico: false, raAuto: false };
+  let config = { limite: 3, imagens: false, modoSimples: false, vozAutomatica: false, daltonico: false, raAuto: true };
   let pessoa = null;                       // pessoa de confiança (fica só neste computador)
   let siteRes = null;
   let avisoSite = null;
@@ -188,6 +188,23 @@
     return document.importNode(new DOMParser().parseFromString(DESENHOS[nome], 'image/svg+xml').documentElement, true);
   }
 
+  // v3.16: escudos do Reclame Aqui (de 0 a 5), desenhados aqui (texto fixo da extensão; só o número vem de fora, de 0 a 5)
+  function escudos(nota) {
+    const n = Math.max(0, Math.min(5, Number(nota) || 0));
+    let svg = '';
+    for (let i = 0; i < 5; i++) {
+      svg += '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 28" width="26" height="30" aria-hidden="true" style="margin-right:4px">' +
+        '<path d="M12 1.5 21.5 5v8.2c0 6-4 10.3-9.5 13.3C6.5 23.500 2.500 19.200 2.500 13.200V5z" fill="' + (i < n ? '#2e9e4f' : 'none') + '" stroke="#fff" stroke-width="1.8"/>' +
+        (i < n ? '<path d="M7.500 13.500l3.200 3.200 6-6.400" fill="none" stroke="#fff" stroke-width="2.400" stroke-linecap="round" stroke-linejoin="round"/>' : '') + '</svg>';
+    }
+    const span = document.createElement('span');
+    span.setAttribute('role', 'img');
+    span.setAttribute('aria-label', n + ' de 5 escudos');
+    span.style.display = 'inline-flex';
+    span.append(...new DOMParser().parseFromString('<r xmlns="http://www.w3.org/2000/svg">' + svg + '</r>', 'image/svg+xml').documentElement.children);
+    return span;
+  }
+
   function barraConf(valor, limite) {
     const fill = el('i', {}); fill.style.width = Math.max(0, Math.min(100, valor)) + '%';
     const marca = el('b', {}); marca.style.left = 'calc(' + limite + '% - 2px)';
@@ -305,12 +322,13 @@
     if (config.raAuto && res.comercio) {
       enviar({ tipo: 'ra-nota' }).then((ra) => {
         if (!ra || !ra.ok || !/^https:\/\/www\.reclameaqui\.com\.br\/detector-site-confiavel\/[a-z0-9.-]+$/.test(ra.link || '')) return;
-        const texto = ra.bloqueado ? 'O Reclame Aqui não deixou consultar a nota automaticamente.'
-          : ra.nota === undefined
-          ? 'O Reclame Aqui ainda não tem uma análise pronta para este site.'
-          : 'Segundo o Reclame Aqui: ' + ra.rotulo + ' (' + ra.nota + ' de 5 escudos).';
-        const caixa = el('div', { class: 'passo' }, el('b', {}, texto + ' '), 'Verifique você mesmo: ',
-          el('a', { href: ra.link, target: '_blank', rel: 'noopener', style: 'color:inherit' }, 'abrir no Reclame Aqui'));
+        const semNota = ra.bloqueado ? 'O Reclame Aqui não deixou consultar a nota automaticamente.'
+          : ra.nota === undefined ? 'O Reclame Aqui ainda não analisou este site.' : '';
+        const confira = el('a', { href: ra.link, target: '_blank', rel: 'noopener', style: 'color:inherit;font-weight:bold' }, 'Confira você mesmo no Reclame Aqui');
+        const caixa = el('div', { class: 'passo' },
+          ...(semNota ? [el('b', {}, semNota)]
+            : [el('b', {}, 'De acordo com o Reclame Aqui: '), escudos(ra.nota), el('b', {}, ' ' + ra.nota + ' de 5 escudos (' + ra.rotulo + ')')]),
+          el('div', { style: 'margin-top:6px' }, '→ ', confira));
         const lista = tela.querySelector('.lista');
         if (lista) lista.after(caixa); else tela.querySelector('.miolo').append(caixa);
       });

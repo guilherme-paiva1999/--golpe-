@@ -13,7 +13,7 @@ if (typeof importScripts === 'function') importScripts('alfabetos.js', 'modelo.j
 
 // ---------- Configuração ----------
 const CONFIG_PADRAO = { limite: 3, consultaIdade: false, imagens: false, modoSimples: false, rigor: 'alto',
-  perfis: [], vozAutomatica: false, daltonico: false, raAuto: false };
+  perfis: [], vozAutomatica: false, daltonico: false, raAuto: true };
 const TTL_CACHE_MS = 6 * 3600 * 1000;
 const LIMITE_PERIGO = 70;
 const LIMITE_ATENCAO = 30;
@@ -595,7 +595,7 @@ async function selo(tabId, estado) {
   const m = { ok: '✓', verificar: '?', atencao: '!', perigo: 'X', nenhum: '' }[estado];
   if (tabId == null || m === undefined) return;
   chrome.action.setBadgeText({ tabId, text: m }).catch(() => {});
-  chrome.action.setBadgeBackgroundColor({ tabId, color: cores[estado] }).catch(() => {});
+  if (cores[estado]) chrome.action.setBadgeBackgroundColor({ tabId, color: cores[estado] }).catch(() => {});   // 'nenhum' só limpa o texto: não tem cor
 }
 function estadoSelo(res) {
   if (res.conhecido || res.permitido) return 'ok';
@@ -1317,7 +1317,7 @@ async function tratar(msg, sender) {
       return { ok: true };
     case 'ra-nota': {
       // v3.16 (opcional): consulta em segundo plano o veredito público do Reclame Aqui para o site da aba que pediu
-      // (a própria página da loja ou a tela de bloqueio dela) e devolve a nota. Só se a pessoa ligou a opção no popup.
+      // (a própria página da loja ou a tela de bloqueio dela) e devolve a nota. Vem ligado; a pessoa pode desligar no popup.
       const cfgRA = await lerConfig();
       if (!cfgRA.raAuto || !sender.tab || typeof sender.tab.url !== 'string') return { ok: false };
       let h;

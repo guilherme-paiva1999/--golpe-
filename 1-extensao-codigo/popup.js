@@ -1,7 +1,7 @@
 'use strict';
 
 const $ = (id) => document.getElementById(id);
-const PADRAO = { limite: 3, consultaIdade: false, imagens: false, modoSimples: false, rigor: 'alto', perfis: [], vozAutomatica: false, daltonico: false, raAuto: false };
+const PADRAO = { limite: 3, consultaIdade: false, imagens: false, modoSimples: false, rigor: 'alto', perfis: [], vozAutomatica: false, daltonico: false, raAuto: true };
 const P = self.EGolpePessoa;
 const TEXTO = { ok: 'Nenhum sinal forte de golpe', atencao: 'Atenção: confira antes de pagar', perigo: 'Provável golpe' };
 
@@ -120,17 +120,7 @@ async function iniciar() {
   $('limite').value = String(cfg.limite);
   $('idade').checked = cfg.consultaIdade;
   $('raAuto').checked = cfg.raAuto;
-  $('raAuto').addEventListener('change', async () => {
-    if ($('raAuto').checked) {
-      // pede a permissão de falar com o Reclame Aqui só quando a pessoa liga a opção
-      const ok = await chrome.permissions.request({ origins: ['https://www.reclameaqui.com.br/*'] });
-      $('raAuto').checked = ok;
-      await salvar({ raAuto: ok });
-    } else {
-      await salvar({ raAuto: false });
-      await chrome.permissions.remove({ origins: ['https://www.reclameaqui.com.br/*'] }).catch(() => {});
-    }
-  });
+  $('raAuto').addEventListener('change', () => salvar({ raAuto: $('raAuto').checked }));
   $('rigor').value = cfg.rigor;
   $('rigor').addEventListener('change', () => salvar({ rigor: $('rigor').value }));
   $('btnGolpe').addEventListener('click', () => rotular('golpe'));
