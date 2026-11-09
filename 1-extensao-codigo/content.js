@@ -7,7 +7,7 @@
 
   // ---------- Estado e configuração ----------
   let ativo = true;
-  let config = { limite: 3, imagens: false, modoSimples: false, vozAutomatica: false, daltonico: false, raAuto: true, avisoConfiaveis: 'suspeitos', confirmacoes: true };
+  let config = { limite: 3, imagens: false, modoSimples: false, vozAutomatica: false, daltonico: false, raAuto: true, mostrar: 'todos', confirmacoes: true };
   let pessoa = null;                       // pessoa de confiança (fica só neste computador)
   let siteRes = null;
   let avisoSite = null;
@@ -596,14 +596,14 @@
     if (res) {
       siteRes = res;
       if (res.nivel !== 'ok') mostrarAvisoSite(res);
-      else if (res.comercio && !res.conhecido && !res.permitido && config.avisoConfiaveis && config.avisoConfiaveis !== 'suspeitos') {
-        // v3.17: opção "mostrar também nos confiáveis" (selo pequeno ou aviso total), uma vez por site por dia
+      else if (res.comercio && !res.conhecido && !res.permitido && config.mostrar !== 'suspeitos') {
+        // v3.17: opção "mostrar todos os sites" (padrão: selo verde nos confiáveis) ou aviso total, uma vez por site por dia
         const { okVisto = {} } = await chrome.storage.local.get('okVisto');
         if (!okVisto[location.hostname] || Date.now() - okVisto[location.hostname] > 86400000) {
           okVisto[location.hostname] = Date.now();
           if (Object.keys(okVisto).length > 200) for (const k of Object.keys(okVisto)) if (k !== location.hostname) delete okVisto[k];
           await chrome.storage.local.set({ okVisto });
-          if (config.avisoConfiaveis === 'total') mostrarAvisoSite(res); else mostrarSeloOk(res);
+          if (config.mostrar === 'total') mostrarAvisoSite(res); else mostrarSeloOk(res);
         }
       }
     }

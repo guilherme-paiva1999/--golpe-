@@ -1,7 +1,7 @@
 'use strict';
 
 const $ = (id) => document.getElementById(id);
-const PADRAO = { limite: 3, consultaIdade: false, imagens: false, modoSimples: false, rigor: 'alto', perfis: [], vozAutomatica: false, daltonico: false, raAuto: true, avisoConfiaveis: 'suspeitos', confirmacoes: true };
+const PADRAO = { limite: 3, consultaIdade: false, imagens: false, modoSimples: false, rigor: 'alto', perfis: [], vozAutomatica: false, daltonico: false, raAuto: true, mostrar: 'todos', confirmacoes: true };
 const P = self.EGolpePessoa;
 const TEXTO = { ok: 'Nenhum sinal forte de golpe', atencao: 'Atenção: confira antes de pagar', perigo: 'Provável golpe' };
 
@@ -66,8 +66,22 @@ async function prepararRA() {
 async function mostrarStatus() {
   try {
     const [aba] = await chrome.tabs.query({ active: true, currentWindow: true });
-    const res = aba && aba.url ? await chrome.runtime.sendMessage({ tipo: 'status', url: aba.url }) : null;
+    const res = aba && aba.url ? await chrome.runtime.sendMessage({ tipo: 'status', url: aba.url, tabId: aba.id }) : null;
     if (!res) { $('pill').textContent = 'Esta página não é analisada'; return; }
+    const pag = res.pagina;
+    if (pag && pag.comercio && typeof pag.confianca === 'number' && !res.conhecido) {
+      // v3.17: loja avaliada: mostra o resultado de verdade (confiável a partir do limite), não "não verificado"
+      const confiavel = pag.nivel === 'ok';
+      $('pill').className = confiavel ? 'ok' : pag.nivel;
+      $('pill').textContent = confiavel ? '✓ Loja confiável' : (pag.nivel === 'perigo' ? 'X Provável golpe' : '! Atenção: confira antes de pagar');
+      const d = document.createElement('div');
+      d.style.fontSize = '15px';
+      d.textContent = 'Confiança: ' + pag.confianca + '% (confiável só com ' + (pag.limite || 80) + '% ou mais)';
+      $('pill').appendChild(d);
+      $('host').firstChild.textContent = res.host;
+      for (const m of (res.motivos || [])) { const li = document.createElement('li'); li.textContent = m; $('motivos').appendChild(li); }
+      return;
+    }
     $('pill').className = res.nivel;
     $('pill').textContent = res.conhecido ? '✓ Site conhecido e confiável'
       : (res.nivel === 'ok' ? '? Não verificado: confira antes de pagar' : (res.nivel === 'perigo' ? 'X ' : '! ') + TEXTO[res.nivel]);
@@ -120,8 +134,8 @@ async function iniciar() {
   $('limite').value = String(cfg.limite);
   $('idade').checked = cfg.consultaIdade;
   $('raAuto').checked = cfg.raAuto;
-  $('avisoConfiaveis').value = cfg.avisoConfiaveis;
-  $('avisoConfiaveis').addEventListener('change', () => salvar({ avisoConfiaveis: $('avisoConfiaveis').value }));
+  $('mostrar').value = cfg.mostrar;
+  $('mostrar').addEventListener('change', () => salvar({ mostrar: $('mostrar').value }));
   $('confirmacoes').checked = cfg.confirmacoes !== false;
   $('confirmacoes').addEventListener('change', () => salvar({ confirmacoes: $('confirmacoes').checked }));
   $('raAuto').addEventListener('change', () => salvar({ raAuto: $('raAuto').checked }));

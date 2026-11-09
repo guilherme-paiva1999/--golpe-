@@ -180,6 +180,17 @@ node ml/testar_gov_marca.js && node ml/testar_pontuacao.js
 A extensão e o aplicativo passaram a se chamar **Isso é golpe?** (antes: "É Golpe?"), igual aos slides e ao pitch:
 nome no Chrome, popup, boas-vindas, tela de bloqueio, aplicativo, aviso no Reclame Aqui e mensagens para a pessoa de confiança.
 
+## v3.17.1: loja confiável aparece na tela e a escolha "o que mostrar" no início
+
+- **Loja acima de 80% agora aparece como confiável.** Uma loja com 84% não mostrava nada porque a opção vinha em "só avisar sobre sites
+  suspeitos". O padrão agora é **"Mostrar todos os sites"**: selo verde pequeno nas lojas confiáveis e aviso nas suspeitas. O popup também
+  mostra "✓ Loja confiável · 84% de confiança" (antes dizia "não verificado").
+- **Escolha no início** (tela de boas-vindas, passo 2): "Mostrar todos os sites" (padrão) ou "Só mostrar os sites suspeitos ou maliciosos".
+  No popup há uma terceira, "Aviso total até nos confiáveis". A chave da opção mudou de `avisoConfiaveis` para `mostrar` (`todos`,
+  `suspeitos`, `total`), para ninguém ficar preso na escolha antiga.
+- Vale para páginas de compra, como todo o resto (a extensão continua quieta em páginas que não pedem dinheiro).
+- Teste no Chrome: confere que "todos" vem marcado e que "só suspeitos" é salvo.
+
 ## v3.17.0: duas listas, confirmações abertas e aviso também para lojas confiáveis
 
 - **Duas listas coloridas** no aviso e na tela de bloqueio, em vez de uma lista só: **⚠ Pontos de atenção** (vermelho, com ✕) e

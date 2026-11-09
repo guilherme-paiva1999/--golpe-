@@ -13,7 +13,7 @@ if (typeof importScripts === 'function') importScripts('alfabetos.js', 'modelo.j
 
 // ---------- Configuração ----------
 const CONFIG_PADRAO = { limite: 3, consultaIdade: false, imagens: false, modoSimples: false, rigor: 'alto',
-  perfis: [], vozAutomatica: false, daltonico: false, raAuto: true, avisoConfiaveis: 'suspeitos', confirmacoes: true };
+  perfis: [], vozAutomatica: false, daltonico: false, raAuto: true, mostrar: 'todos', confirmacoes: true };
 const TTL_CACHE_MS = 6 * 3600 * 1000;
 const LIMITE_PERIGO = 70;
 const LIMITE_ATENCAO = 30;
@@ -1374,6 +1374,8 @@ async function tratar(msg, sender) {
       const host = msg.host.toLowerCase();
       const res = await avaliarPagina(host, msg.protocolo, sinais, limparMedidas(msg.medidas));
       if (sender.tab) selo(sender.tab.id, res.provado ? 'ok' : estadoSelo(res));
+      // v3.17: guarda o resultado da loja para o popup mostrar "Loja confiável: 84%" (ou o aviso) sem refazer a conta
+      if (sender.tab) chrome.storage.session.set({ ['pag:' + sender.tab.id]: { host, nivel: res.nivel, confianca: res.confianca, limite: res.limite, comercio: !!res.comercio, internacional: !!res.internacional } }).catch(() => {});
       if (res.nivel === 'perigo' && sender.tab && typeof msg.url === 'string') {
         try {
           if (new URL(msg.url).hostname.toLowerCase() === host) {
@@ -1419,6 +1421,10 @@ async function tratar(msg, sender) {
       try { u = new URL(msg.url); } catch (e) { return null; }
       if (!protocoloValido(u.protocol)) return null;
       const res = { ...(await analisar(u.hostname.toLowerCase(), u.protocol)), host: u.hostname };
+      if (msg.tipo === 'status' && Number.isInteger(msg.tabId)) {
+        const pag = (await chrome.storage.session.get('pag:' + msg.tabId))['pag:' + msg.tabId];
+        if (pag && pag.host === u.hostname.toLowerCase()) res.pagina = pag;          // v3.17: resultado da loja (da página aberta)
+      }
       if (msg.tipo === 'detalhes') {
         const guardados = (await chrome.storage.session.get('motivos:' + u.href))['motivos:' + u.href];
         if (guardados && guardados.length) {

@@ -65,6 +65,8 @@ As capturas de tela ficam em `teste-real/capturas/` (não vão para o GitHub).
   **modelo da página** (regressão logística com texto + características; AUC 0,92, ~52% dos golpes com 2% de falsos alertas).
   A **rede neural foi testada e não ganhou** do clássico com estes dados (`8-treino-ml/README.md`). Sem página para ler,
   vale o modelo do nome do site (~10% dos golpes com ~1% de falsos alertas).
+- **O que mostrar** (3.17.1, pedido do Guilherme): padrão "todos" = selo verde nas lojas confiáveis (80%+); escolha na boas-vindas e no popup
+  (`mostrar`: todos, suspeitos, total). Só em páginas de compra.
 - **Duas listas (contra/a favor) e confirmações abertas** (3.17.0, pedido do Guilherme): ranking Tranco local, Internet Archive e crt.sh só
   mostram linhas, não mudam a porcentagem. Reclame Aqui é um cartão verde só. Opção de mostrar o aviso também nas lojas confiáveis.
   Meta do Guilherme: "a melhor verificação do mercado". Pendente: Site Confiável (siteconfiavel.com.br não abre neste ambiente; falta o

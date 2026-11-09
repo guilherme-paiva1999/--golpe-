@@ -2,7 +2,7 @@
 
 const $ = (id) => document.getElementById(id);
 const P = self.EGolpePessoa;
-const PADRAO = { limite: 3, consultaIdade: false, imagens: false, modoSimples: false, rigor: 'alto', perfis: [], vozAutomatica: false, daltonico: false };
+const PADRAO = { limite: 3, consultaIdade: false, imagens: false, modoSimples: false, rigor: 'alto', perfis: [], vozAutomatica: false, daltonico: false, mostrar: 'todos' };
 
 // O que cada perfil liga. Combinações somam (ex.: idoso + daltônico).
 const AJUSTES = {
@@ -70,6 +70,7 @@ async function terminar() {
   if (cfg.modoSimples) itens.push('Letras grandes e avisos simples: ligado.');
   if (cfg.vozAutomatica) itens.push('Leitura dos avisos em voz alta: ligada.');
   if (cfg.daltonico) itens.push('Cores para daltonismo: ligadas.');
+  itens.push(cfg.mostrar === 'suspeitos' ? 'O que mostrar: só os sites suspeitos ou maliciosos.' : 'O que mostrar: todos os sites (selo verde nos confiáveis).');
   itens.push(P.valida(pessoaConfianca) ? 'Pessoa de confiança: ' + pessoaConfianca.nome + '.' : 'Pessoa de confiança: não cadastrada (dá para cadastrar depois no ícone da extensão).');
   $('resumo').replaceChildren(...itens.map((t) => Object.assign(document.createElement('li'), { textContent: t })));
   await chrome.storage.local.set({ boasVindasFeitas: true });
@@ -86,6 +87,8 @@ async function iniciar() {
     $('telefone').value = pessoaConfianca.telefone || '';
     $('email').value = pessoaConfianca.email || '';
   }
+  const radioMostrar = document.querySelector('input[name=mostrar][value=' + (cfg.mostrar === 'suspeitos' ? 'suspeitos' : 'todos') + ']');
+  if (radioMostrar) radioMostrar.checked = true;
   document.body.classList.toggle('grande', !!cfg.modoSimples);
   previa();
 
@@ -107,7 +110,9 @@ async function iniciar() {
   $('modoSimples').addEventListener('change', aplicarTamanho);
   $('volta1').addEventListener('click', () => mostrar(1));
   $('ir3').addEventListener('click', async () => {
-    await salvarConfig({ modoSimples: $('modoSimples').checked, vozAutomatica: $('vozAutomatica').checked, daltonico: $('daltonico').checked });
+    const m = document.querySelector('input[name=mostrar]:checked').value;
+    await salvarConfig({ modoSimples: $('modoSimples').checked, vozAutomatica: $('vozAutomatica').checked, daltonico: $('daltonico').checked,
+      mostrar: m === 'todos' && cfg.mostrar === 'total' ? 'total' : m });
     const idoso = perfisMarcados().includes('idoso');
     $('avisoIdoso').hidden = !idoso;
     $('pular').textContent = idoso ? 'Pular por enquanto (não recomendado)' : 'Pular por enquanto';

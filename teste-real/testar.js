@@ -51,6 +51,9 @@ const conferir = (nome, cond, extra) => { console.log((cond ? 'OK   ' : 'FALHA '
   conferir('idoso liga letras grandes e voz', await bv.isChecked('#modoSimples') && await bv.isChecked('#vozAutomatica'));
   conferir('daltônico liga cores', await bv.isChecked('#daltonico'));
   await bv.uncheck('#vozAutomatica');               // sem voz no teste
+  // v3.17.1: a escolha "o que mostrar" logo no início (padrão: todos os sites)
+  conferir('boas-vindas: "mostrar todos os sites" vem marcado', await bv.isChecked('input[name=mostrar][value=todos]'));
+  await bv.check('input[name=mostrar][value=suspeitos]');
   await foto(bv, '2-ajustes');
   await bv.click('#ir3');
   conferir('aviso "recomendado" para idoso', await bv.isVisible('#avisoIdoso'));
@@ -64,6 +67,7 @@ const conferir = (nome, cond, extra) => { console.log((cond ? 'OK   ' : 'FALHA '
   await foto(bv, '4-pronto');
   const guardado = await bv.evaluate(() => chrome.storage.local.get(['config', 'pessoaConfianca']));
   conferir('config salva', guardado.config.modoSimples === true && guardado.config.daltonico === true && guardado.config.perfis.join() === 'idoso,daltonico', JSON.stringify(guardado.config));
+  conferir('escolha "só suspeitos" salva', guardado.config.mostrar === 'suspeitos', String(guardado.config.mostrar));
   conferir('pessoa salva', guardado.pessoaConfianca.nome === 'Maria (filha)', JSON.stringify(guardado.pessoaConfianca));
 
   // 2) Bloqueio real antes de abrir
