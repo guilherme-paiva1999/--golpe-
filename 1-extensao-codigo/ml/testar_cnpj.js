@@ -8,8 +8,9 @@ vm.runInContext(fs.readFileSync(path.join(__dirname,'../alfabetos.js'),'utf8')+f
   'estaNaLista=async()=>false;' +
   'consultarRdap=async(d)=>(self.__rdap[d]||{dias:2000,cnpj:null,pf:false});' +
   'consultarCnpj=async(c)=>(c in self.__cnpj?self.__cnpj[c]:null);', Object.assign(ctx, { self: ctx }));
-ctx.__cnpj = { '11222333000181': { existe: true, ativa: true, situacao: 'ATIVA', abertura: '2015-01-01' },
-  '99888777000166': { existe: true, ativa: false, situacao: 'BAIXADA', abertura: '2010-01-01' } };   // '55444333000122': sem resposta
+ctx.__cnpj = { '11222333000181': { existe: true, ativa: true, situacao: 'ATIVA', abertura: '2015-01-01', socios: ['pf:a', 'pf:b', 'pf:c'] },
+  '99888777000166': { existe: true, ativa: false, situacao: 'BAIXADA', abertura: '2010-01-01', socios: ['pf:a', 'pf:b'] },
+  '55666777000188': { existe: true, ativa: true, situacao: 'ATIVA', abertura: '2012-01-01', socios: ['pf:x'] } };   // '55444333000122': sem resposta
 ctx.__rdap = { 'empresa.com.br': { dias: 2000, cnpj: '11222333000181', pf: false }, 'pessoa.com.br': { dias: 2500, cnpj: null, pf: true } };
 const T = ctx.T;
 const loja = (o) => Object.assign({ venda: true, pagamento: true, contato: true, politicas: true, cnpjValido: false, cnpj: '' }, o);
@@ -35,7 +36,9 @@ const t = async (nome, host, sinais, espNivel, espCnpj) => {
   chk('conferência mostra o CNPJ com pontos e barra', /11\.222\.333\/0001-81/.test(r1.conferencia[0]));
   const r2 = await T.avaliarPagina('empresa.com.br', 'https:', loja({ cnpjValido: true, cnpj: '99888777000166', gateway: true }));
   // dono do endereço (registro.br) real e ativo, CNPJ da página de outra empresa: provavelmente o mesmo grupo, não é golpe
-  chk('dono do domínio ativo e CNPJ da página de outra empresa: "provavelmente do mesmo grupo"', r2.conferencia.some((l) => /registrado em nome de.*provavelmente do mesmo grupo/.test(l)) && !r2.conferencia.some((l) => /^Atenção/.test(l)));
+  chk('dono do domínio ativo e CNPJ da página de outra empresa COM sócios em comum: "faz parte do mesmo grupo"', r2.conferencia.some((l) => /faz parte do mesmo grupo.*sócios ou administradores em comum/.test(l)) && !r2.conferencia.some((l) => /^Atenção/.test(l)));
+  const r2c = await T.avaliarPagina('empresa.com.br', 'https:', loja({ cnpjValido: true, cnpj: '55666777000188', gateway: true }));
+  chk('CNPJ da página de empresa SEM relação com a dona do endereço: "não parecem ser do mesmo grupo"', r2c.conferencia.some((l) => /^Atenção:.*não parecem ser do mesmo grupo/.test(l)) && r2c.contra.some((l) => /não parecem ser do mesmo grupo/.test(l)), r2c.confianca + '%');
   // dono do endereço inativo (talvez o CNPJ da página tenha sido copiado de outra empresa): avisa
   ctx.__rdap['copiado.com.br'] = { dias: 3000, cnpj: '99888777000166', pf: false };
   const r2b = await T.avaliarPagina('copiado.com.br', 'https:', loja({ cnpjValido: true, cnpj: '11222333000181', gateway: true }));

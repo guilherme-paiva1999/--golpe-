@@ -242,7 +242,7 @@
     return chip;
   };
   // Uma linha de confirmação é "a favor" quando achou algo bom; senão, "contra" (mesma regra do background.js).
-  const linhaFavor = (t) => /conferido na Receita Federal|está registrado em nome de|aparece nos arquivos desde|está entre os|primeiro certificado público deste domínio é de \d{4}/.test(String(t));
+  const linhaFavor = (t) => /conferido na Receita Federal|faz parte do mesmo grupo|aparece nos arquivos desde|está entre os|primeiro certificado público deste domínio é de \d{4}/.test(String(t));
   // Cartão de lista: tipo 'contra' (vermelho) ou 'favor' (verde); some quando está vazio; itens podem chegar depois.
   function cartaoLista(tipo, titulo, itens) {
     const ul = el('ul', {});

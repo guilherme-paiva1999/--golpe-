@@ -740,8 +740,24 @@ function normalizarNome(s) {
 
 // v3.16: duas fontes abertas com os mesmos dados da Receita (BrasilAPI e Minha Receita). As duas são consultadas ao mesmo tempo e vale
 // a primeira que responder: a BrasilAPI chegou a levar 9 segundos para um CNPJ grande (Magazine Luiza) e a consulta falhava.
+// Hash curto (FNV-1a de 32 bits) para guardar sócios sem guardar nomes: serve só para ver se duas empresas têm os mesmos sócios.
+function hash32(s) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h.toString(16);
+}
+// Sócios e administradores (quadro societário público da Receita): 'pj:<documento>' para empresa sócia, 'pf:<hash do nome + CPF parcial>' para pessoa.
+function chavesDeSocios(qsa) {
+  if (!Array.isArray(qsa)) return [];
+  return qsa.slice(0, 40).map((s) => {
+    if (!s) return null;
+    const doc = String(s.cnpj_cpf_do_socio || '');
+    if (Number(s.identificador_de_socio) === 1) return doc.replace(/\D/g, '') ? 'pj:' + doc.replace(/\D/g, '') : null;
+    return 'pf:' + hash32(normalizarNome(s.nome_socio) + '|' + doc);
+  }).filter(Boolean);
+}
 function lerCnpj(j) {
-  return { existe: true, ativa: /^ATIVA$/i.test(String(j.descricao_situacao_cadastral || '').trim()),
+  return { existe: true, socios: chavesDeSocios(j.qsa), ativa: /^ATIVA$/i.test(String(j.descricao_situacao_cadastral || '').trim()),
     situacao: j.descricao_situacao_cadastral || '', razao: j.razao_social || '', fantasia: j.nome_fantasia || '',
     abertura: j.data_inicio_atividade || '',
     // v3.9: atividades econômicas (CNAE principal e secundárias) e MEI
@@ -760,7 +776,7 @@ async function buscarCnpjEm(url, cnpj) {
 async function consultarCnpj(cnpj) {
   const { cnpjs = {} } = await chrome.storage.local.get('cnpjs');
   const c = cnpjs[cnpj];
-  if (c && Date.now() - c.t < 7 * 86400000) return c.info;
+  if (c && Date.now() - c.t < 7 * 86400000 && (c.info.existe === false || Array.isArray(c.info.socios))) return c.info;     // cache antigo (sem sócios) é refeito
   let info = null;
   try {
     info = await Promise.any([buscarCnpjEm('https://brasilapi.com.br/api/cnpj/v1/', cnpj), buscarCnpjEm('https://minhareceita.org/', cnpj)]);
@@ -866,7 +882,7 @@ function situacaoCnpj(cnpjUsado, empresa, rdap) {
 // ---------- v3.17: duas listas, o que pesa contra e o que pesa a favor ----------
 // Uma linha de confirmação (CNPJ, Tranco, Internet Archive, crt.sh) é "a favor" quando achou algo bom; senão, "contra".
 function classificarLinha(t) {
-  return /conferido na Receita Federal|está registrado em nome de|aparece nos arquivos desde|está entre os|primeiro certificado público deste domínio é de \d{4}/.test(String(t)) ? 'favor' : 'contra';
+  return /conferido na Receita Federal|faz parte do mesmo grupo|aparece nos arquivos desde|está entre os|primeiro certificado público deste domínio é de \d{4}/.test(String(t)) ? 'favor' : 'contra';
 }
 function separarMotivos(motivos, favoraveis, conferencia) {
   const favor = [...(favoraveis || [])], contra = [];
@@ -995,6 +1011,9 @@ function lerVereditoRA(html, host) {
   }
   return null;
 }
+// Escudos do Reclame Aqui -> pontos de confiança (0 a 100). Peso mínimo de propósito: serve para confirmar, não para decidir.
+// 5 escudos +10, 4 escudos +5, 3 escudos neutro, 2 escudos -5, 1 ou 0 escudo -10.
+function pontosDoRA(nota) { return nota >= 5 ? 10 : nota === 4 ? 5 : nota === 3 ? 0 : nota === 2 ? -5 : -10; }
 async function consultarReclameAqui(host) {
   if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(host)) return { ok: false };
   const link = RA_DETECTOR + host;
@@ -1024,6 +1043,21 @@ async function consultarReclameAqui(host) {
 // O aviso mandava a pessoa "abrir o site oficial digitando o endereço e conferir o CNPJ da loja". Agora a extensão faz isso:
 // consulta o CNPJ na Receita Federal (BrasilAPI), compara com o dono do domínio no registro.br e, quando a página imita
 // uma marca conhecida, oferece um botão que abre o endereço oficial da marca (escrito na extensão, nunca tirado da página).
+// As duas empresas fazem parte do mesmo grupo? Pelo quadro societário público: uma é sócia da outra, as duas têm a mesma empresa sócia,
+// ou têm 2 ou mais sócios/administradores (pessoas) em comum. Devolve { mesmo, motivo } ou null se não dá para verificar.
+function relacaoDeGrupo(a, b, cnpjA, cnpjB) {
+  if (!a || !b || !Array.isArray(a.socios) || !Array.isArray(b.socios)) return null;
+  const base = (d) => String(d).slice(0, 8);
+  const pj = (x) => x.socios.filter((k) => k.startsWith('pj:')).map((k) => k.slice(3));
+  const pfA = a.socios.filter((k) => k.startsWith('pf:')), pfB = new Set(b.socios.filter((k) => k.startsWith('pf:')));
+  if (pj(a).some((d) => d.length === 14 && base(d) === base(cnpjB))) return { mesmo: true, motivo: 'a empresa dona do endereço é sócia da empresa do CNPJ da página' };
+  if (pj(b).some((d) => d.length === 14 && base(d) === base(cnpjA))) return { mesmo: true, motivo: 'a empresa do CNPJ da página é sócia da empresa dona do endereço' };
+  const pjB = new Set(pj(b).map((d) => (d.length === 14 ? base(d) : d)));
+  if (pj(a).some((d) => pjB.has(d.length === 14 ? base(d) : d))) return { mesmo: true, motivo: 'as duas têm a mesma empresa como sócia' };
+  const comuns = pfA.filter((k) => pfB.has(k)).length;
+  if (comuns >= 2) return { mesmo: true, motivo: 'as duas têm ' + comuns + ' sócios ou administradores em comum' };
+  return { mesmo: false };
+}
 const mascaraCnpj = (c) => String(c).replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
 function oficialDaMarca(host, marcas, dominio) {
   for (const k of marcas || []) {
@@ -1034,7 +1068,7 @@ function oficialDaMarca(host, marcas, dominio) {
   return m ? { nome: m.marca, host: m.oficial } : null;
 }
 // Devolve as linhas "já conferimos por você" e se o CNPJ da página não bate com o dono do domínio.
-function conferenciaCnpj({ cnpjPagina, cnpjRegistro, empresa, doRegistro, dono }) {
+function conferenciaCnpj({ cnpjPagina, cnpjRegistro, empresa, doRegistro, dono, grupo }) {
   const linhas = [];
   const usado = cnpjPagina || cnpjRegistro || '';
   let diverge = false, donoAtivo = false;
@@ -1054,11 +1088,22 @@ function conferenciaCnpj({ cnpjPagina, cnpjRegistro, empresa, doRegistro, dono }
   // O CNPJ que a página mostra deveria ser do dono do domínio (mesma empresa: os 8 primeiros números iguais).
   if (cnpjPagina && cnpjRegistro && cnpjPagina.slice(0, 8) !== cnpjRegistro.slice(0, 8)) {
     if (dono && dono.existe && dono.ativa) {
-      // Grupos usam CNPJs diferentes (a loja, a holding, o site). Se a empresa dona do endereço é real e ativa, não é sinal de golpe.
-      donoAtivo = true;
+      // Grupos usam CNPJs diferentes (a loja, a holding, quem registra o site). Só é normal se as duas empresas forem do mesmo grupo.
+      const nomeDono = dono.fantasia || dono.razao || 'outra empresa';
+      const nomePagina = (empresa && (empresa.fantasia || empresa.razao)) || 'empresa da página';
       const idadeDono = textoIdadeEmpresa(diasDeEmpresa(dono));
-      linhas.push('O endereço do site está registrado em nome de ' + (dono.fantasia || dono.razao || 'outra empresa') + ' (CNPJ ' + mascaraCnpj(cnpjRegistro) + '), ativa' +
-        (idadeDono ? ', ' + idadeDono : '') + '. O CNPJ da página (' + mascaraCnpj(cnpjPagina) + ') é de outra empresa, provavelmente do mesmo grupo.');
+      if (grupo && grupo.mesmo) {
+        donoAtivo = true;
+        linhas.push('O endereço do site está registrado em nome de ' + nomeDono + ' (CNPJ ' + mascaraCnpj(cnpjRegistro) + '), ativa' + (idadeDono ? ', ' + idadeDono : '') +
+          ', que faz parte do mesmo grupo de ' + nomePagina + ' (CNPJ ' + mascaraCnpj(cnpjPagina) + '): ' + grupo.motivo + '.');
+      } else if (grupo && grupo.mesmo === false) {
+        diverge = true;
+        linhas.push('Atenção: o CNPJ da página (' + mascaraCnpj(cnpjPagina) + ', ' + nomePagina + ') e a empresa dona do endereço (' + mascaraCnpj(cnpjRegistro) + ', ' + nomeDono +
+          ') não parecem ser do mesmo grupo: não achamos sócios em comum. Confira quem vende antes de pagar.');
+      } else {
+        donoAtivo = true;                      // não deu para verificar (consulta falhou): não pune, mas avisa
+        linhas.push('Não conseguimos confirmar se ' + nomeDono + ' (dona do endereço) e a empresa do CNPJ da página (' + mascaraCnpj(cnpjPagina) + ') são do mesmo grupo. Confira quem vende antes de pagar.');
+      }
     } else {
       diverge = true;
       linhas.push('Atenção: o CNPJ da página (' + mascaraCnpj(cnpjPagina) + ') não é o da empresa dona do endereço do site (' + mascaraCnpj(cnpjRegistro) + ').');
@@ -1105,15 +1150,27 @@ async function avaliarPagina(host, protocolo, sinais, medidas = null) {
     // v3.15: o CNPJ da página tem que ser da empresa dona do domínio (registro.br). Se for de outra, desconfia.
     const donoDiferente = !!(cnpjPagina && rdap && rdap.cnpj && cnpjPagina.slice(0, 8) !== rdap.cnpj.slice(0, 8));
     const dono = donoDiferente ? await consultarCnpj(rdap.cnpj) : null;       // a empresa dona do endereço (registro.br)
+    // CNPJ da página diferente do dono do endereço: confirma se as duas empresas são do mesmo grupo (sócios em comum)
+    const grupo = donoDiferente && dono && dono.existe && dono.ativa && empresa && empresa.existe ? relacaoDeGrupo(empresa, dono, cnpjPagina, rdap.cnpj) : null;
     const conf = conferenciaCnpj({ cnpjPagina, cnpjRegistro: (rdap && rdap.cnpj) || '',
-      empresa, doRegistro: !!(empresa && empresa.doRegistro), dono });
-    // Dono do endereço real e ativo: vale ele (confirmado pelo registro.br). Dono inexistente ou inativo (CNPJ copiado de outra empresa?): a idade da empresa da página não vale.
+      empresa, doRegistro: !!(empresa && empresa.doRegistro), dono, grupo });
+    // Dono do endereço real, ativo e do mesmo grupo: vale ele (confirmado pelo registro.br). Outra empresa, ou dono inexistente ou inativo (CNPJ copiado?): a idade da empresa da página não vale.
     const empresaDaLoja = conf.donoAtivo ? { ...dono, confirmado: true } : (conf.diverge && empresa ? { ...empresa, abertura: '' } : empresa);
     const c = pontuarConfianca(sinais, dias, protocolo, r.pontos, gratuito, { pesoPressao: pesoDaPressao(empresaDaLoja) });
     const motivos = [...r.motivos, ...c.motivos];
     // v3.16: a empresa (CNPJ) é o ponto de partida. Se a Receita não respondeu, vale a conta sem a empresa, sem punir a loja.
     if (!(cnpjUsado && !empresa)) c.confianca = confiancaDaLoja(c, empresaDaLoja, motivos);
-    c.confianca = aplicarRA(await notaRA(r.dominio), true, c.confianca, motivos);
+    // v3.18: a nota do Reclame Aqui (escudos) entra na conta da menor forma possível: 5 escudos +10, 4 +5, 3 neutro, 2 -5, 1 -10.
+    // Se a consulta automática não deu nota, vale a nota que a pessoa registrou no popup (como antes).
+    const raAuto = cfg.raAuto !== false ? await Promise.race([consultarReclameAqui(r.dominio), new Promise((res) => setTimeout(() => res(null), 5000))]).catch(() => null) : null;
+    if (raAuto && typeof raAuto.nota === 'number') {
+      const pts = pontosDoRA(raAuto.nota);
+      if (pts) {
+        c.confianca = Math.max(0, Math.min(100, c.confianca + pts));
+        motivos.push(pts > 0 ? 'A favor: Reclame Aqui: ' + raAuto.nota + ' de 5 escudos (+' + pts + ' pontos de confiança).'
+          : 'Contra: Reclame Aqui: ' + raAuto.nota + (raAuto.nota === 1 ? ' escudo' : ' de 5 escudos') + ' (' + pts + ' pontos de confiança).');
+      }
+    } else c.confianca = aplicarRA(await notaRA(r.dominio), true, c.confianca, motivos);
     // atividade de comércio: se a página vende e a empresa não tem atividade de comércio, tira 10 (como antes)
     if (empresa && empresa.existe && empresa.ativa && sinais.venda && Array.isArray(empresa.cnaes) && empresa.cnaes.length && !empresa.cnaes.some(cnaeVende)) {
       c.confianca = Math.max(0, c.confianca - 10);

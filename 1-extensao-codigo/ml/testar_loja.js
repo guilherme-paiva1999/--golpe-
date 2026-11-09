@@ -9,9 +9,9 @@ vm.runInContext(fs.readFileSync(path.join(__dirname, '../alfabetos.js'), 'utf8')
   'estaNaLista=async()=>false;notaRA=async()=>null;buscarConsumidor=async()=>null;' +
   'consultarRdap=async(d)=>(self.__rdap[d]||{dias:4000,cnpj:null,pf:false});consultarCnpj=async(c)=>(c in self.__cnpj?self.__cnpj[c]:null);', Object.assign(ctx, { self: ctx }));
 const anos = (a) => new Date(Date.now() - a * 365.25 * 86400000).toISOString().slice(0, 10);
-const emp = (a, extra) => Object.assign({ existe: true, ativa: true, situacao: 'ATIVA', fantasia: 'LOJA', abertura: anos(a), cnaes: ['4751201'], atividade: 'Comércio varejista' }, extra);
-ctx.__cnpj = { '11000000000191': emp(29), '22000000000100': emp(7), '33000000000100': emp(2), '44000000000100': emp(0.3),
-  '99888777000166': { existe: true, ativa: false, situacao: 'BAIXADA', abertura: anos(10) } };
+const emp = (a, extra) => Object.assign({ existe: true, ativa: true, situacao: 'ATIVA', fantasia: 'LOJA', abertura: anos(a), cnaes: ['4751201'], atividade: 'Comércio varejista', socios: [] }, extra);
+ctx.__cnpj = { '11000000000191': emp(29, { socios: ['pf:1', 'pf:2', 'pf:3'] }), '22000000000100': emp(7, { socios: ['pf:1', 'pf:2'] }), '33000000000100': emp(2), '44000000000100': emp(0.3),
+  '99888777000166': { existe: true, ativa: false, situacao: 'BAIXADA', abertura: anos(10), socios: [] } };
 ctx.__rdap = {};
 const T = ctx.T;
 const CNPJ_OK = (c) => c;   // os números acima são só chaves de teste (o content.js é quem valida o dígito)
@@ -40,14 +40,26 @@ const chk = (nome, cond, extra) => { n++; ok += !!cond; console.log((cond ? 'OK 
   const F = await av('baixada.com.br', { ...tudo }, '99888777000166', '99888777000166');
   chk('CNPJ baixado: confiança de no máximo 20% e perigo, mesmo com todas as provas', F.confianca <= 20 && F.nivel === 'perigo', F.confianca + '%');
   const G = await av('golpe-copiou.com.br', { ...tudo, pressao: true }, '11000000000191', '33000000000100');
-  chk('CNPJ de empresa antiga na página, mas o dono do endereço é uma empresa nova: vale a idade do dono (2 anos), não a da página', G.confianca < 70 && G.conferencia.some((l) => /mesmo grupo/.test(l)), G.confianca + '%');
+  chk('CNPJ de empresa antiga na página, dono do endereço é outra empresa SEM relação: não ganha os 70% e avisa', G.confianca < 50 && G.contra.some((l) => /não parecem ser do mesmo grupo/.test(l)), G.confianca + '%');
   const G2 = await av('golpe-copiou2.com.br', { ...tudo, pressao: true }, '11000000000191', '99888777000166');
   chk('CNPJ de empresa antiga na página e dono do endereço com CNPJ baixado: cai (copiado?)', G2.confianca < 45 && G2.contra.some((l) => /^Atenção: o CNPJ da página/.test(l)), G2.confianca + '%');
   const G3 = await av('grupo-grande.com.br', { ...tudo, pressao: true }, '22000000000100', '11000000000191');
-  chk('estilo C&A: CNPJ da página de uma empresa do grupo e dono do endereço ativo há 29 anos: confiável, com pressão', G3.confianca >= 80 && G3.nivel === 'ok' && G3.favor.some((l) => /mesmo grupo/.test(l)), G3.confianca + '%');
+  chk('estilo C&A: CNPJ da página de uma empresa do grupo e dono do endereço ativo há 29 anos: confiável, com pressão', G3.confianca >= 80 && G3.nivel === 'ok' && G3.favor.some((l) => /faz parte do mesmo grupo/.test(l)), G3.confianca + '%');
   const H = await av('novissima.com.br', { ...tudo }, '44000000000100', '44000000000100');
   chk('empresa aberta há 4 meses: confiança baixa e perde pontos por ser nova', H.confianca < 85 && H.motivos.some((m) => /menos de 6 meses/.test(m)), H.confianca + '%');
   chk('mais anos de empresa, mais confiança (29 anos > 7 anos > 2 anos), com as mesmas provas', B.confianca > C0.confianca && C0.confianca > D0.confianca, B.confianca + ' > ' + C0.confianca + ' > ' + D0.confianca);
+  // v3.18: escudos do Reclame Aqui entram na conta, da menor forma possível (5: +10, 4: +5, 3: neutro, 2: -5, 1: -10)
+  vm.runInContext('consultarReclameAqui = async () => ({ ok: true, nota: self.__nota });', ctx);
+  const nota = async (v, host) => { ctx.__nota = v; return (await av(host, { ...pouco }, '22000000000100', '22000000000100')).confianca; };
+  const sem = await (async () => { ctx.__nota = undefined; return (await av('ra-sem.com.br', { ...pouco }, '22000000000100', '22000000000100')).confianca; })();
+  const n5 = await nota(5, 'ra5.com.br'), n4 = await nota(4, 'ra4.com.br'), n3 = await nota(3, 'ra3.com.br'), n2 = await nota(2, 'ra2.com.br'), n1 = await nota(1, 'ra1.com.br');
+  chk('Reclame Aqui 5 escudos: +10 pontos', n5 - sem === 10, sem + '% -> ' + n5 + '%');
+  chk('Reclame Aqui 4 escudos: +5 pontos', n4 - sem === 5, n4 + '%');
+  chk('Reclame Aqui 3 escudos: neutro (nem ganha nem perde)', n3 === sem, n3 + '%');
+  chk('Reclame Aqui 2 escudos: -5 pontos', n2 - sem === -5, n2 + '%');
+  chk('Reclame Aqui 1 escudo: -10 pontos', n1 - sem === -10, n1 + '%');
+  ctx.__nota = 1; const r1ra = await av('ra1b.com.br', { ...pouco }, '22000000000100', '22000000000100');
+  chk('nota baixa entra na lista vermelha', r1ra.contra.some((l) => /^Reclame Aqui: 1 escudo \(-10 pontos/.test(l)), r1ra.contra.find((l) => /Reclame/.test(l)));
   console.log(ok + '/' + n + ' como esperado');
   process.exitCode = ok === n ? 0 : 1;
 })();

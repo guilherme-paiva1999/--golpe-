@@ -180,6 +180,24 @@ node ml/testar_gov_marca.js && node ml/testar_pontuacao.js
 A extensão e o aplicativo passaram a se chamar **Isso é golpe?** (antes: "É Golpe?"), igual aos slides e ao pitch:
 nome no Chrome, popup, boas-vindas, tela de bloqueio, aplicativo, aviso no Reclame Aqui e mensagens para a pessoa de confiança.
 
+## v3.18.0: confirma se as empresas são do mesmo grupo e o Reclame Aqui entra na conta
+
+**1) Mesmo grupo, de verdade.** Quando o CNPJ da página é diferente do dono do endereço (registro.br), a v3.17.2 aceitava qualquer dono ativo
+como "provável grupo". Agora a extensão **confere o quadro societário público da Receita** (BrasilAPI e Minha Receita) das duas empresas:
+- **Mesmo grupo** se uma é sócia da outra, se as duas têm a mesma empresa como sócia, ou se têm **2 ou mais sócios/administradores em comum**.
+  Vale a idade e a situação da dona do endereço, e a linha verde diz o motivo ("faz parte do mesmo grupo... as duas têm 4 sócios ou
+  administradores em comum"). Conferido com dados reais: C&A Modas × Cofra Latin America = mesmo grupo (4 em comum); C&A × Magazine Luiza = não.
+- **Sem relação**: vira **ponto de atenção** ("o CNPJ da página (...) e a empresa dona do endereço (...) não parecem ser do mesmo grupo: não
+  achamos sócios em comum"), tira 15 pontos e a idade da empresa da página não vale (protege contra CNPJ copiado de uma empresa conhecida).
+- Se a consulta falhar e não der para verificar: não pune, mas avisa que não deu para confirmar.
+- Privacidade: dos sócios só ficam guardadas chaves (empresas sócias e um código curto de nome + CPF parcial das pessoas), nunca os nomes.
+
+**2) Reclame Aqui entra na conta, no peso mínimo** (pedido do Guilherme, em pontos de 0 a 100): **5 escudos +10, 4 escudos +5, 3 escudos
+neutro (nem ganha nem perde), 2 escudos −5, 1 escudo −10**. Só usa a nota lida automaticamente (espera até 5 segundos); se ela não vier,
+vale a nota que a pessoa registrou no popup, como antes. Nota boa entra na lista verde ("Reclame Aqui: 4 de 5 escudos (+5 pontos de
+confiança)") e nota baixa na vermelha ("Reclame Aqui: 1 escudo (-10 pontos de confiança)").
+- Testes: `ml/testar_cnpj.js` (22), `ml/testar_loja.js` (20, inclui as notas 5, 4, 3, 2 e 1).
+
 ## v3.17.2: CNPJ de outra empresa do mesmo grupo não é golpe (caso C&A)
 
 A C&A (`cea.com.br`) mostrava 29% de confiança com 9 pontos a favor e nota 5 de 5 no Reclame Aqui. A página mostra o CNPJ da **C&A Modas**

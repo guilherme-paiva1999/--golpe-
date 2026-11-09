@@ -63,7 +63,7 @@ function avisoEstrangeira() {
 }
 
 // v3.17: duas listas coloridas (o que pesa contra e o que pesa a favor). Linhas que chegam depois entram na lista certa.
-const linhaFavor = (t) => /conferido na Receita Federal|está registrado em nome de|aparece nos arquivos desde|está entre os|primeiro certificado público deste domínio é de \d{4}/.test(String(t));
+const linhaFavor = (t) => /conferido na Receita Federal|faz parte do mesmo grupo|aparece nos arquivos desde|está entre os|primeiro certificado público deste domínio é de \d{4}/.test(String(t));
 const contagem = { contra: 0, favor: 0 };
 function adicionarItem(tipo, texto) {
   if (typeof texto !== 'string' || !texto) return;
