@@ -180,6 +180,20 @@ node ml/testar_gov_marca.js && node ml/testar_pontuacao.js
 A extensão e o aplicativo passaram a se chamar **Isso é golpe?** (antes: "É Golpe?"), igual aos slides e ao pitch:
 nome no Chrome, popup, boas-vindas, tela de bloqueio, aplicativo, aviso no Reclame Aqui e mensagens para a pessoa de confiança.
 
+## v3.17.2: CNPJ de outra empresa do mesmo grupo não é golpe (caso C&A)
+
+A C&A (`cea.com.br`) mostrava 29% de confiança com 9 pontos a favor e nota 5 de 5 no Reclame Aqui. A página mostra o CNPJ da **C&A Modas**
+(45.242.914/0001-05), mas o endereço está registrado no registro.br em nome da **Cofra Latin America Ltda.** (05.236.528/0001-88), a empresa
+do mesmo grupo. A regra da v3.15 tratava isso como CNPJ copiado: tirava 15 pontos, jogava a idade da empresa fora (base de 35%) e deixava a
+pressão pesar por inteiro. Resultado: 29%.
+- Agora a extensão **consulta também a empresa dona do endereço**. Se ela é real e ativa, a loja usa a idade e a situação dela (aqui, ativa
+  desde 2002 = base de 70%, e a pressão deixa de pesar), e a linha diz: "O endereço do site está registrado em nome de X (CNPJ ...), ativa,
+  aberta há N anos. O CNPJ da página (...) é de outra empresa, provavelmente do mesmo grupo." (entra em "Pontos a favor").
+- Só se a dona do endereço **não existir ou estiver inativa** vale o aviso antigo ("Atenção: o CNPJ da página não é o da empresa dona do
+  endereço"), com −15 pontos e sem a idade da empresa da página (protege contra CNPJ copiado).
+- O aviso não aparece mais duas vezes na lista vermelha.
+- Testes: `ml/testar_cnpj.js` (21) e `ml/testar_loja.js` (14, com um caso no estilo C&A: 99% mesmo com pressão).
+
 ## v3.17.1: loja confiável aparece na tela e a escolha "o que mostrar" no início
 
 - **Loja acima de 80% agora aparece como confiável.** Uma loja com 84% não mostrava nada porque a opção vinha em "só avisar sobre sites

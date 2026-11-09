@@ -866,7 +866,7 @@ function situacaoCnpj(cnpjUsado, empresa, rdap) {
 // ---------- v3.17: duas listas, o que pesa contra e o que pesa a favor ----------
 // Uma linha de confirmação (CNPJ, Tranco, Internet Archive, crt.sh) é "a favor" quando achou algo bom; senão, "contra".
 function classificarLinha(t) {
-  return /conferido na Receita Federal|aparece nos arquivos desde|está entre os|primeiro certificado público deste domínio é de \d{4}/.test(String(t)) ? 'favor' : 'contra';
+  return /conferido na Receita Federal|está registrado em nome de|aparece nos arquivos desde|está entre os|primeiro certificado público deste domínio é de \d{4}/.test(String(t)) ? 'favor' : 'contra';
 }
 function separarMotivos(motivos, favoraveis, conferencia) {
   const favor = [...(favoraveis || [])], contra = [];
@@ -1034,13 +1034,13 @@ function oficialDaMarca(host, marcas, dominio) {
   return m ? { nome: m.marca, host: m.oficial } : null;
 }
 // Devolve as linhas "já conferimos por você" e se o CNPJ da página não bate com o dono do domínio.
-function conferenciaCnpj({ cnpjPagina, cnpjRegistro, empresa, doRegistro }) {
+function conferenciaCnpj({ cnpjPagina, cnpjRegistro, empresa, doRegistro, dono }) {
   const linhas = [];
   const usado = cnpjPagina || cnpjRegistro || '';
-  let diverge = false;
+  let diverge = false, donoAtivo = false;
   if (!usado) {
     linhas.push('Procuramos o CNPJ na página e no registro do site e não achamos nenhum.');
-    return { linhas, diverge };
+    return { linhas, diverge, donoAtivo };
   }
   const onde = doRegistro ? 'do dono do site no registro.br' : 'mostrado na página';
   if (!empresa) linhas.push('CNPJ ' + mascaraCnpj(usado) + ' (' + onde + '): não conseguimos consultar a Receita Federal agora (os serviços abertos demoraram a responder). Tente de novo em instantes.');
@@ -1051,12 +1051,20 @@ function conferenciaCnpj({ cnpjPagina, cnpjRegistro, empresa, doRegistro }) {
     linhas.push('CNPJ ' + mascaraCnpj(usado) + ' (' + onde + ') conferido na Receita Federal: ' + (empresa.fantasia || empresa.razao || 'sem nome') +
       ', ativa' + (idade ? ', ' + idade : '') + '.');
   }
-  // O CNPJ que a página mostra precisa ser do dono do domínio (mesma empresa: os 8 primeiros números iguais).
+  // O CNPJ que a página mostra deveria ser do dono do domínio (mesma empresa: os 8 primeiros números iguais).
   if (cnpjPagina && cnpjRegistro && cnpjPagina.slice(0, 8) !== cnpjRegistro.slice(0, 8)) {
-    diverge = true;
-    linhas.push('Atenção: o CNPJ da página (' + mascaraCnpj(cnpjPagina) + ') não é o da empresa dona do endereço do site (' + mascaraCnpj(cnpjRegistro) + ').');
+    if (dono && dono.existe && dono.ativa) {
+      // Grupos usam CNPJs diferentes (a loja, a holding, o site). Se a empresa dona do endereço é real e ativa, não é sinal de golpe.
+      donoAtivo = true;
+      const idadeDono = textoIdadeEmpresa(diasDeEmpresa(dono));
+      linhas.push('O endereço do site está registrado em nome de ' + (dono.fantasia || dono.razao || 'outra empresa') + ' (CNPJ ' + mascaraCnpj(cnpjRegistro) + '), ativa' +
+        (idadeDono ? ', ' + idadeDono : '') + '. O CNPJ da página (' + mascaraCnpj(cnpjPagina) + ') é de outra empresa, provavelmente do mesmo grupo.');
+    } else {
+      diverge = true;
+      linhas.push('Atenção: o CNPJ da página (' + mascaraCnpj(cnpjPagina) + ') não é o da empresa dona do endereço do site (' + mascaraCnpj(cnpjRegistro) + ').');
+    }
   }
-  return { linhas, diverge };
+  return { linhas, diverge, donoAtivo };
 }
 
 async function avaliarPagina(host, protocolo, sinais, medidas = null) {
@@ -1095,10 +1103,12 @@ async function avaliarPagina(host, protocolo, sinais, medidas = null) {
   if (comercio) {
     const limite = limiteConfianca(cfg.rigor);
     // v3.15: o CNPJ da página tem que ser da empresa dona do domínio (registro.br). Se for de outra, desconfia.
+    const donoDiferente = !!(cnpjPagina && rdap && rdap.cnpj && cnpjPagina.slice(0, 8) !== rdap.cnpj.slice(0, 8));
+    const dono = donoDiferente ? await consultarCnpj(rdap.cnpj) : null;       // a empresa dona do endereço (registro.br)
     const conf = conferenciaCnpj({ cnpjPagina, cnpjRegistro: (rdap && rdap.cnpj) || '',
-      empresa, doRegistro: !!(empresa && empresa.doRegistro) });
-    // CNPJ de outra empresa na página (talvez copiado): os anos dessa empresa não valem para esta loja
-    const empresaDaLoja = conf.diverge && empresa ? { ...empresa, abertura: '' } : empresa;
+      empresa, doRegistro: !!(empresa && empresa.doRegistro), dono });
+    // Dono do endereço real e ativo: vale ele (confirmado pelo registro.br). Dono inexistente ou inativo (CNPJ copiado de outra empresa?): a idade da empresa da página não vale.
+    const empresaDaLoja = conf.donoAtivo ? { ...dono, confirmado: true } : (conf.diverge && empresa ? { ...empresa, abertura: '' } : empresa);
     const c = pontuarConfianca(sinais, dias, protocolo, r.pontos, gratuito, { pesoPressao: pesoDaPressao(empresaDaLoja) });
     const motivos = [...r.motivos, ...c.motivos];
     // v3.16: a empresa (CNPJ) é o ponto de partida. Se a Receita não respondeu, vale a conta sem a empresa, sem punir a loja.
@@ -1109,7 +1119,7 @@ async function avaliarPagina(host, protocolo, sinais, medidas = null) {
       c.confianca = Math.max(0, c.confianca - 10);
       motivos.push('A empresa não tem atividade de comércio registrada na Receita' + (empresa.atividade ? ' (atividade principal: ' + empresa.atividade + ')' : '') + ', mas a página vende produtos.');
     }
-    if (conf.diverge) { c.confianca = Math.max(0, c.confianca - 15); motivos.push('O CNPJ mostrado na página não é o da empresa dona do endereço do site.'); }
+    if (conf.diverge) c.confianca = Math.max(0, c.confianca - 15);       // a explicação já está na linha "Atenção" da lista
     c.confianca = aplicarConsumidor(consumidor, true, c.confianca, motivos);
     c.confianca = Math.round(c.confianca);
     let nivel = c.confianca >= limite ? 'ok' : (c.confianca < 30 ? 'perigo' : 'atencao');

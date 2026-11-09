@@ -40,7 +40,11 @@ const chk = (nome, cond, extra) => { n++; ok += !!cond; console.log((cond ? 'OK 
   const F = await av('baixada.com.br', { ...tudo }, '99888777000166', '99888777000166');
   chk('CNPJ baixado: confiança de no máximo 20% e perigo, mesmo com todas as provas', F.confianca <= 20 && F.nivel === 'perigo', F.confianca + '%');
   const G = await av('golpe-copiou.com.br', { ...tudo, pressao: true }, '11000000000191', '33000000000100');
-  chk('CNPJ de empresa antiga copiado numa loja de outra empresa: não ganha os 70%', G.confianca < 70 && G.motivos.some((m) => /não é o da empresa dona/.test(m)), G.confianca + '%');
+  chk('CNPJ de empresa antiga na página, mas o dono do endereço é uma empresa nova: vale a idade do dono (2 anos), não a da página', G.confianca < 70 && G.conferencia.some((l) => /mesmo grupo/.test(l)), G.confianca + '%');
+  const G2 = await av('golpe-copiou2.com.br', { ...tudo, pressao: true }, '11000000000191', '99888777000166');
+  chk('CNPJ de empresa antiga na página e dono do endereço com CNPJ baixado: cai (copiado?)', G2.confianca < 45 && G2.contra.some((l) => /^Atenção: o CNPJ da página/.test(l)), G2.confianca + '%');
+  const G3 = await av('grupo-grande.com.br', { ...tudo, pressao: true }, '22000000000100', '11000000000191');
+  chk('estilo C&A: CNPJ da página de uma empresa do grupo e dono do endereço ativo há 29 anos: confiável, com pressão', G3.confianca >= 80 && G3.nivel === 'ok' && G3.favor.some((l) => /mesmo grupo/.test(l)), G3.confianca + '%');
   const H = await av('novissima.com.br', { ...tudo }, '44000000000100', '44000000000100');
   chk('empresa aberta há 4 meses: confiança baixa e perde pontos por ser nova', H.confianca < 85 && H.motivos.some((m) => /menos de 6 meses/.test(m)), H.confianca + '%');
   chk('mais anos de empresa, mais confiança (29 anos > 7 anos > 2 anos), com as mesmas provas', B.confianca > C0.confianca && C0.confianca > D0.confianca, B.confianca + ' > ' + C0.confianca + ' > ' + D0.confianca);

@@ -34,7 +34,12 @@ const t = async (nome, host, sinais, espNivel, espCnpj) => {
   chk('aviso traz a conferência do CNPJ feita pela extensão', r1.conferencia && /conferido na Receita Federal/.test(r1.conferencia[0]));
   chk('conferência mostra o CNPJ com pontos e barra', /11\.222\.333\/0001-81/.test(r1.conferencia[0]));
   const r2 = await T.avaliarPagina('empresa.com.br', 'https:', loja({ cnpjValido: true, cnpj: '99888777000166', gateway: true }));
-  chk('CNPJ da página diferente do dono do domínio: avisa', r2.conferencia.some((l) => /não é o da empresa dona do endereço/.test(l)) && r2.motivos.some((m) => /não é o da empresa dona/.test(m)));
+  // dono do endereço (registro.br) real e ativo, CNPJ da página de outra empresa: provavelmente o mesmo grupo, não é golpe
+  chk('dono do domínio ativo e CNPJ da página de outra empresa: "provavelmente do mesmo grupo"', r2.conferencia.some((l) => /registrado em nome de.*provavelmente do mesmo grupo/.test(l)) && !r2.conferencia.some((l) => /^Atenção/.test(l)));
+  // dono do endereço inativo (talvez o CNPJ da página tenha sido copiado de outra empresa): avisa
+  ctx.__rdap['copiado.com.br'] = { dias: 3000, cnpj: '99888777000166', pf: false };
+  const r2b = await T.avaliarPagina('copiado.com.br', 'https:', loja({ cnpjValido: true, cnpj: '11222333000181', gateway: true }));
+  chk('dono do domínio inativo e CNPJ de outra empresa na página: avisa', r2b.conferencia.some((l) => /^Atenção: o CNPJ da página.*não é o da empresa dona do endereço/.test(l)));
   const r3 = await T.avaliarPagina('empresa.com.br', 'https:', loja({ gateway: true }));
   chk('sem CNPJ na página, usa o do registro.br sem acusar diferença', !r3.conferencia.some((l) => /não é o da empresa/.test(l)));
   const r4 = await T.avaliarPagina('shop-abroad.com', 'https:', loja({ gateway: true, brasil: true, cnpjValido: true, cnpj: '11222333000181' }));
