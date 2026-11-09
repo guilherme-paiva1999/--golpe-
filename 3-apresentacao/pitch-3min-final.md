@@ -20,7 +20,7 @@ Proteger quem compra é proteger quem cria.
 
 ## 1:25 · A solução (40 s)
 O **Isso é Golpe?** é um aplicativo e uma extensão do navegador, com uma regra simples:
-**todo site começa suspeito e só é confiável com 80% ou mais de confiança.**
+**todo site começa suspeito e só é confiável com 90% ou mais de confiança.**
 No celular, a pessoa toca em Compartilhar no link do WhatsApp e confere **antes de abrir**.
 No computador, a extensão age sozinha, **só onde tem dinheiro**: loja, Pix, pagamento.
 Ela consulta a **Receita Federal**: se a empresa existe, está ativa, **há quanto tempo** e se é **registrada para vender**.

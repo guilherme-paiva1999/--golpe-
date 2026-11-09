@@ -19,7 +19,7 @@ E foi pensando nessas pessoas que este projeto nasceu, aqui na Feira do Empreend
 ## Slide 3 · Ícone (quem somos e proposta de valor)
 Por isso que eu, Guilherme, e meus colegas Ian, Arthur, Aghata, João e Rudá criamos o Isso é Golpe?: uma proteção que confere sites e links antes de você pagar, para ajudar quem compra pela internet, principalmente idosos e famílias, a não cair em golpe e a confiar nas lojas honestas.
 
-A regra é simples: todo site começa suspeito e só é confiável se provar, com 80% ou mais de confiança.
+A regra é simples: todo site começa suspeito e só é confiável se provar, com 90% ou mais de confiança.
 
 ## Slide 4 · Menu de acessibilidade (o MVP funcionando)
 E isso já funciona. [Solte o vídeo de 40 segundos do MVP e fale por cima dele.]

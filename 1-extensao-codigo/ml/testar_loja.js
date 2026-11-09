@@ -22,7 +22,7 @@ const chk = (nome, cond, extra) => { n++; ok += !!cond; console.log((cond ? 'OK 
 (async () => {
   const av = (host, sinais, cnpj, dono) => { ctx.__rdap[host] = { dias: 4000, cnpj: dono || null, pf: false }; return T.avaliarPagina(host, 'https:', { ...sinais, cnpj: cnpj || '', cnpjs: cnpj ? [cnpj] : [], cnpjValido: !!cnpj }); };
   const A = await av('antiga.com.br', { ...tudo, pressao: true, desconto: true }, '11000000000191', '11000000000191');
-  chk('empresa de 29 anos + pressão + desconto + todas as provas: confiável (80% ou mais)', A.confianca >= 80 && A.nivel === 'ok', A.confianca + '%');
+  chk('empresa de 29 anos + pressão + desconto + todas as provas: confiável (90% ou mais)', A.confianca >= 90 && A.nivel === 'ok', A.confianca + '%');
   chk('a pressão não aparece como motivo contra para empresa de 29 anos', !A.motivos.some((m) => /mensagens de pressão|descontos/.test(m)));
   const B = await av('antiga2.com.br', { ...pouco, pressao: true }, '11000000000191', '11000000000191');
   chk('empresa de 29 anos com poucas provas e pressão: parte de 70% (entre 70 e 89)', B.confianca >= 70 && B.confianca < 90, B.confianca + '%');
@@ -44,7 +44,7 @@ const chk = (nome, cond, extra) => { n++; ok += !!cond; console.log((cond ? 'OK 
   const G2 = await av('golpe-copiou2.com.br', { ...tudo, pressao: true }, '11000000000191', '99888777000166');
   chk('CNPJ de empresa antiga na página e dono do endereço com CNPJ baixado: cai (copiado?)', G2.confianca < 45 && G2.contra.some((l) => /^Atenção: o CNPJ da página/.test(l)), G2.confianca + '%');
   const G3 = await av('grupo-grande.com.br', { ...tudo, pressao: true }, '22000000000100', '11000000000191');
-  chk('estilo C&A: CNPJ da página de uma empresa do grupo e dono do endereço ativo há 29 anos: confiável, com pressão', G3.confianca >= 80 && G3.nivel === 'ok' && G3.favor.some((l) => /faz parte do mesmo grupo/.test(l)), G3.confianca + '%');
+  chk('estilo C&A: CNPJ da página de uma empresa do grupo e dono do endereço ativo há 29 anos: confiável, com pressão', G3.confianca >= 90 && G3.nivel === 'ok' && G3.favor.some((l) => /faz parte do mesmo grupo/.test(l)), G3.confianca + '%');
   const H = await av('novissima.com.br', { ...tudo }, '44000000000100', '44000000000100');
   chk('empresa aberta há 4 meses: confiança baixa e perde pontos por ser nova', H.confianca < 85 && H.motivos.some((m) => /menos de 6 meses/.test(m)), H.confianca + '%');
   chk('mais anos de empresa, mais confiança (29 anos > 7 anos > 2 anos), com as mesmas provas', B.confianca > C0.confianca && C0.confianca > D0.confianca, B.confianca + ' > ' + C0.confianca + ' > ' + D0.confianca);

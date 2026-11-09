@@ -80,7 +80,7 @@ const conferir = (nome, cond, extra) => { console.log((cond ? 'OK   ' : 'FALHA '
   await pg.waitForFunction(() => /^\d+%$/.test(document.getElementById('confNum').textContent), null, { timeout: 30000 }).catch(() => {});
   conferir('porcentagem aparece na hora (< 1,5 s)', Date.now() - t0 < 1500, (Date.now() - t0) + ' ms');
   conferir('sem texto de "verificando/carregando"', !/verificando|carregando|conferindo/i.test(await pg.textContent('main')));
-  conferir('frase "com 90% ou mais"', (await pg.textContent('#resumo')).includes('com 80% ou mais'), await pg.textContent('#resumo'));
+  conferir('frase "com 90% ou mais"', (await pg.textContent('#resumo')).includes('com 90% ou mais'), await pg.textContent('#resumo'));
   await espera(6000);
   const conf = await pg.textContent('#confNum');
   conferir('mostra confiança em %', /^\d+%$/.test(conf), conf);

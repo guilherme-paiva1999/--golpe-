@@ -22,7 +22,7 @@ Quem mais sofre é o pequeno criador, que perde a venda porque o cliente não sa
 
 ## 1:30 · A solução (45 s)
 O **Isso é Golpe?** é um aplicativo de celular e uma extensão do navegador que trabalham juntos, com uma regra simples:
-**todo site começa suspeito e só é confiável se provar, com 80% ou mais de confiança.**
+**todo site começa suspeito e só é confiável se provar, com 90% ou mais de confiança.**
 No celular, a pessoa toca em Compartilhar no link do WhatsApp e confere **antes de abrir**.
 No computador, a extensão age sozinha, **só onde tem dinheiro**: loja, Pix, pagamento. Em site de notícia, ela fica quieta.
 E consulta a **Receita Federal**: se a empresa está ativa, **há quanto tempo existe**, porque empresa aberta ontem é alerta,

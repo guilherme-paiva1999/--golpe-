@@ -180,6 +180,11 @@ node ml/testar_gov_marca.js && node ml/testar_pontuacao.js
 A extensão e o aplicativo passaram a se chamar **Isso é golpe?** (antes: "É Golpe?"), igual aos slides e ao pitch:
 nome no Chrome, popup, boas-vindas, tela de bloqueio, aplicativo, aviso no Reclame Aqui e mensagens para a pessoa de confiança.
 
+## v3.18.1: limite de confiável volta a 90%
+
+Pedido do Guilherme: **confiável só com 90% ou mais** (rigor normal continua 60%). Era 80% da v3.16.4 à v3.18.0 e 90% da v3.3 à v3.16.
+Mudou em `limiteConfianca`, na tela de aviso e de bloqueio, no popup, na boas-vindas e nos testes. Os pitches em markdown voltaram a dizer 90%.
+
 ## v3.18.0: confirma se as empresas são do mesmo grupo e o Reclame Aqui entra na conta
 
 **1) Mesmo grupo, de verdade.** Quando o CNPJ da página é diferente do dono do endereço (registro.br), a v3.17.2 aceitava qualquer dono ativo

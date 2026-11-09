@@ -297,8 +297,8 @@
       : res.comercio
       ? (perigo ? 'Esta loja tem cara de golpe' : 'Esta loja ainda não provou ser confiável')
       : (perigo ? 'Este site pode ser um golpe' : 'Este site é suspeito');
-    // Porcentagem: só é confiável quem chega ao limite (80% ou mais no rigor padrão).
-    const limiteConf = res.limite || (config.rigor === 'normal' ? 60 : 80);
+    // Porcentagem: só é confiável quem chega ao limite (90% ou mais no rigor padrão).
+    const limiteConf = res.limite || (config.rigor === 'normal' ? 60 : 90);
     const confNum = res.confianca !== undefined ? res.confianca : (typeof res.pontos === 'number' ? Math.max(0, 100 - res.pontos) : null);
     const confTexto = res.confianca !== undefined
       ? 'Confiança: ' + res.confianca + '%. Para ser confiável, precisa ter ' + limiteConf + '% ou mais.'
@@ -410,7 +410,7 @@
     const selo = el('div', { class: 'selo' + (config.daltonico ? ' daltonico' : ''), role: 'status', 'aria-live': 'polite' },
       el('div', { class: 'cab' }, desenho('ok'),
         el('div', {}, el('div', { class: 't' }, 'Isso é golpe? está de olho: esta loja parece confiável'),
-          ...(confNum === null ? [] : [el('div', {}, confNum + '% de confiança (confiável a partir de ' + (res.limite || 80) + '%)')]))),
+          ...(confNum === null ? [] : [el('div', {}, confNum + '% de confiança (confiável a partir de ' + (res.limite || 90) + '%)')]))),
       blocoConf,
       raCard.el,
       el('button', { type: 'button', onclick: () => host.remove() }, 'Fechar'));
@@ -757,7 +757,7 @@
     if (msg.nivel === 'confiavel' || msg.nivel === 'selo') {          // v3.17: exemplo de loja confiável (aviso total ou selo)
       if (fecharAvisoAtual) fecharAvisoAtual();
       avisoSite = null;
-      const exemplo = { nivel: 'ok', comercio: true, dominio: location.hostname, confianca: 87, limite: 80,
+      const exemplo = { nivel: 'ok', comercio: true, dominio: location.hostname, confianca: 93, limite: 90,
         motivos: ['A favor: empresa ativa na Receita Federal (LOJA EXEMPLO), aberta há 15 anos: a confiança parte de 70%.'],
         conferencia: ['CNPJ 11.222.333/0001-81 (do dono do site no registro.br) conferido na Receita Federal: LOJA EXEMPLO, ativa, aberta há 15 anos.'],
         contra: ['A página usa mensagens de pressão (tempo curto, poucas unidades), mas a empresa é antiga e ativa, então isso pesa menos.', 'Não achamos política de trocas, privacidade ou entrega.'],

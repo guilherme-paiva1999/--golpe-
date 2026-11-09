@@ -76,7 +76,7 @@ async function mostrarStatus() {
       $('pill').textContent = confiavel ? '✓ Loja confiável' : (pag.nivel === 'perigo' ? 'X Provável golpe' : '! Atenção: confira antes de pagar');
       const d = document.createElement('div');
       d.style.fontSize = '15px';
-      d.textContent = 'Confiança: ' + pag.confianca + '% (confiável só com ' + (pag.limite || 80) + '% ou mais)';
+      d.textContent = 'Confiança: ' + pag.confianca + '% (confiável só com ' + (pag.limite || 90) + '% ou mais)';
       $('pill').appendChild(d);
       $('host').firstChild.textContent = res.host;
       for (const m of (res.motivos || [])) { const li = document.createElement('li'); li.textContent = m; $('motivos').appendChild(li); }
@@ -90,7 +90,7 @@ async function mostrarStatus() {
       const d = document.createElement('div');
       d.style.fontSize = '15px';
       const cfg = await lerConfig();
-      d.textContent = 'Confiança: ' + conf + '% (confiável só com ' + (cfg.rigor === 'normal' ? 60 : 80) + '% ou mais)';
+      d.textContent = 'Confiança: ' + conf + '% (confiável só com ' + (cfg.rigor === 'normal' ? 60 : 90) + '% ou mais)';
       $('pill').appendChild(d);
     }
     $('host').firstChild.textContent = res.host;
