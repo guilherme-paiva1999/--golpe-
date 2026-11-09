@@ -264,11 +264,23 @@ function atualizarListas(so) {
   return atualizando;
 }
 
+// v3.16.3: extensão carregada da pasta do projeto ("Carregar sem compactação") se recarrega sozinha quando a versão do manifest.json da
+// pasta muda (a cada envio novo). Quem instala pela Chrome Web Store não passa por aqui: o Chrome atualiza por conta própria.
+async function recarregarSeMudou() {
+  try {
+    const r = await fetch(chrome.runtime.getURL('manifest.json'), { cache: 'no-store' });
+    const v = (await r.json()).version;
+    if (v && v !== chrome.runtime.getManifest().version) chrome.runtime.reload();
+  } catch (e) { /* pasta indisponível: tenta de novo no próximo minuto */ }
+}
+
 async function garantirAlarme() {
   const a = await chrome.alarms.get('atualizar');
   if (!a) chrome.alarms.create('atualizar', { periodInMinutes: 1440, delayInMinutes: 1440 });
   const f = await chrome.alarms.get('feed');
   if (!f) chrome.alarms.create('feed', { periodInMinutes: 360, delayInMinutes: 360 });
+  // v3.16.3: só para extensão carregada de uma pasta (desenvolvimento): confere a versão da pasta a cada minuto
+  if (typeof chrome.runtime.getManifest === 'function' && !chrome.runtime.getManifest().update_url && !(await chrome.alarms.get('recarregar'))) chrome.alarms.create('recarregar', { periodInMinutes: 1, delayInMinutes: 1 });
 }
 chrome.runtime.onInstalled.addListener((d) => {
   garantirAlarme(); atualizarListas();
@@ -279,6 +291,7 @@ chrome.runtime.onStartup.addListener(garantirAlarme);
 chrome.alarms.onAlarm.addListener((a) => {
   if (a.name === 'atualizar') atualizarListas();
   if (a.name === 'feed') atualizarListas(['phishing', 'urlhaus']);   // golpes novos entram em horas, não em dias
+  if (a.name === 'recarregar') recarregarSeMudou();
 });
 garantirAlarme();
 
@@ -605,7 +618,7 @@ function estadoSelo(res) {
 const SINAIS_CHAVES = ['pagamento', 'pressao', 'desconto', 'formExterno', 'senha', 'semContato', 'brasil', 'espionagem',
   'venda', 'cnpjValido', 'cnpjInvalido', 'contato', 'emailMesmoDominio', 'politicas', 'gateway'];
 
-// Loja (venda ou pedido de pagamento): começa com 0 e precisa PROVAR confiança: só é confiável com 90% ou mais.
+// Loja (venda ou pedido de pagamento): começa com 0 e precisa PROVAR confiança: só é confiável com 80% ou mais.
 // Provas somam; sinais ruins tiram. O que faltou vira o aviso.
 // opcoes.pesoPressao (0 a 1): quanto as palavras de pressão e o desconto exagerado pesam. Vale 1 por padrão; para empresa com
 // CNPJ ativo há muito tempo diminui (v3.16). Devolve também o que somou (positivos) e o que tirou (negativos), sem limite de 0 a 100.
@@ -838,8 +851,8 @@ function aplicarConsumidor(reg, comercio, valor, motivos) {
   return aplicarDelta(d, comercio, valor);
 }
 
-// Só é confiável quem CHEGA ao limite: 90% ou mais (rigor alto, o padrão) ou 60% ou mais (rigor normal).
-function limiteConfianca(rigor) { return rigor === 'normal' ? 60 : 90; }
+// Só é confiável quem CHEGA ao limite: 80% ou mais (rigor alto, o padrão; era 90% da v3.3 à v3.16) ou 60% ou mais (rigor normal).
+function limiteConfianca(rigor) { return rigor === 'normal' ? 60 : 80; }
 
 // Situação do CNPJ de uma loja: 'ativo', 'irregular' (não existe, baixado, inapto...), 'nenhum' (não achamos CNPJ
 // na página nem no registro.br) ou 'sem-resposta' (a BrasilAPI não respondeu: nesse caso a regra não bloqueia).
@@ -1100,7 +1113,7 @@ function confiancaDaVerificacao(base, prova) {
     const [nome, delta] = NOTAS_RA[prova.ra.nota];
     somar(delta);
     item(delta > 0 ? 'favor' : delta < 0 ? 'contra' : 'neutro', 'Reclame Aqui', 'Você registrou: ' + nome + '.');
-  } else item('neutro', 'Reclame Aqui', 'Ainda não verificado. Use o botão "Verificar no Reclame Aqui".');
+  } else item('neutro', 'Reclame Aqui', 'Ainda não verificado. Use o botão "Confira você mesmo no Reclame Aqui".');
 
   if (prova.ml) {
     const pct = Math.round(prova.ml.p * 100);

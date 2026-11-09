@@ -1,7 +1,7 @@
 # É Golpe? · tudo o que foi produzido
 
 Extensão do Chrome que avisa sobre golpes, feita para o Hackathon "Negócios em Transformação" (UniSenac, Senac, Sebrae).
-Versão da extensão neste pacote: **3.16.2**.
+Versão da extensão neste pacote: **3.16.4**.
 
 ## O que tem em cada pasta
 
@@ -35,6 +35,13 @@ Veja [`CONTINUAR.md`](CONTINUAR.md): como baixar, instalar, rodar os testes e as
 3. **Carregar sem compactação** e escolha a pasta com o `manifest.json`.
 4. Na primeira vez abre a tela de boas-vindas: escolha a acessibilidade e, se quiser, a pessoa de confiança.
 5. Recarregue as abas abertas. O popup tem botões para testar os avisos.
+
+## Novidades da 3.16.4
+
+- **Confiável a partir de 80%** (antes 90%).
+- O Reclame Aqui aparece em um só visual verde com a logo: "De acordo com o Reclame Aqui: N de 5 escudos" e "→ Confira você mesmo no Reclame Aqui".
+  O botão antigo "Verificar no Reclame Aqui" saiu das telas de aviso e de bloqueio.
+- A extensão carregada da pasta se recarrega sozinha quando a versão muda.
 
 ## Novidades da 3.16.0
 

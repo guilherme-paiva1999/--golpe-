@@ -15,7 +15,7 @@ let motivos = [];
 let verificacao = null;
 let contaDaPagina = null;   // a porcentagem que causou o bloqueio (loja), quando houver
 
-const limiteDaConfig = () => (config.rigor === 'normal' ? 60 : 90);
+const limiteDaConfig = () => (config.rigor === 'normal' ? 60 : 80);
 
 const ICONES ={ contra: ['✗', 'Contra'], favor: ['✓', 'A favor'], neutro: ['•', 'Informação'] };
 
@@ -68,7 +68,7 @@ function mostrarMotivos() {
   $('caixaMotivos').hidden = !lista.length;
 }
 
-// Mostra a porcentagem. Só é confiável quem CHEGA ao limite (90% ou mais no rigor padrão).
+// Mostra a porcentagem. Só é confiável quem CHEGA ao limite (80% ou mais no rigor padrão).
 function mostrarConfianca(confianca, limite) {
   $('confNum').textContent = confianca + '%';
   $('confBarra').style.width = confianca + '%';
@@ -127,6 +127,7 @@ async function iniciar() {
   document.documentElement.classList.toggle('daltonico', !!config.daltonico);
   document.body.classList.toggle('daltonico', !!config.daltonico);
   // v3.16 (opcional, desligado por padrão): consulta a nota no Reclame Aqui em segundo plano e mostra aqui, com o link
+  if (url) $('ra').href = self.EGolpeRA.link(url.hostname);
   if (config.raAuto !== false && url) {
     chrome.runtime.sendMessage({ tipo: 'ra-nota' }).then((ra) => {
       if (!ra || !ra.ok || !/^https:\/\/www\.reclameaqui\.com\.br\/detector-site-confiavel\/[a-z0-9.-]+$/.test(ra.link || '')) return;
@@ -141,11 +142,11 @@ async function iniciar() {
           e.setAttribute('viewBox', '0 0 24 28'); e.setAttribute('width', '26'); e.setAttribute('height', '30'); e.setAttribute('aria-hidden', 'true'); e.style.marginRight = '4px';
           const c = document.createElementNS('http://www.w3.org/2000/svg', 'path');
           c.setAttribute('d', 'M12 1.5 21.5 5v8.2c0 6-4 10.3-9.5 13.3C6.5 23.5 2.5 19.2 2.5 13.2V5z');
-          c.setAttribute('fill', i < n ? '#2e9e4f' : 'none'); c.setAttribute('stroke', '#fff'); c.setAttribute('stroke-width', '1.8');
+          c.setAttribute('fill', i < n ? '#fff' : 'none'); c.setAttribute('stroke', '#fff'); c.setAttribute('stroke-width', '1.8'); if (i >= n) c.setAttribute('stroke-opacity', '.55');
           e.appendChild(c);
           if (i < n) {
             const v = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            v.setAttribute('d', 'M7.5 13.5l3.2 3.2 6-6.4'); v.setAttribute('fill', 'none'); v.setAttribute('stroke', '#fff');
+            v.setAttribute('d', 'M7.5 13.5l3.2 3.2 6-6.4'); v.setAttribute('fill', 'none'); v.setAttribute('stroke', '#056734');
             v.setAttribute('stroke-width', '2.4'); v.setAttribute('stroke-linecap', 'round'); v.setAttribute('stroke-linejoin', 'round');
             e.appendChild(v);
           }
@@ -153,7 +154,6 @@ async function iniciar() {
         }
         $('raTexto').textContent = n + ' de 5 escudos (' + ra.rotulo + ')';
       }
-      $('raLink').href = ra.link;
       $('caixaRA').hidden = false;
     }).catch(() => {});
   }
@@ -209,15 +209,7 @@ $('voltar').addEventListener('click', async () => {
   } catch (e) { window.close(); }
 });
 
-// v3.14: abre direto a nota deste site no Detector do Reclame Aqui.
-$('ra').addEventListener('click', () => {
-  const dominio = url ? url.hostname.replace(/^www\./, '') : '';
-  if (dominio) {
-    $('raSub').hidden = false;
-    $('raSub').textContent = 'Abrindo a nota de ' + dominio + ' no Reclame Aqui. Se for um site novo para eles, confirme que você não é um robô.';
-  }
-  chrome.tabs.create({ url: self.EGolpeRA.link(dominio) });
-});
+// v3.16.3: o botão verde é o link direto para a nota do site no Reclame Aqui (definido quando a tela abre)
 
 $('cadastrar').addEventListener('click', (e) => { e.preventDefault(); chrome.runtime.openOptionsPage(); });
 

@@ -87,11 +87,12 @@
     .acoes{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
     .tela button{margin:0;font:inherit;cursor:pointer;border-radius:8px}
     .tela button:focus-visible,.tela summary:focus-visible{outline:3px solid #fff;outline-offset:3px;box-shadow:none}
-    .tela button.b{display:inline-flex;align-items:center;gap:10px;padding:12px 22px;font-weight:bold;border:2px solid #fff}
+    .tela button.b,.tela a.b{display:inline-flex;align-items:center;gap:10px;padding:12px 22px;font-weight:bold;border:2px solid #fff;text-decoration:none;font-size:1em;cursor:pointer;border-radius:6px}
     .tela button.seguro{background:#fff;color:var(--fundo)}
     .tela button.pessoa{background:transparent;color:#fff}
     .tela button.pessoa svg{width:20px;height:20px;flex:none}
-    .tela button.ra{background:#056734;color:#fff;border-color:#056734}
+    .tela button.ra,.tela a.ra{background:#056734;color:#fff;border-color:#056734}
+    .tela .notara{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#056734;color:#fff;border:2px solid #056734;border-radius:6px;padding:12px 22px;font-weight:bold;margin-top:16px}
     .logo-ra{background:#fff;border-radius:4px;padding:3px 6px;display:inline-flex}
     .logo-ra img{height:15px;width:auto;display:block}
     .tela details{margin-top:28px}
@@ -99,7 +100,7 @@
     .painel{margin-top:12px;font-size:.9em}
     .tela button.leve{background:none;color:#fff;border:1px solid #fff;padding:6px 12px;font-size:.95em;margin-top:12px}
     .tela button.link{display:block;margin-top:24px;background:none;border:0;color:#fff;font-size:.8em;opacity:.7;text-decoration:underline;padding:4px 0}
-    @media (max-width:480px){.tela{font-size:17px}.tela .cab{gap:14px}.tela .ico{width:48px;height:48px}.h1{font-size:1.4em}.tela button.b{width:100%;justify-content:center;padding:12px 14px}.conf-txt{flex-basis:100%}}`;
+    @media (max-width:480px){.tela{font-size:17px}.tela .cab{gap:14px}.tela .ico{width:48px;height:48px}.h1{font-size:1.4em}.tela button.b,.tela a.b{width:100%;justify-content:center;padding:12px 14px;box-sizing:border-box}.conf-txt{flex-basis:100%}}`;
 
   // Avisos ficam em Shadow DOM fechado: o CSS e o JS do site não os alcançam.
   function criarCaixa(estilo) {
@@ -194,8 +195,8 @@
     let svg = '';
     for (let i = 0; i < 5; i++) {
       svg += '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 28" width="26" height="30" aria-hidden="true" style="margin-right:4px">' +
-        '<path d="M12 1.5 21.5 5v8.2c0 6-4 10.3-9.5 13.3C6.5 23.500 2.500 19.200 2.500 13.200V5z" fill="' + (i < n ? '#2e9e4f' : 'none') + '" stroke="#fff" stroke-width="1.8"/>' +
-        (i < n ? '<path d="M7.500 13.500l3.200 3.200 6-6.400" fill="none" stroke="#fff" stroke-width="2.400" stroke-linecap="round" stroke-linejoin="round"/>' : '') + '</svg>';
+        '<path d="M12 1.5 21.5 5v8.2c0 6-4 10.3-9.5 13.3C6.5 23.500 2.500 19.200 2.500 13.200V5z" fill="' + (i < n ? '#fff' : 'none') + '" stroke="#fff" stroke-width="1.8" stroke-opacity="' + (i < n ? '1' : '.55') + '"/>' +
+        (i < n ? '<path d="M7.500 13.500l3.200 3.200 6-6.400" fill="none" stroke="#056734" stroke-width="2.400" stroke-linecap="round" stroke-linejoin="round"/>' : '') + '</svg>';
     }
     const span = document.createElement('span');
     span.setAttribute('role', 'img');
@@ -220,8 +221,8 @@
     const titulo = res.comercio
       ? (perigo ? 'Esta loja tem cara de golpe' : 'Esta loja ainda não provou ser confiável')
       : (perigo ? 'Este site pode ser um golpe' : 'Este site é suspeito');
-    // Porcentagem: só é confiável quem chega ao limite (90% ou mais no rigor padrão).
-    const limiteConf = res.limite || (config.rigor === 'normal' ? 60 : 90);
+    // Porcentagem: só é confiável quem chega ao limite (80% ou mais no rigor padrão).
+    const limiteConf = res.limite || (config.rigor === 'normal' ? 60 : 80);
     const confNum = res.confianca !== undefined ? res.confianca : (typeof res.pontos === 'number' ? Math.max(0, 100 - res.pontos) : null);
     const confTexto = res.confianca !== undefined
       ? 'Confiança: ' + res.confianca + '%. Para ser confiável, precisa ter ' + limiteConf + '% ou mais.'
@@ -257,18 +258,14 @@
 
     const dominioRA = (res.dominio || location.hostname).replace(/^www\./, '');
     // Botão grande: uma fonte externa, além do nosso aviso. Verde da marca, com a logo numa etiqueta branca.
-    const logo = el('img', { src: chrome.runtime.getURL('icons/reclameaqui.png'), alt: '' });
-    const chip = el('span', { class: 'logo-ra', 'aria-hidden': 'true' }, logo);
-    logo.addEventListener('error', () => chip.remove());          // se a página bloquear a imagem, fica só o texto
-    const textoRA = el('span', {}, 'Verificar no Reclame Aqui');
-    const ra = el('button', {
-      type: 'button', class: 'b ra',
-      onclick: () => {
-        // v3.14: abre direto a nota deste site no Detector do Reclame Aqui.
-        window.open(self.EGolpeRA.link(dominioRA), '_blank', 'noopener');
-        textoRA.textContent = 'Abrindo a nota no Reclame Aqui';
-      }
-    }, chip, textoRA);
+    // v3.16.3: um só botão verde do Reclame Aqui: "Confira você mesmo" (link direto para a nota do site)
+    const chipRA = () => {
+      const logo = el('img', { src: chrome.runtime.getURL('icons/reclameaqui.png'), alt: '' });
+      const chip = el('span', { class: 'logo-ra', 'aria-hidden': 'true' }, logo);
+      logo.addEventListener('error', () => chip.remove());        // se a página bloquear a imagem, fica só o texto
+      return chip;
+    };
+    const ra = el('a', { href: self.EGolpeRA.link(dominioRA), target: '_blank', rel: 'noopener', class: 'b ra' }, chipRA(), el('span', {}, '→ Confira você mesmo no Reclame Aqui'));
     const acoes = el('div', { class: 'acoes' }, voltar);
     const P = self.EGolpePessoa;
     if (P && P.valida(pessoa)) {
@@ -324,13 +321,10 @@
         if (!ra || !ra.ok || !/^https:\/\/www\.reclameaqui\.com\.br\/detector-site-confiavel\/[a-z0-9.-]+$/.test(ra.link || '')) return;
         const semNota = ra.bloqueado ? 'O Reclame Aqui não deixou consultar a nota automaticamente.'
           : ra.nota === undefined ? 'O Reclame Aqui ainda não analisou este site.' : '';
-        const confira = el('a', { href: ra.link, target: '_blank', rel: 'noopener', style: 'color:inherit;font-weight:bold' }, 'Confira você mesmo no Reclame Aqui');
-        const caixa = el('div', { class: 'passo' },
-          ...(semNota ? [el('b', {}, semNota)]
-            : [el('b', {}, 'De acordo com o Reclame Aqui: '), escudos(ra.nota), el('b', {}, ' ' + ra.nota + ' de 5 escudos (' + ra.rotulo + ')')]),
-          el('div', { style: 'margin-top:6px' }, '→ ', confira));
-        const lista = tela.querySelector('.lista');
-        if (lista) lista.after(caixa); else tela.querySelector('.miolo').append(caixa);
+        const caixa = el('div', { class: 'notara' }, chipRA(),
+          ...(semNota ? [el('span', {}, semNota)]
+            : [el('span', {}, 'De acordo com o Reclame Aqui:'), escudos(ra.nota), el('span', {}, ra.nota + ' de 5 escudos (' + ra.rotulo + ')')]));
+        acoes.before(caixa);
       });
     }
   }

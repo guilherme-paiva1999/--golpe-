@@ -38,8 +38,9 @@
   .fora svg{flex:none;width:44px;height:44px}
   #motivos{margin:24px 0 0;padding-left:24px}
   #motivos li{margin:2px 0}
-  #raLink{color:#fff}
-  #caixaRA{margin:16px 0 0;padding:10px 14px;border:2px solid currentColor;border-radius:6px}
+  .notara{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#056734;color:var(--branco);border:2px solid #056734;border-radius:6px;padding:12px 22px;font-weight:bold;margin:16px 0 0}
+  .notara[hidden]{display:none}
+  a.b{text-decoration:none;color:inherit;border-radius:6px}
   #caixaConf{margin:16px 0 0;padding:10px 14px;border:2px solid currentColor;border-radius:6px}
   .conf-titulo{margin:0 0 4px;font-weight:bold}
   #confLinhas{margin:0;padding-left:22px}
@@ -94,7 +95,7 @@
   <p class="texto" id="texto">Ele tem sinais fortes de golpe. Se você chegou aqui por uma mensagem, e-mail ou anúncio, apague-os e acesse o serviço digitando o endereço oficial.</p>
 
   <section id="caixaMotivos"><ul id="motivos"></ul></section>
-  <section id="caixaRA" hidden><p class="conf-titulo"><span id="raNota"></span> <span id="raEscudos" role="img" style="display:inline-flex;vertical-align:middle"></span> <span id="raTexto"></span></p><p class="nota">→ <a id="raLink" href="#" target="_blank" rel="noopener"><b>Confira você mesmo no Reclame Aqui</b></a></p></section>
+  <section id="caixaRA" class="notara" hidden><span class="logo-ra" aria-hidden="true"><img src="icons/reclameaqui.png" alt=""></span><span id="raNota"></span><span id="raEscudos" role="img" style="display:inline-flex"></span><span id="raTexto"></span></section>
   <section id="caixaConf" hidden><p class="conf-titulo">Já conferimos por você:</p><ul id="confLinhas"></ul></section>
 
   <div class="botoes">
@@ -104,9 +105,8 @@
       <span id="perguntarTxt">Perguntar se é golpe</span>
     </button>
     <button id="oficial" class="b" type="button" hidden></button>
-    <button id="ra" class="b" type="button"><span class="logo-ra" aria-hidden="true"><img src="icons/reclameaqui.png" alt=""></span>Verificar no Reclame Aqui</button>
+    <a id="ra" class="b" href="#" target="_blank" rel="noopener"><span class="logo-ra" aria-hidden="true"><img src="icons/reclameaqui.png" alt=""></span>→ Confira você mesmo no Reclame Aqui</a>
   </div>
-  <p class="nota" id="raSub" hidden></p>
 
   <details id="detalhes">
     <summary>Ver a verificação completa</summary>

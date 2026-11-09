@@ -180,6 +180,18 @@ node ml/testar_gov_marca.js && node ml/testar_pontuacao.js
 A extensão e o aplicativo passaram a se chamar **Isso é golpe?** (antes: "É Golpe?"), igual aos slides e ao pitch:
 nome no Chrome, popup, boas-vindas, tela de bloqueio, aplicativo, aviso no Reclame Aqui e mensagens para a pessoa de confiança.
 
+## v3.16.4: limite de 80%, layout verde do Reclame Aqui e recarga automática
+
+- **Confiável a partir de 80%** (antes 90%, desde a v3.3). Rigor normal continua 60%. Mudou em `limiteConfianca` (background.js), na tela de
+  bloqueio, no aviso, no popup e nos testes. Os materiais de apresentação ainda falam em 90% (ver `3-apresentacao/`).
+- **Reclame Aqui em um só visual verde, com a logo:** "De acordo com o Reclame Aqui: [escudos] N de 5 escudos (rótulo)" e, embaixo, o
+  botão verde "→ Confira você mesmo no Reclame Aqui". O antigo botão "Verificar no Reclame Aqui" saiu da tela de aviso e de bloqueio
+  (eram dois botões para a mesma coisa). Sem a nota (opção desligada, site novo ou desafio do Reclame Aqui), fica só o botão verde.
+- **Recarga automática (só extensão carregada de uma pasta):** a cada minuto a extensão lê o `manifest.json` da própria pasta e, se a
+  versão mudou, chama `chrome.runtime.reload()`. Quem instala pela Chrome Web Store não passa por isso. Testado: o alarme dispara e a
+  extensão se recarrega; no Chrome de teste (carregado por automação) a extensão não volta depois do reload, o que não acontece em
+  "Carregar sem compactação". Por isso toda mudança precisa subir o número da versão.
+
 ## v3.16.2: escudos do Reclame Aqui, ligados por padrão, e um erro no ícone
 
 - **Escudos do Reclame Aqui no aviso e na tela de bloqueio**, ligados por padrão (dá para desligar no popup): "De acordo com o Reclame Aqui:
