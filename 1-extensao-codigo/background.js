@@ -607,28 +607,68 @@ const SINAIS_CHAVES = ['pagamento', 'pressao', 'desconto', 'formExterno', 'senha
 
 // Loja (venda ou pedido de pagamento): começa com 0 e precisa PROVAR confiança: só é confiável com 90% ou mais.
 // Provas somam; sinais ruins tiram. O que faltou vira o aviso.
-function pontuarConfianca(sinais, dias, protocolo, pontosDoEndereco, gratuito) {
+// opcoes.pesoPressao (0 a 1): quanto as palavras de pressão e o desconto exagerado pesam. Vale 1 por padrão; para empresa com
+// CNPJ ativo há muito tempo diminui (v3.16). Devolve também o que somou (positivos) e o que tirou (negativos), sem limite de 0 a 100.
+function pontuarConfianca(sinais, dias, protocolo, pontosDoEndereco, gratuito, opcoes = {}) {
   const alertas = [], faltou = [];
-  let c = 0;
-  if (gratuito) { c -= 15; faltou.push('A loja está em hospedagem gratuita, onde qualquer pessoa cria páginas. A idade do serviço não prova a idade da loja.'); }
+  const pesoPressao = opcoes.pesoPressao === undefined ? 1 : opcoes.pesoPressao;
+  let positivos = 0, negativos = 0;
+  const add = (d) => { if (d >= 0) positivos += d; else negativos -= d; };
+  if (gratuito) { add(-15); faltou.push('A loja está em hospedagem gratuita, onde qualquer pessoa cria páginas. A idade do serviço não prova a idade da loja.'); }
   else if (dias === null || dias === undefined) faltou.push('Não conseguimos provar há quanto tempo esta loja existe.');
-  else if (dias >= 1095) c += 35;
-  else if (dias >= 365) c += 25;
-  else if (dias >= 180) { c += 10; faltou.push('Esta loja tem menos de 1 ano de vida.'); }
+  else if (dias >= 1095) add(35);
+  else if (dias >= 365) add(25);
+  else if (dias >= 180) { add(10); faltou.push('Esta loja tem menos de 1 ano de vida.'); }
   else if (dias >= 90) faltou.push('Esta loja tem menos de 6 meses de vida.');
-  else if (dias >= 30) { c -= 25; faltou.push('Esta loja tem só ' + Math.round(dias) + ' dias de vida.'); }
-  else { c -= 40; faltou.push('Esta loja foi criada há apenas ' + Math.max(1, Math.round(dias)) + ' dias.'); }
-  if (protocolo === 'https:') c += 10; else faltou.push('O site não usa conexão segura (sem cadeado).');
-  if (sinais.cnpjValido) c += 10; else faltou.push(sinais.cnpjInvalido ? 'O CNPJ que aparece na página é inválido.' : 'Não achamos CNPJ na página.');
-  if (sinais.contato) c += 10; else faltou.push('Não achamos contato claro (e-mail, telefone ou endereço).');
-  if (sinais.emailMesmoDominio) c += 5;
-  if (sinais.politicas) c += 15; else faltou.push('Não achamos política de trocas, privacidade ou entrega.');
-  if (sinais.gateway) c += 10;
-  if (sinais.formExterno) { c -= 20; alertas.push('O formulário envia os seus dados para outro site.'); }
-  if (sinais.pressao) { c -= 15; alertas.push('A página usa mensagens de pressão (tempo curto, poucas unidades).'); }
-  if (sinais.desconto) { c -= 15; alertas.push('A página promete descontos exagerados.'); }
-  if (pontosDoEndereco > 0) c -= Math.min(pontosDoEndereco, 40);
-  return { confianca: Math.max(0, Math.min(100, c)), motivos: [...alertas, ...faltou] };
+  else if (dias >= 30) { add(-25); faltou.push('Esta loja tem só ' + Math.round(dias) + ' dias de vida.'); }
+  else { add(-40); faltou.push('Esta loja foi criada há apenas ' + Math.max(1, Math.round(dias)) + ' dias.'); }
+  if (protocolo === 'https:') add(10); else faltou.push('O site não usa conexão segura (sem cadeado).');
+  if (sinais.cnpjValido) add(10); else faltou.push(sinais.cnpjInvalido ? 'O CNPJ que aparece na página é inválido.' : 'Não achamos CNPJ na página.');
+  if (sinais.contato) add(10); else faltou.push('Não achamos contato claro (e-mail, telefone ou endereço).');
+  if (sinais.emailMesmoDominio) add(5);
+  if (sinais.politicas) add(15); else faltou.push('Não achamos política de trocas, privacidade ou entrega.');
+  if (sinais.gateway) add(10);
+  if (sinais.formExterno) { add(-20); alertas.push('O formulário envia os seus dados para outro site.'); }
+  if (sinais.pressao && pesoPressao > 0) {
+    add(-15 * pesoPressao);
+    alertas.push(pesoPressao < 1 ? 'A página usa mensagens de pressão (tempo curto, poucas unidades), mas a empresa é antiga e ativa, então isso pesa menos.'
+      : 'A página usa mensagens de pressão (tempo curto, poucas unidades).');
+  }
+  if (sinais.desconto && pesoPressao > 0) {
+    add(-15 * pesoPressao);
+    alertas.push(pesoPressao < 1 ? 'A página promete descontos grandes, mas a empresa é antiga e ativa, então isso pesa menos.' : 'A página promete descontos exagerados.');
+  }
+  if (pontosDoEndereco > 0) add(-Math.min(pontosDoEndereco, 40));
+  const bruto = positivos - negativos;
+  return { confianca: Math.max(0, Math.min(100, bruto)), bruto, positivos, negativos, motivos: [...alertas, ...faltou] };
+}
+
+// v3.16: a confiança de uma LOJA parte da empresa (CNPJ na Receita Federal).
+//  - CNPJ ativo: parte de 50% e sobe aos poucos com os anos de empresa, até 70% com 10 anos ou mais. As provas da página
+//    (cadeado, contato, políticas, idade do site...) somam por cima, com peso menor.
+//  - Sem CNPJ ativo (não existe, baixado, inapto ou nenhum): já não é confiável. Parte de 50% e só cai (pressão, endereço suspeito...).
+//  - Palavras de pressão e descontos grandes pesam 100% quando a empresa não tem CNPJ ativo ou é nova (até 5 anos) e vão perdendo o
+//    peso até 10 anos; de 10 anos em diante deixam de pesar ("promoção com prazo" é normal em empresa antiga).
+function pesoDaPressao(empresa) {
+  if (!empresa || !empresa.existe || !empresa.ativa) return 1;
+  const anos = (diasDeEmpresa(empresa) || 0) / 365;
+  return Math.max(0, Math.min(1, (10 - anos) / 5));
+}
+function confiancaDaLoja(c, empresa, motivos) {
+  const ativa = !!(empresa && empresa.existe && empresa.ativa);
+  if (!ativa) {
+    if (empresa) motivos.push('Contra: sem CNPJ ativo na Receita Federal a loja não é confiável: a confiança parte de 50% e só cai.');
+    return Math.max(0, Math.min(50, 50 - c.negativos));
+  }
+  const dias = diasDeEmpresa(empresa);
+  const anos = (dias || 0) / 365;
+  const base = Math.round(50 + 2 * Math.min(anos, 10));
+  let conf = base + 0.3 * c.positivos - c.negativos;
+  motivos.push('A favor: empresa ativa na Receita Federal (' + (empresa.fantasia || empresa.razao || 'sem nome') +
+    (dias !== null ? ', ' + textoIdadeEmpresa(dias) : '') + '): a confiança parte de ' + base + '%.');
+  if (dias !== null && dias >= 0 && dias < 180) { conf -= 15; motivos.push('A empresa foi aberta há menos de 6 meses.'); }
+  else if (dias !== null && dias < 365) { conf -= 5; motivos.push('A empresa tem menos de 1 ano.'); }
+  return Math.max(0, Math.min(100, conf));
 }
 
 const OFICIAIS_PAGINA = {
@@ -797,6 +837,57 @@ function situacaoCnpj(cnpjUsado, empresa, rdap) {
   return empresa.existe && empresa.ativa ? 'ativo' : 'irregular';
 }
 
+// ---------- v3.16: nota do Reclame Aqui em segundo plano (opcional) ----------
+// O Detector de Site Confiável publica o veredito de cada site em dados estruturados (schema.org, JSON-LD) na própria página
+// pública: https://www.reclameaqui.com.br/detector-site-confiavel/<site>. A extensão faz UMA consulta comum (sem cookies) e mostra
+// a nota como "segundo o Reclame Aqui", com o link para a pessoa conferir. Não muda a porcentagem. Se o Reclame Aqui ainda não
+// analisou o site, a página dele pede confirmação "não sou um robô": nesse caso NÃO tentamos contornar, só mostramos o link.
+const RA_DETECTOR = 'https://www.reclameaqui.com.br/detector-site-confiavel/';
+const RA_ROTULOS = { 5: 'Confiável', 4: 'Provavelmente confiável', 3: 'Atenção', 2: 'Pouco confiável', 1: 'Não confiável', 0: 'Não confiável' };
+// Lê o veredito (nota de 0 a 5) do HTML do Detector. Devolve null se a página não traz o veredito desse site.
+function lerVereditoRA(html, host) {
+  const blocos = String(html || '').matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
+  for (const b of blocos) {
+    let j;
+    try { j = JSON.parse(b[1]); } catch (e) { continue; }
+    for (const n of Array.isArray(j['@graph']) ? j['@graph'] : [j]) {
+      if (!n || n['@type'] !== 'Review' || !n.author || !/reclame\s*aqui/i.test(String(n.author.name || ''))) continue;
+      const alvo = n.itemReviewed && String(n.itemReviewed.url || '');
+      let ah = '';
+      try { ah = new URL(alvo).hostname.toLowerCase().replace(/^www\./, ''); } catch (e) { continue; }
+      if (ah !== host) continue;                                       // o veredito tem que ser deste site, não de outro
+      const v = n.reviewRating && Number(n.reviewRating.ratingValue);
+      if (!Number.isFinite(v) || v < 0 || v > 5) continue;
+      return { nota: Math.round(v), rotulo: RA_ROTULOS[Math.round(v)], data: String(n.datePublished || '').slice(0, 10) };
+    }
+  }
+  return null;
+}
+async function consultarReclameAqui(host) {
+  if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(host)) return { ok: false };
+  const link = RA_DETECTOR + host;
+  const { raConsultas = {} } = await chrome.storage.local.get('raConsultas');
+  const c = raConsultas[host];
+  if (c && Date.now() - c.t < (c.res.nota === undefined ? 3600000 : 86400000)) return { ok: true, link, ...c.res };
+  if (c === undefined && (await chrome.storage.session.get('raBloqueado')).raBloqueado > Date.now()) return { ok: true, link, bloqueado: true };   // pausa depois de um desafio
+  let res = {};
+  try {
+    const r = await fetch(link, { signal: AbortSignal.timeout(10000), credentials: 'omit', headers: { Accept: 'text/html' } });
+    // O Reclame Aqui usa um desafio anti-robô (Cloudflare). Se ele aparecer, NÃO tentamos contornar: só mostramos o link.
+    if (r.status === 403 || r.status === 429 || r.headers.get('cf-mitigated')) {
+      await chrome.storage.session.set({ raBloqueado: Date.now() + 30 * 60000 });          // não insiste por 30 minutos
+      return { ok: true, link, bloqueado: true };
+    }
+    if (!r.ok) return { ok: true, link };
+    const v = lerVereditoRA(await r.text(), host);
+    res = v || {};
+  } catch (e) { return { ok: true, link }; }
+  if (Object.keys(raConsultas).length > 300) for (const k of Object.keys(raConsultas)) delete raConsultas[k];
+  raConsultas[host] = { t: Date.now(), res };
+  await chrome.storage.local.set({ raConsultas });
+  return { ok: true, link, ...res };
+}
+
 // ---------- v3.15: conferência automática do CNPJ e do site oficial ----------
 // O aviso mandava a pessoa "abrir o site oficial digitando o endereço e conferir o CNPJ da loja". Agora a extensão faz isso:
 // consulta o CNPJ na Receita Federal (BrasilAPI), compara com o dono do domínio no registro.br e, quando a página imita
@@ -871,15 +962,24 @@ async function avaliarPagina(host, protocolo, sinais, medidas = null) {
 
   if (comercio) {
     const limite = limiteConfianca(cfg.rigor);
-    const c = pontuarConfianca(sinais, dias, protocolo, r.pontos, gratuito);
-    const motivos = [...r.motivos, ...c.motivos];
-    c.confianca = aplicarRA(await notaRA(r.dominio), true, c.confianca, motivos);
-    c.confianca = aplicarEmpresa(empresa, true, c.confianca, motivos, !!sinais.venda);
     // v3.15: o CNPJ da página tem que ser da empresa dona do domínio (registro.br). Se for de outra, desconfia.
     const conf = conferenciaCnpj({ cnpjPagina, cnpjRegistro: (rdap && rdap.cnpj) || '',
       empresa, doRegistro: !!(empresa && empresa.doRegistro) });
+    // CNPJ de outra empresa na página (talvez copiado): os anos dessa empresa não valem para esta loja
+    const empresaDaLoja = conf.diverge && empresa ? { ...empresa, abertura: '' } : empresa;
+    const c = pontuarConfianca(sinais, dias, protocolo, r.pontos, gratuito, { pesoPressao: pesoDaPressao(empresaDaLoja) });
+    const motivos = [...r.motivos, ...c.motivos];
+    // v3.16: a empresa (CNPJ) é o ponto de partida. Se a Receita não respondeu, vale a conta sem a empresa, sem punir a loja.
+    if (!(cnpjUsado && !empresa)) c.confianca = confiancaDaLoja(c, empresaDaLoja, motivos);
+    c.confianca = aplicarRA(await notaRA(r.dominio), true, c.confianca, motivos);
+    // atividade de comércio: se a página vende e a empresa não tem atividade de comércio, tira 10 (como antes)
+    if (empresa && empresa.existe && empresa.ativa && sinais.venda && Array.isArray(empresa.cnaes) && empresa.cnaes.length && !empresa.cnaes.some(cnaeVende)) {
+      c.confianca = Math.max(0, c.confianca - 10);
+      motivos.push('A empresa não tem atividade de comércio registrada na Receita' + (empresa.atividade ? ' (atividade principal: ' + empresa.atividade + ')' : '') + ', mas a página vende produtos.');
+    }
     if (conf.diverge) { c.confianca = Math.max(0, c.confianca - 15); motivos.push('O CNPJ mostrado na página não é o da empresa dona do endereço do site.'); }
     c.confianca = aplicarConsumidor(consumidor, true, c.confianca, motivos);
+    c.confianca = Math.round(c.confianca);
     let nivel = c.confianca >= limite ? 'ok' : (c.confianca < 30 ? 'perigo' : 'atencao');
     if (falsa) nivel = 'perigo';                       // marca falsa é decisiva, mesmo em site antigo
     if (sinais.espionagem) { nivel = 'perigo'; motivos.unshift(MOTIVO_ESPIAO); }   // v3.10
@@ -1203,20 +1303,18 @@ async function tratar(msg, sender) {
     case 'falar':
       falar(String(msg.texto || ''));
       return { ok: true };
-    case 'abrir-ra': {
-      // v3.15 (opcional, desligado por padrão): abre a nota da loja no Reclame Aqui, em outra aba, quando um aviso aparece.
-      // Só vale para o site da própria aba que pediu, uma vez por site e por dia. A pessoa continua sendo quem vê e quem confirma ("não sou um robô").
+    case 'ra-nota': {
+      // v3.16 (opcional): consulta em segundo plano o veredito público do Reclame Aqui para o site da aba que pediu
+      // (a própria página da loja ou a tela de bloqueio dela) e devolve a nota. Só se a pessoa ligou a opção no popup.
       const cfgRA = await lerConfig();
       if (!cfgRA.raAuto || !sender.tab || typeof sender.tab.url !== 'string') return { ok: false };
       let h;
-      try { h = new URL(sender.tab.url).hostname.toLowerCase().replace(/^www\./, ''); } catch (e) { return { ok: false }; }
-      if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(h)) return { ok: false };
-      const chave = 'raAuto:' + h;
-      const ja = await chrome.storage.session.get(chave);
-      if (ja[chave]) return { ok: false };
-      await chrome.storage.session.set({ [chave]: Date.now() });
-      await chrome.tabs.create({ url: 'https://www.reclameaqui.com.br/detector-site-confiavel/' + h, active: false, openerTabId: sender.tab.id });
-      return { ok: true };
+      try {
+        const u = new URL(sender.tab.url);
+        const alvo = u.href.startsWith(chrome.runtime.getURL('bloqueado.html')) ? new URL(u.searchParams.get('u')) : u;
+        h = alvo.hostname.toLowerCase().replace(/^www\./, '');
+      } catch (e) { return { ok: false }; }
+      return await consultarReclameAqui(h);
     }
     case 'parar-fala':
       if (chrome.tts) chrome.tts.stop();

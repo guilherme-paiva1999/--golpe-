@@ -1,7 +1,7 @@
 # É Golpe? · tudo o que foi produzido
 
 Extensão do Chrome que avisa sobre golpes, feita para o Hackathon "Negócios em Transformação" (UniSenac, Senac, Sebrae).
-Versão da extensão neste pacote: **3.15.0**.
+Versão da extensão neste pacote: **3.16.0**.
 
 ## O que tem em cada pasta
 
@@ -35,6 +35,13 @@ Veja [`CONTINUAR.md`](CONTINUAR.md): como baixar, instalar, rodar os testes e as
 3. **Carregar sem compactação** e escolha a pasta com o `manifest.json`.
 4. Na primeira vez abre a tela de boas-vindas: escolha a acessibilidade e, se quiser, a pessoa de confiança.
 5. Recarregue as abas abertas. O popup tem botões para testar os avisos.
+
+## Novidades da 3.16.0
+
+- **Nova conta de confiança da loja:** parte da empresa. CNPJ ativo há 10 anos ou mais parte de 70% e as palavras de pressão deixam de
+  pesar; sem CNPJ ativo a loja não é confiável (parte de 50% e só cai); o peso da pressão diminui de forma gradual entre 5 e 10 anos.
+- **Nota do Reclame Aqui no aviso** (opção desligada): "Segundo o Reclame Aqui: ...", com o link para a pessoa conferir.
+- O botão **"Ouvir o aviso"** só aparece para quem marcou a leitura em voz alta no início.
 
 ## Novidades da 3.15.0
 

@@ -137,6 +137,7 @@ async function mostrarResultado(res) {
     $('avisoAbrir').hidden = false;
   }
   const cfg = await lerConfig();
+  $('ouvir').hidden = !cfg.vozAutomatica;      // v3.16: "Ouvir o resultado" só para quem marcou a voz na boas-vindas
   if (cfg.vozAutomatica) falarResultado();
 }
 

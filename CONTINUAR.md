@@ -25,6 +25,8 @@ node ml/testar_gov_marca.js
 node ml/testar_pontuacao.js
 node ml/testar_cnpj.js
 node ml/testar_alfabetos.js
+node ml/testar_loja.js
+node ml/testar_ra_nota.js
 node ml/testar_modelo_pagina.js
 node ml/testar_modelo_pagina_extensao.js
 ```
@@ -62,6 +64,9 @@ As capturas de tela ficam em `teste-real/capturas/` (não vão para o GitHub).
   **modelo da página** (regressão logística com texto + características; AUC 0,92, ~52% dos golpes com 2% de falsos alertas).
   A **rede neural foi testada e não ganhou** do clássico com estes dados (`8-treino-ml/README.md`). Sem página para ler,
   vale o modelo do nome do site (~10% dos golpes com ~1% de falsos alertas).
+- **Confiança da loja parte da empresa** (3.16.0, pedido do Guilherme): CNPJ ativo há 10 anos ou mais = 70% e pressão não pesa; sem CNPJ ativo
+  = 50% e só cai; pressão pesa 100% até 5 anos e perde o peso até 10 anos. Não desfazer sem combinar. `node ml/testar_loja.js`.
+- **Nota do Reclame Aqui no aviso** (3.16.0, opção desligada): lê o JSON-LD público; não contorna o desafio anti-robô do Cloudflare.
 - **Conferência automática** (3.15.0): o aviso mostra "Já conferimos por você" (CNPJ na Receita e dono do domínio no registro.br) e
   o botão do site oficial quando imita uma marca. Reclame Aqui sozinho é opção desligada (envia o endereço da loja sem clique).
 - **Alfabeto cirílico** (3.13.0): `alfabetos.js` lê letras russas disfarçadas no endereço e na página; os dois modelos foram

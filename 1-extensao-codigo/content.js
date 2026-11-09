@@ -140,7 +140,8 @@
 
   // Leitura em voz alta (quem não lê bem, ou prefere ouvir). Clicar de novo para parar.
   function botaoOuvir(texto) {
-    if (!('speechSynthesis' in window)) return null;
+    // v3.16: o botão "Ouvir" só aparece para quem marcou a leitura em voz alta na tela de boas-vindas (não vem ligado)
+    if (!config.vozAutomatica || !('speechSynthesis' in window)) return null;
     return el('button', {
       type: 'button',
       onclick: () => {
@@ -300,7 +301,20 @@
     avisoSite = host;
     voltar.focus({ preventScroll: true });                       // Enter = ação segura; leitor de tela anuncia o alerta
     if (config.vozAutomatica) enviar({ tipo: 'falar', texto: textoVoz });
-    if (config.raAuto && res.comercio) enviar({ tipo: 'abrir-ra' });      // v3.15 (opcional): nota do Reclame Aqui em outra aba
+    // v3.16 (opcional): nota do Reclame Aqui, consultada em segundo plano e mostrada aqui, com o link para a pessoa conferir
+    if (config.raAuto && res.comercio) {
+      enviar({ tipo: 'ra-nota' }).then((ra) => {
+        if (!ra || !ra.ok || !/^https:\/\/www\.reclameaqui\.com\.br\/detector-site-confiavel\/[a-z0-9.-]+$/.test(ra.link || '')) return;
+        const texto = ra.bloqueado ? 'O Reclame Aqui não deixou consultar a nota automaticamente.'
+          : ra.nota === undefined
+          ? 'O Reclame Aqui ainda não tem uma análise pronta para este site.'
+          : 'Segundo o Reclame Aqui: ' + ra.rotulo + ' (' + ra.nota + ' de 5 escudos).';
+        const caixa = el('div', { class: 'passo' }, el('b', {}, texto + ' '), 'Verifique você mesmo: ',
+          el('a', { href: ra.link, target: '_blank', rel: 'noopener', style: 'color:inherit' }, 'abrir no Reclame Aqui'));
+        const lista = tela.querySelector('.lista');
+        if (lista) lista.after(caixa); else tela.querySelector('.miolo').append(caixa);
+      });
+    }
   }
 
   // ---------- 2) Página pedindo pagamento ----------

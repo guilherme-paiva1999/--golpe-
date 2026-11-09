@@ -180,6 +180,30 @@ node ml/testar_gov_marca.js && node ml/testar_pontuacao.js
 A extensão e o aplicativo passaram a se chamar **Isso é golpe?** (antes: "É Golpe?"), igual aos slides e ao pitch:
 nome no Chrome, popup, boas-vindas, tela de bloqueio, aplicativo, aviso no Reclame Aqui e mensagens para a pessoa de confiança.
 
+## v3.16: a confiança da loja parte da empresa; nota do Reclame Aqui no aviso; "Ouvir" só para quem pede
+
+**Nova conta da loja (decisão do Guilherme).** O ponto de partida é a empresa (CNPJ na Receita Federal):
+- **CNPJ ativo:** parte de 50% e sobe aos poucos com os anos de empresa, até **70% com 10 anos ou mais**. As provas da página
+  (cadeado, contato, políticas, idade do site...) somam por cima, com peso de 30%.
+- **Sem CNPJ ativo** (não existe, baixado, inapto ou nenhum): já **não é confiável**. Parte de 50% e só cai.
+- **Palavras de pressão e descontos grandes:** pesam por inteiro (15 pontos cada) quando a empresa não tem CNPJ ativo ou tem até 5 anos;
+  vão perdendo peso até 10 anos; **de 10 anos em diante deixam de pesar** ("promoção com prazo" é normal em empresa antiga).
+- Empresa com menos de 6 meses perde 15; menos de 1 ano, 5. Sem atividade de comércio na Receita, perde 10 (como antes).
+- O CNPJ da página que não é o do dono do domínio (registro.br) não ganha a base de idade: protege contra golpe que copia o CNPJ de
+  uma empresa antiga. Se a Receita não responde, a conta segue sem a empresa (não pune a loja).
+- Exemplos (testes): empresa de 29 anos com pressão, desconto e todas as provas: 98%; com poucas provas: 87%; 7 anos: 81%, e a
+  pressão tira só uma parte; 2 anos: 71%, e a pressão tira 15; sem CNPJ: 50%, e com pressão 35%.
+- Testes: `node ml/testar_loja.js` (12). Substitui, na loja, o `aplicarEmpresa` (continua valendo fora das lojas).
+
+**Nota do Reclame Aqui no aviso (opcional, desligada).** No popup: "Mostrar a nota do Reclame Aqui nos avisos". A extensão consulta
+em segundo plano a página pública do Detector, lê o veredito nos dados estruturados (schema.org, JSON-LD) e mostra "Segundo o Reclame
+Aqui: Confiável (5 de 5 escudos). Verifique você mesmo: [link]". Não muda a porcentagem. Pede a permissão do site só quando a pessoa
+liga a opção. Se o Reclame Aqui responder com o desafio anti-robô (Cloudflare), **não contornamos**: aparece "não deixou consultar
+automaticamente" e o link; a consulta fica em pausa por 30 minutos. Nos testes com Chrome sem tela (headless) o desafio apareceu
+sempre; num Chrome normal ainda não foi medido. Testes: `node ml/testar_ra_nota.js` (leitura do veredito).
+
+**"Ouvir o aviso"** só aparece para quem marcou "Ler os avisos em voz alta" na tela de boas-vindas (antes aparecia sempre).
+
 ## v3.15: a extensão faz a conferência que o aviso mandava a pessoa fazer
 
 O aviso dizia "abra o site oficial digitando o endereço e confira o CNPJ da loja". Agora isso é feito pela extensão:

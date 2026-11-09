@@ -126,8 +126,18 @@ async function iniciar() {
   document.body.classList.toggle('grande', !!config.modoSimples);
   document.documentElement.classList.toggle('daltonico', !!config.daltonico);
   document.body.classList.toggle('daltonico', !!config.daltonico);
-  // v3.15 (opcional, desligado por padrão): abre a nota do site no Reclame Aqui em outra aba assim que o bloqueio aparece
-  if (config.raAuto && url) chrome.tabs.create({ url: self.EGolpeRA.link(url.hostname), active: false }).catch(() => {});
+  // v3.16 (opcional, desligado por padrão): consulta a nota no Reclame Aqui em segundo plano e mostra aqui, com o link
+  if (config.raAuto && url) {
+    chrome.runtime.sendMessage({ tipo: 'ra-nota' }).then((ra) => {
+      if (!ra || !ra.ok || !/^https:\/\/www\.reclameaqui\.com\.br\/detector-site-confiavel\/[a-z0-9.-]+$/.test(ra.link || '')) return;
+      $('raNota').textContent = ra.bloqueado ? 'O Reclame Aqui não deixou consultar a nota automaticamente.'
+        : ra.nota === undefined
+        ? 'O Reclame Aqui ainda não tem uma análise pronta para este site.'
+        : 'Segundo o Reclame Aqui: ' + ra.rotulo + ' (' + ra.nota + ' de 5 escudos).';
+      $('raLink').href = ra.link;
+      $('caixaRA').hidden = false;
+    }).catch(() => {});
+  }
 
   if (!url) {
     $('host').textContent = 'Endereço inválido';
@@ -162,6 +172,7 @@ async function iniciar() {
     }
   } catch (e) { motivos = []; mostrarConfianca(0, limiteDaConfig()); }
   mostrarMotivos();
+  $('ouvir').closest('section').hidden = !config.vozAutomatica;     // v3.16: "Ouvir o aviso" só para quem marcou a voz na boas-vindas
   if (config.vozAutomatica) falar(textoParaOuvir());
 
   try {
