@@ -1240,7 +1240,7 @@ async function avaliarPagina(host, protocolo, sinais, medidas = null) {
   }
   const nivel = nivelPorRigor(res.pontos, cfg.rigor);
   return { nivel, pontos: res.pontos, motivos: res.motivos, dominio: r.dominio, conhecido: false,
-    provado: nivel === 'ok' && dias !== null && dias >= 365, dias, oficial };
+    provado: nivel === 'ok' && dias !== null && dias >= 365, dias, oficial, internacional: !r.dominio.endsWith('.br') && !ehIPv4(r.dominio) };
 }
 
 // ---------- Verificação completa (tela de bloqueio) ----------

@@ -180,6 +180,22 @@ node ml/testar_gov_marca.js && node ml/testar_pontuacao.js
 A extensão e o aplicativo passaram a se chamar **Isso é golpe?** (antes: "É Golpe?"), igual aos slides e ao pitch:
 nome no Chrome, popup, boas-vindas, tela de bloqueio, aplicativo, aviso no Reclame Aqui e mensagens para a pessoa de confiança.
 
+## v3.19.0: sites internacionais explicam que estão fora do nosso controle
+
+Pedido do Guilherme (caso LinkedIn, que deu 10%): site de fora do .br tem que dizer que **não está no nosso controle e por quê**, em vez de só mostrar um
+número ou um alarme.
+- **Selo "Este é um site internacional: está fora do nosso controle"**, no canto da página, uma vez por site por dia, em qualquer site de fora do
+  .br (o LinkedIn, por exemplo), quando a opção "o que mostrar" está em "todos os sites" (o padrão). Fora dele: sites conhecidos (Google, YouTube...),
+  lojas (o aviso da loja já traz a explicação) e endereços de teste/locais. O motivo, em linguagem simples:
+  - não tem CNPJ (não é empresa registrada no Brasil), então não dá para conferir quem está por trás dela na Receita Federal;
+  - o registro.br só informa o dono de endereços .br;
+  - pode não seguir as leis brasileiras de defesa do consumidor (troca, devolução e garantia);
+  - seus dados e pagamentos podem ser tratados fora do Brasil;
+  - "Isso não quer dizer que seja golpe: quer dizer que a nossa verificação não garante nada sobre ele."
+- **No aviso de loja** de um site internacional, a mesma explicação aparece na coluna da direita, acima do cartão do Reclame Aqui.
+- **Na tela de bloqueio de loja estrangeira**, o texto agora diz "fora do nosso controle" e traz os mesmos motivos.
+- Teste no Chrome: um endereço de fora do .br (mapeado para a loja de teste) mostra o selo; os `.example` de teste continuam quietos.
+
 ## v3.18.6: o LinkedIn não é loja (mais rigor para chamar uma página de loja)
 
 O LinkedIn foi bloqueado sem pedir nada de compra. Reproduzido com uma página que imita o LinkedIn (`teste/rede-social.html`: login, "código de

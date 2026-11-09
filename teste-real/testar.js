@@ -27,7 +27,7 @@ const conferir = (nome, cond, extra) => { console.log((cond ? 'OK   ' : 'FALHA '
   const ctx = await chromium.launchPersistentContext(path.join(os.tmpdir(), 'egolpe-e2e-' + Date.now()), {
     executablePath: CHROME, headless: false, ignoreDefaultArgs: ['--disable-extensions'], viewport: { width: 1100, height: 900 },
     args: ['--headless=new', '--enable-unsafe-extension-debugging',
-      '--host-resolver-rules=MAP *.example 127.0.0.1:18765']
+      '--host-resolver-rules=MAP *.example 127.0.0.1:18765, MAP intl-teste.com 127.0.0.1:18765']
   });
   let id = null;
   if (!ctx.serviceWorkers().length) {
@@ -151,6 +151,16 @@ const conferir = (nome, cond, extra) => { console.log((cond ? 'OK   ' : 'FALHA '
   const avisouRede = rede.url().includes('bloqueado.html') || await rede.evaluate(() => !!document.querySelector('[data-pg]')).catch(() => false);
   conferir('rede social (login, código de segurança, salário em R$, link de checkout) não avisa nem bloqueia', !avisouRede, rede.url());
   await rede.close();
+
+  // 3d) Site de fora do .br (como o LinkedIn): mostra que é internacional e está fora do nosso controle (o .example de teste não mostra)
+  // (no começo deste teste a escolha "só suspeitos" foi salva; para ver o selo, volta para "todos os sites")
+  await pg.evaluate(async () => { const { config } = await chrome.storage.local.get('config'); await chrome.storage.local.set({ config: { ...config, mostrar: 'todos' } }); });
+  const intl = await ctx.newPage();
+  await intl.goto('http://intl-teste.com/blog.html');
+  let selo = false;
+  for (let i = 0; i < 24 && !selo; i++) { await espera(500); selo = await intl.evaluate(() => !!document.querySelector('[data-pg]')).catch(() => false); }
+  conferir('site internacional (fora do .br): aparece o aviso de que está fora do nosso controle', selo, intl.url());
+  await intl.close();
 
   // 4) Verificação completa com dados reais (RDAP + BrasilAPI + consumidor.gov.br)
   for (const u of ['https://www.kabum.com.br/', 'https://www.magazineluiza.com.br/']) {

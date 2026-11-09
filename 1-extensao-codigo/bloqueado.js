@@ -54,10 +54,11 @@ function avisoEstrangeira() {
   fora.className = 'fora';
   fora.innerHTML = '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 4L61 58H3z" fill="#1a1200"/>' +
     '<rect x="29" y="22" width="6" height="20" rx="3" fill="#fff8e6"/><circle cx="32" cy="49" r="3.5" fill="#fff8e6"/></svg>';
-  fora.append('Ela está fora dos nossos cuidados.');
+  fora.append('Ela está fora do nosso controle.');
   $('texto').before(fora);
-  $('texto').textContent = 'Ela não tem CNPJ e não segue as leis brasileiras de defesa do consumidor. ' +
-    'Mas o que podemos dizer sobre ela está logo abaixo.';
+  $('texto').textContent = 'Ela não tem CNPJ, então não conseguimos conferir quem está por trás dela na Receita Federal. O registro.br só informa o dono de endereços .br. ' +
+    'Ela pode não seguir as leis brasileiras de defesa do consumidor (troca, devolução e garantia), e seus dados e pagamentos podem ser tratados fora do Brasil. ' +
+    'Isso não quer dizer que seja golpe. O que podemos dizer sobre ela está logo abaixo.';
   motivos = motivos.filter((m) => !/^Esta é uma loja estrangeira/.test(m));
   $('detalhes').open = true;
 }

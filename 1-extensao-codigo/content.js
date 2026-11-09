@@ -67,6 +67,13 @@
       --fundo:#7f1d1d;--escuro:rgba(0,0,0,.25);background:var(--fundo);padding:28px 20px 48px}
     .tela.atencao{--fundo:#7a4a00}
     .tela.ok{--fundo:#14532d}
+    /* Site internacional: fora do nosso controle, e por quê */
+    .intl{border-radius:10px;padding:14px 18px;background:#fff8e6;color:#1a1200;border-left:10px solid #ffc65c}
+    .intl h3{margin:0 0 6px;font-size:1.1em}
+    .intl ul{margin:6px 0 0;padding-left:22px}
+    .intl li{margin:3px 0;font-size:.95em;line-height:1.4}
+    .intl p{margin:8px 0 0;font-size:.95em;font-weight:bold}
+    .selo.intlselo{background:#3d2e00;max-width:460px}
     /* Duas listas bem visíveis: o que pesa contra (vermelho) e o que pesa a favor (verde) */
     .cartao{margin-top:18px;border-radius:10px;padding:14px 18px;color:#111}
     .cartao h3{margin:0 0 8px;font-size:1.15em;display:flex;align-items:center;gap:10px}
@@ -287,6 +294,40 @@
     enviar({ tipo: 'confirmacao-crt' }).then((r) => { if (r && typeof r.linha === 'string') entregarLinha(r.linha); });
   }
 
+  // Site internacional: o que a extensão não consegue garantir, e por quê (texto fixo da extensão).
+  const RAZOES_INTERNACIONAL = [
+    'Não tem CNPJ: não é uma empresa registrada no Brasil, então não dá para conferir quem está por trás dela na Receita Federal.',
+    'O registro.br só informa o dono de endereços .br, então não sabemos quem registrou este endereço.',
+    'Pode não seguir as leis brasileiras de defesa do consumidor (troca, devolução e garantia).',
+    'Seus dados e pagamentos podem ser tratados fora do Brasil.'
+  ];
+  function blocoInternacional() {
+    return el('div', { class: 'intl' }, el('h3', {}, '🌐 Este é um site internacional: está fora do nosso controle'),
+      el('ul', {}, ...RAZOES_INTERNACIONAL.map((t) => el('li', {}, t))),
+      el('p', {}, 'Isso não quer dizer que seja golpe: quer dizer que a nossa verificação não garante nada sobre ele.'));
+  }
+  // Selo pequeno, uma vez por site por dia, em sites de fora do .br (opção "mostrar todos os sites").
+  function mostrarSeloInternacional() {
+    const { host, root } = criarCaixa({ position: 'fixed', bottom: '0', right: '0', 'z-index': '2147483647', display: 'block' });
+    const selo = el('div', { class: 'selo intlselo', role: 'status', 'aria-live': 'polite' }, blocoInternacional(),
+      el('button', { type: 'button', onclick: () => host.remove() }, 'Fechar'));
+    root.appendChild(selo);
+    document.documentElement.appendChild(host);
+  }
+  async function avisarSeInternacional() {
+    if (!ativo || config.mostrar === 'suspeitos') return;
+    const h = location.hostname.toLowerCase();
+    if (!/^https?:$/.test(location.protocol) || !h.includes('.') || h.endsWith('.br') || /^[\d.]+$/.test(h) || /\.(example|test|invalid|localhost|local|internal|lan)$/.test(h)) return;
+    if (siteRes && (siteRes.conhecido || siteRes.permitido || siteRes.comercio)) return;     // conhecido: ok; loja: o aviso da loja já explica
+    if (avisoSite && avisoSite.isConnected) return;                                         // já há um aviso maior na tela
+    const { intlVisto = {} } = await chrome.storage.local.get('intlVisto');
+    if (intlVisto[h] && Date.now() - intlVisto[h] < 86400000) return;
+    intlVisto[h] = Date.now();
+    if (Object.keys(intlVisto).length > 200) for (const k of Object.keys(intlVisto)) if (k !== h) delete intlVisto[k];
+    await chrome.storage.local.set({ intlVisto });
+    mostrarSeloInternacional();
+  }
+
   function barraConf(valor, limite) {
     const fill = el('i', {}); fill.style.width = Math.max(0, Math.min(100, valor)) + '%';
     const marca = el('b', {}); marca.style.left = 'calc(' + limite + '% - 2px)';
@@ -392,7 +433,7 @@
           barraConf(confNum, limiteConf))]),
         el('p', { class: 'texto' }, passoTexto)),
        el('div', { class: 'grade' }, cartaoContra.el, cartaoFavor.el,
-        el('div', { class: 'lado' }, raCard.el)),
+        el('div', { class: 'lado' }, ...(res.internacional ? [blocoInternacional()] : []), raCard.el)),
        acoes,
        ...(ouvir ? [ouvir] : []),
        ...(confiavel ? [] : [continuar])));
@@ -821,5 +862,6 @@
       // Em sites de leitura e vídeo, a extensão fica quieta. Golpe confirmado já foi bloqueado antes de abrir.
       if (res && res.nivel !== 'ok' && document.body && paginaDeDinheiro(lerSinais())) mostrarAvisoSite(res);
       checarPagina();
+      setTimeout(avisarSeInternacional, 3500);      // v3.19: site de fora do .br explica que está fora do nosso controle
     });
 })();
