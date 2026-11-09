@@ -328,6 +328,7 @@
       onclick: () => {
         if (!confirmou) { confirmou = true; continuar.textContent = 'Tem certeza? Clique de novo para entrar'; return; }
         enviar({ tipo: 'parar-fala' });
+        dispensadoNaSessao = true;
         fechar();
       }
     }, 'Continuar mesmo assim (não recomendado)');
@@ -581,8 +582,14 @@
   }
 
   let ultimoEnvio = '';
+  let ultimaChecagem = 0;
+  let dispensadoNaSessao = false;                 // a pessoa escolheu "continuar mesmo assim" neste site: não repete o aviso de atenção em cada página
   async function checarPagina() {
-    if (!ativo || rodadas++ >= 6 || !document.body) return;
+    if (!ativo || !document.body) return;
+    // As 6 primeiras checagens de cada página são rápidas; depois, no máximo uma a cada 4 segundos (o texto da página é lido a cada checagem).
+    const agora = Date.now();
+    if (rodadas >= 6 && agora - ultimaChecagem < 4000) return;
+    rodadas++; ultimaChecagem = agora;
     if (siteRes && siteRes.conhecido) return;               // site provado: não incomoda
     const sinais = lerSinais();
     const chave = JSON.stringify(sinais);
@@ -595,7 +602,7 @@
       medidas: medidasDaPagina() });
     if (res) {
       siteRes = res;
-      if (res.nivel !== 'ok') mostrarAvisoSite(res);
+      if (res.nivel !== 'ok') { if (!(dispensadoNaSessao && res.nivel === 'atencao')) mostrarAvisoSite(res); }
       else if (res.comercio && !res.conhecido && !res.permitido && config.mostrar !== 'suspeitos') {
         // v3.17: opção "mostrar todos os sites" (padrão: selo verde nos confiáveis) ou aviso total, uma vez por site por dia
         const { okVisto = {} } = await chrome.storage.local.get('okVisto');
@@ -741,7 +748,7 @@
 
   function desligar() {
     ativo = false;
-    try { obsMut.disconnect(); obsInt.disconnect(); } catch (e) { /* já desligado */ }
+    try { obsMut.disconnect(); obsInt.disconnect(); clearInterval(vigiaEndereco); } catch (e) { /* já desligado */ }
   }
 
   // ---------- Modo de teste (botões do popup) ----------
@@ -776,6 +783,20 @@
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg && msg.tipo === 'sinais') { sendResponse({ sinais: lerSinais(), nota: siteRes ? siteRes.pontos : 0 }); }
   });
+
+  // ---------- Sites que trocam de página sem recarregar (H&M e outras lojas feitas em React, Next...) ----------
+  // Ao clicar numa roupa, o endereço muda (pushState) mas a página não recarrega, então o content script não roda de novo.
+  // Aqui a extensão percebe a troca de endereço e refaz a checagem da página nova, como se ela tivesse acabado de abrir.
+  let urlAtual = location.href;
+  function aoMudarDePagina() {
+    urlAtual = location.href;
+    rodadas = 0; ultimoEnvio = ''; ultimaChecagem = 0;
+    if (siteRes && !siteRes.conhecido) siteRes = null;
+    if (avisoSite && !avisoSite.isConnected) avisoSite = null;      // o aviso anterior foi fechado: a página nova pode ter o seu
+    [600, 2000, 5000].forEach((ms) => setTimeout(checarPagina, ms));  // a página nova ainda está sendo desenhada
+  }
+  const vigiaEndereco = setInterval(() => { if (location.href !== urlAtual) aoMudarDePagina(); }, 500);
+  try { if (window.navigation && window.navigation.addEventListener) window.navigation.addEventListener('navigatesuccess', () => { if (location.href !== urlAtual) aoMudarDePagina(); }); } catch (e) { /* sem a API de navegação */ }
 
   // ---------- Início ----------
   obsMut.observe(document.documentElement, { childList: true, subtree: true });

@@ -65,6 +65,8 @@ As capturas de tela ficam em `teste-real/capturas/` (não vão para o GitHub).
   **modelo da página** (regressão logística com texto + características; AUC 0,92, ~52% dos golpes com 2% de falsos alertas).
   A **rede neural foi testada e não ganhou** do clássico com estes dados (`8-treino-ml/README.md`). Sem página para ler,
   vale o modelo do nome do site (~10% dos golpes com ~1% de falsos alertas).
+- **Sites que trocam de página sem recarregar** (3.18.3, caso H&M): `content.js` vigia a troca de endereço (pushState) e refaz a checagem; teste
+  `teste/spa.html`. A página inicial sem venda continua quieta de propósito.
 - **Mesmo grupo e Reclame Aqui na conta** (3.18.0, pedido do Guilherme): CNPJ diferente do dono do domínio só é normal se as empresas forem do mesmo
   grupo (sócios em comum no quadro societário); senão é ponto de atenção. Escudos do RA: 5 = +10, 4 = +5, 3 = 0, 2 = -5, 1 = -10 (peso mínimo).
 - **O que mostrar** (3.17.1, pedido do Guilherme): padrão "todos" = selo verde nas lojas confiáveis (80%+); escolha na boas-vindas e no popup

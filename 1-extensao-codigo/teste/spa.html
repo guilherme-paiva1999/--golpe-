@@ -1,0 +1,14 @@
+<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>Teste: loja que troca de página sem recarregar</title>
+<body style="font:18px/1.5 Arial;max-width:600px;margin:30px auto;padding:0 16px">
+<!-- Imita lojas feitas em React/Next (como a H&M): a página inicial não vende nada; ao clicar no produto, o endereço muda (pushState)
+     e o conteúdo é trocado SEM recarregar. A extensão precisa avisar na página do produto sem a pessoa apertar F5. -->
+<div id="app"><h1>Loja SPA</h1><p>Bem-vindo! Esta é a página inicial (sem preços).</p><p><a href="#" id="ver">Ver o tênis</a></p></div>
+<script>
+document.getElementById('ver').addEventListener('click', function (e) {
+  e.preventDefault();
+  history.pushState({}, '', '/produto-tenis');
+  document.title = 'Tênis esportivo';
+  document.getElementById('app').innerHTML = '<h1>Tênis esportivo</h1><p>Por apenas R$ 99,90. <button>Comprar agora</button></p>' +
+    '<form action="/pagar" method="post"><p><input name="cartao" placeholder="Número do cartão" autocomplete="cc-number"></p><button>Pagar</button></form>';
+});
+</script></body></html>

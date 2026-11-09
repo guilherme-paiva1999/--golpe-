@@ -180,6 +180,19 @@ node ml/testar_gov_marca.js && node ml/testar_pontuacao.js
 A extensão e o aplicativo passaram a se chamar **Isso é golpe?** (antes: "É Golpe?"), igual aos slides e ao pitch:
 nome no Chrome, popup, boas-vindas, tela de bloqueio, aplicativo, aviso no Reclame Aqui e mensagens para a pessoa de confiança.
 
+## v3.18.3: sites que trocam de página sem recarregar (caso H&M)
+
+Na H&M (`hm.com.br`) a página inicial não vende nada e a extensão fica quieta (é a regra: só age em páginas de compra). Mas ao clicar numa
+roupa, o aviso só aparecia depois de apertar F5. Motivo: lojas feitas em React/Next trocam o conteúdo e o endereço **sem recarregar**
+(`pushState`), então o script da extensão, que só rodava ao abrir a página, nunca olhava a página nova. Além disso, cada página gastava as 6
+checagens que a extensão fazia só com as mudanças da página inicial.
+- A extensão agora **percebe a troca de endereço** (confere o endereço a cada 0,5 s e usa a API de navegação do Chrome quando existe) e refaz
+  a checagem da página nova, como se ela tivesse acabado de abrir (em 0,6 s, 2 s e 5 s, porque a página nova ainda está sendo desenhada).
+- As 6 primeiras checagens de cada página continuam rápidas; depois, no máximo **uma a cada 4 segundos** (antes parava de vez), para pegar
+  produto que aparece tarde sem pesar na página.
+- Quem escolhe "Continuar mesmo assim" no aviso de atenção não é avisado de novo a cada página do mesmo site (o bloqueio de perigo continua).
+- Teste novo no Chrome (`teste/spa.html`): página inicial sem venda não avisa; ao clicar no produto, sem recarregar, o aviso/bloqueio aparece.
+
 ## v3.18.2: limite de confiável em 80% (80 já conta)
 
 Pedido do Guilherme: **confiável com 80% ou mais** (a regra é "maior ou igual": exatamente 80% já é confiável; rigor normal continua 60%).

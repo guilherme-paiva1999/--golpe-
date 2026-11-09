@@ -132,6 +132,18 @@ const conferir = (nome, cond, extra) => { console.log((cond ? 'OK   ' : 'FALHA '
   await foto(loja, '6-aviso-loja');
   if (loja.url().includes('bloqueado.html')) console.log('      (a loja foi bloqueada direto)');
 
+  // 3b) Loja que troca de página sem recarregar (como a H&M): a inicial não vende; ao clicar no produto, o aviso tem que aparecer sozinho
+  const spa = await ctx.newPage();
+  await spa.goto('http://loja-teste.example/spa.html');
+  await espera(5000);
+  const avisaSpa = async () => spa.url().includes('bloqueado.html') || await spa.evaluate(() => !!document.querySelector('[data-pg]')).catch(() => false);
+  conferir('site sem recarregar: a página inicial (sem venda) não avisa', !(await avisaSpa()));
+  await spa.click('#ver');
+  let avisouSpa = false;
+  for (let i = 0; i < 30 && !avisouSpa; i++) { await espera(500); avisouSpa = await avisaSpa(); }
+  conferir('site sem recarregar: ao clicar no produto, o aviso aparece sem apertar F5', avisouSpa, spa.url());
+  await spa.close();
+
   // 4) Verificação completa com dados reais (RDAP + BrasilAPI + consumidor.gov.br)
   for (const u of ['https://www.kabum.com.br/', 'https://www.magazineluiza.com.br/']) {
     const v = await bv.evaluate((u) => chrome.runtime.sendMessage({ tipo: 'investigar', url: u }), u);
