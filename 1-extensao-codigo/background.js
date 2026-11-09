@@ -1068,13 +1068,13 @@ function oficialDaMarca(host, marcas, dominio) {
   return m ? { nome: m.marca, host: m.oficial } : null;
 }
 // Devolve as linhas "já conferimos por você" e se o CNPJ da página não bate com o dono do domínio.
-function conferenciaCnpj({ cnpjPagina, cnpjRegistro, empresa, doRegistro, dono, grupo }) {
+function conferenciaCnpj({ cnpjPagina, cnpjRegistro, empresa, doRegistro, dono, grupo, diasSite }) {
   const linhas = [];
   const usado = cnpjPagina || cnpjRegistro || '';
-  let diverge = false, donoAtivo = false;
+  let diverge = false, donoAtivo = false, leve = false;
   if (!usado) {
     linhas.push('Procuramos o CNPJ na página e no registro do site e não achamos nenhum.');
-    return { linhas, diverge, donoAtivo };
+    return { linhas, diverge, donoAtivo, leve };
   }
   const onde = doRegistro ? 'do dono do site no registro.br' : 'mostrado na página';
   if (!empresa) linhas.push('CNPJ ' + mascaraCnpj(usado) + ' (' + onde + '): não conseguimos consultar a Receita Federal agora (os serviços abertos demoraram a responder). Tente de novo em instantes.');
@@ -1096,6 +1096,12 @@ function conferenciaCnpj({ cnpjPagina, cnpjRegistro, empresa, doRegistro, dono, 
         donoAtivo = true;
         linhas.push('O endereço do site está registrado em nome de ' + nomeDono + ' (CNPJ ' + mascaraCnpj(cnpjRegistro) + '), ativa' + (idadeDono ? ', ' + idadeDono : '') +
           ', que faz parte do mesmo grupo de ' + nomePagina + ' (CNPJ ' + mascaraCnpj(cnpjPagina) + '): ' + grupo.motivo + '.');
+      } else if (grupo && grupo.mesmo === false && Number.isFinite(diasSite) && diasSite >= 5 * 365) {
+        // Marcas grandes costumam registrar o endereço por meio de uma agência ou de uma empresa de proteção de domínios (caso H&M). Site com
+        // 5 anos ou mais de registro contínuo não é site criado agora com CNPJ copiado: vira só um ponto de atenção leve.
+        leve = true;
+        linhas.push('O endereço do site está registrado em nome de ' + nomeDono + ' (CNPJ ' + mascaraCnpj(cnpjRegistro) + '), sem relação societária com ' + nomePagina + ' (CNPJ ' +
+          mascaraCnpj(cnpjPagina) + ', o da página). Como o site existe há ' + textoAnos(diasSite / 365.25) + ', é comum quando a marca registra o endereço por uma agência ou empresa de proteção de domínios.');
       } else if (grupo && grupo.mesmo === false) {
         diverge = true;
         linhas.push('Atenção: o CNPJ da página (' + mascaraCnpj(cnpjPagina) + ', ' + nomePagina + ') e a empresa dona do endereço (' + mascaraCnpj(cnpjRegistro) + ', ' + nomeDono +
@@ -1109,7 +1115,7 @@ function conferenciaCnpj({ cnpjPagina, cnpjRegistro, empresa, doRegistro, dono, 
       linhas.push('Atenção: o CNPJ da página (' + mascaraCnpj(cnpjPagina) + ') não é o da empresa dona do endereço do site (' + mascaraCnpj(cnpjRegistro) + ').');
     }
   }
-  return { linhas, diverge, donoAtivo };
+  return { linhas, diverge, donoAtivo, leve };
 }
 
 async function avaliarPagina(host, protocolo, sinais, medidas = null) {
@@ -1132,9 +1138,16 @@ async function avaliarPagina(host, protocolo, sinais, medidas = null) {
   // CNPJ: o da página; se a página não mostra, o do responsável pelo domínio (registro.br).
   // v3.15: rodapés mostram vários CNPJs (a loja, o banco do cartão da loja...). Vale o que é do dono do domínio no registro.br;
   // se nenhum for, o primeiro da página (como antes).
-  let cnpjPagina = /^\d{14}$/.test(sinais.cnpj || '') ? sinais.cnpj : '';
-  if (rdap && rdap.cnpj && Array.isArray(sinais.cnpjs)) {
-    const doDono = sinais.cnpjs.find((c) => c.slice(0, 8) === rdap.cnpj.slice(0, 8));
+  // v3.18.5: o rodapé com o CNPJ nem sempre aparece em todas as páginas (na H&M, a lista de camisas tinha e a página do produto não, e a nota
+  // mudava de 74% para 44%). Os CNPJs vistos em qualquer página deste site, nesta sessão do navegador, valem para as outras páginas dele.
+  const chaveVistos = 'cnpjsSite:' + r.dominio;
+  let vistos = [];
+  try { vistos = ((await chrome.storage.session.get(chaveVistos))[chaveVistos]) || []; } catch (e) { /* sem memória */ }
+  const todosCnpjs = [...new Set([...(Array.isArray(sinais.cnpjs) ? sinais.cnpjs : []), ...(/^\d{14}$/.test(sinais.cnpj || '') ? [sinais.cnpj] : []), ...vistos])].slice(0, 6);
+  if (todosCnpjs.length > vistos.length) { try { await chrome.storage.session.set({ [chaveVistos]: todosCnpjs }); } catch (e) { /* sem memória */ } }
+  let cnpjPagina = /^\d{14}$/.test(sinais.cnpj || '') ? sinais.cnpj : (todosCnpjs[0] || '');
+  if (rdap && rdap.cnpj) {
+    const doDono = todosCnpjs.find((c) => c.slice(0, 8) === rdap.cnpj.slice(0, 8));
     if (doDono) cnpjPagina = doDono;
   }
   const cnpjUsado = cnpjPagina || (rdap && rdap.cnpj) || '';
@@ -1153,7 +1166,7 @@ async function avaliarPagina(host, protocolo, sinais, medidas = null) {
     // CNPJ da página diferente do dono do endereço: confirma se as duas empresas são do mesmo grupo (sócios em comum)
     const grupo = donoDiferente && dono && dono.existe && dono.ativa && empresa && empresa.existe ? relacaoDeGrupo(empresa, dono, cnpjPagina, rdap.cnpj) : null;
     const conf = conferenciaCnpj({ cnpjPagina, cnpjRegistro: (rdap && rdap.cnpj) || '',
-      empresa, doRegistro: !!(empresa && empresa.doRegistro), dono, grupo });
+      empresa, doRegistro: !!(empresa && empresa.doRegistro), dono, grupo, diasSite: dias });
     // Dono do endereço real, ativo e do mesmo grupo: vale ele (confirmado pelo registro.br). Outra empresa, ou dono inexistente ou inativo (CNPJ copiado?): a idade da empresa da página não vale.
     const empresaDaLoja = conf.donoAtivo ? { ...dono, confirmado: true } : (conf.diverge && empresa ? { ...empresa, abertura: '' } : empresa);
     const c = pontuarConfianca(sinais, dias, protocolo, r.pontos, gratuito, { pesoPressao: pesoDaPressao(empresaDaLoja) });
@@ -1177,6 +1190,7 @@ async function avaliarPagina(host, protocolo, sinais, medidas = null) {
       motivos.push('A empresa não tem atividade de comércio registrada na Receita' + (empresa.atividade ? ' (atividade principal: ' + empresa.atividade + ')' : '') + ', mas a página vende produtos.');
     }
     if (conf.diverge) c.confianca = Math.max(0, c.confianca - 15);       // a explicação já está na linha "Atenção" da lista
+    else if (conf.leve) c.confianca = Math.max(0, c.confianca - 5);       // site antigo, empresa sem relação com a dona do endereço: atenção leve
     c.confianca = aplicarConsumidor(consumidor, true, c.confianca, motivos);
     c.confianca = Math.round(c.confianca);
     let nivel = c.confianca >= limite ? 'ok' : (c.confianca < 30 ? 'perigo' : 'atencao');

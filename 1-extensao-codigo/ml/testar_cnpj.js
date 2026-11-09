@@ -38,7 +38,10 @@ const t = async (nome, host, sinais, espNivel, espCnpj) => {
   // dono do endereço (registro.br) real e ativo, CNPJ da página de outra empresa: provavelmente o mesmo grupo, não é golpe
   chk('dono do domínio ativo e CNPJ da página de outra empresa COM sócios em comum: "faz parte do mesmo grupo"', r2.conferencia.some((l) => /faz parte do mesmo grupo.*sócios ou administradores em comum/.test(l)) && !r2.conferencia.some((l) => /^Atenção/.test(l)));
   const r2c = await T.avaliarPagina('empresa.com.br', 'https:', loja({ cnpjValido: true, cnpj: '55666777000188', gateway: true }));
-  chk('CNPJ da página de empresa SEM relação com a dona do endereço: "não parecem ser do mesmo grupo"', r2c.conferencia.some((l) => /^Atenção:.*não parecem ser do mesmo grupo/.test(l)) && r2c.contra.some((l) => /não parecem ser do mesmo grupo/.test(l)), r2c.confianca + '%');
+  chk('CNPJ da página de empresa SEM relação com a dona do endereço, site antigo (5 anos ou mais): atenção leve', r2c.conferencia.some((l) => /sem relação societária/.test(l)) && !r2c.conferencia.some((l) => /^Atenção:/.test(l)), r2c.confianca + '%');
+  ctx.__rdap['novo-copiado.com.br'] = { dias: 100, cnpj: '11222333000181', pf: false };
+  const r2d = await T.avaliarPagina('novo-copiado.com.br', 'https:', loja({ cnpjValido: true, cnpj: '55666777000188', gateway: true }));
+  chk('CNPJ da página de empresa SEM relação com a dona do endereço, site NOVO: "não parecem ser do mesmo grupo" (atenção forte)', r2d.conferencia.some((l) => /^Atenção:.*não parecem ser do mesmo grupo/.test(l)) && r2d.contra.some((l) => /não parecem ser do mesmo grupo/.test(l)), r2d.confianca + '%');
   // dono do endereço inativo (talvez o CNPJ da página tenha sido copiado de outra empresa): avisa
   ctx.__rdap['copiado.com.br'] = { dias: 3000, cnpj: '99888777000166', pf: false };
   const r2b = await T.avaliarPagina('copiado.com.br', 'https:', loja({ cnpjValido: true, cnpj: '11222333000181', gateway: true }));

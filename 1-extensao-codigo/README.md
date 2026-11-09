@@ -180,6 +180,23 @@ node ml/testar_gov_marca.js && node ml/testar_pontuacao.js
 A extensão e o aplicativo passaram a se chamar **Isso é golpe?** (antes: "É Golpe?"), igual aos slides e ao pitch:
 nome no Chrome, popup, boas-vindas, tela de bloqueio, aplicativo, aviso no Reclame Aqui e mensagens para a pessoa de confiança.
 
+## v3.18.5: a mesma loja não pode dar 44% numa página e 74% em outra (caso H&M)
+
+Na H&M, uma página dava 74% e outra 44%. Investigado com os dados reais:
+- `hm.com.br` está registrado no registro.br em nome de **Domain Under Protection Serviços de Internet Ltda.** (CNPJ 05.678.324/0001-05, ativa
+  desde 2003), uma empresa de **proteção de domínios** que marcas grandes usam. Quem vende é a H&M, com outro CNPJ.
+- Na página **sem** o CNPJ da H&M no rodapé, a extensão usava a empresa que registrou o endereço (antiga e ativa): 74%.
+- Na página **com** o CNPJ da H&M, ele era de outra empresa, sem sócios em comum com quem registrou o endereço: a regra de "CNPJ de outra empresa"
+  tirava 15 pontos e jogava a idade fora: 44%. Ou seja, **mostrar o CNPJ derrubava a nota**.
+O que mudou:
+- **Memória por site:** os CNPJs vistos em qualquer página do site (nesta sessão do navegador) valem para as outras páginas dele. Um rodapé sem
+  CNPJ não faz mais a nota mudar.
+- **Site antigo com CNPJ sem relação com quem registrou o endereço** (5 anos ou mais de registro) vira só um **ponto de atenção leve** (−5), com a
+  explicação "é comum quando a marca registra o endereço por uma agência ou empresa de proteção de domínios", e vale a idade da empresa da página.
+  **Site novo** (menos de 5 anos) continua em atenção forte (−15, sem a idade da empresa): protege contra CNPJ copiado de uma empresa conhecida,
+  porque quem cria um site agora com o CNPJ de outra empresa tem registro recente.
+- Testes novos em `ml/testar_loja.js` (23, com o caso estilo H&M: 73% e 70% nas duas páginas) e `ml/testar_cnpj.js` (23).
+
 ## v3.18.4: tudo numa tela só (Reclame Aqui na direita)
 
 O aviso e a tela de bloqueio ocupavam só uma coluna estreita no meio da tela, e a pessoa precisava descer para ver o Reclame Aqui e os botões.
