@@ -98,7 +98,7 @@ const conferir = (nome, cond, extra) => { console.log((cond ? 'OK   ' : 'FALHA '
   const itens = await pg.$$eval('#verif li', (l) => l.map((x) => x.textContent));
   conferir('verificação completa com 7 itens', itens.length === 7, '\n      ' + itens.join('\n      '));
   conferir('modo daltônico na tela', await pg.$eval('body', (b) => b.classList.contains('daltonico')));
-  const motivos = await pg.$$eval('#motivos li', (l) => l.map((x) => x.textContent));
+  const motivos = await pg.$$eval('#listaContra li, #listaFavor li', (l) => l.map((x) => x.textContent));
   console.log('      motivos:', motivos.join(' | '));
   await foto(pg, '5-bloqueio');
   await pg.evaluate(async () => { const { config } = await chrome.storage.local.get('config'); await chrome.storage.local.set({ config: { ...config, daltonico: false, modoSimples: false } }); });

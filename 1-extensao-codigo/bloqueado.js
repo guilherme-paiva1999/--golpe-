@@ -62,10 +62,26 @@ function avisoEstrangeira() {
   $('detalhes').open = true;
 }
 
+// v3.17: duas listas coloridas (o que pesa contra e o que pesa a favor). Linhas que chegam depois entram na lista certa.
+const linhaFavor = (t) => /conferido na Receita Federal|aparece nos arquivos desde|está entre os|primeiro certificado público deste domínio é de \d{4}/.test(String(t));
+const contagem = { contra: 0, favor: 0 };
+function adicionarItem(tipo, texto) {
+  if (typeof texto !== 'string' || !texto) return;
+  const ul = $(tipo === 'favor' ? 'listaFavor' : 'listaContra');
+  const item = document.createElement('li'); item.textContent = texto; ul.appendChild(item);
+  contagem[tipo]++;
+  $(tipo === 'favor' ? 'tituloFavor' : 'tituloContra').textContent = (tipo === 'favor' ? '✓ Pontos a favor' : '⚠ Pontos de atenção') + ' (' + contagem[tipo] + ')';
+  $(tipo === 'favor' ? 'cartaoFavor' : 'cartaoContra').hidden = false;
+}
 function mostrarMotivos() {
-  const lista = motivos.slice(0, config.modoSimples ? 3 : 5);
-  $('motivos').replaceChildren(...lista.map(li));
-  $('caixaMotivos').hidden = !lista.length;
+  const limite = config.modoSimples ? 3 : 6;
+  $('listaContra').replaceChildren(); $('listaFavor').replaceChildren(); contagem.contra = 0; contagem.favor = 0;
+  $('cartaoContra').hidden = true; $('cartaoFavor').hidden = true;
+  const conta = contaDaPagina;
+  const contra = conta && Array.isArray(conta.contra) ? conta.contra : motivos.filter((m) => !/^A favor:/.test(m)).map((m) => m.replace(/^Contra:\s*/, ''));
+  const favor = conta && Array.isArray(conta.favor) ? conta.favor : motivos.filter((m) => /^A favor:/.test(m)).map((m) => m.replace(/^A favor:\s*/, ''));
+  contra.slice(0, limite).forEach((t) => adicionarItem('contra', t));
+  favor.slice(0, limite).forEach((t) => adicionarItem('favor', t));
 }
 
 // Mostra a porcentagem. Só é confiável quem CHEGA ao limite (80% ou mais no rigor padrão).
@@ -128,6 +144,12 @@ async function iniciar() {
   document.body.classList.toggle('daltonico', !!config.daltonico);
   // v3.16 (opcional, desligado por padrão): consulta a nota no Reclame Aqui em segundo plano e mostra aqui, com o link
   if (url) $('ra').href = self.EGolpeRA.link(url.hostname);
+  // v3.17: confirmações abertas (Tranco, Internet Archive, crt.sh): cada linha entra na lista certa quando chega
+  if (url && config.confirmacoes !== false) {
+    const entra = (linha) => { if (typeof linha === 'string') adicionarItem(linhaFavor(linha) ? 'favor' : 'contra', linha); };
+    chrome.runtime.sendMessage({ tipo: 'confirmacoes' }).then((r) => { if (r && Array.isArray(r.linhas)) r.linhas.slice(0, 3).forEach(entra); }).catch(() => {});
+    chrome.runtime.sendMessage({ tipo: 'confirmacao-crt' }).then((r) => { if (r) entra(r.linha); }).catch(() => {});
+  }
   if (config.raAuto !== false && url) {
     chrome.runtime.sendMessage({ tipo: 'ra-nota' }).then((ra) => {
       if (!ra || !ra.ok || !/^https:\/\/www\.reclameaqui\.com\.br\/detector-site-confiavel\/[a-z0-9.-]+$/.test(ra.link || '')) return;
@@ -154,7 +176,7 @@ async function iniciar() {
         }
         $('raTexto').textContent = n + ' de 5 escudos (' + ra.rotulo + ')';
       }
-      $('caixaRA').hidden = false;
+      $('raTopo').hidden = false;
     }).catch(() => {});
   }
 
@@ -178,12 +200,8 @@ async function iniciar() {
       mostrarConfianca(res.conta.confianca, res.conta.limite || limiteDaConfig());
       if (res.conta.cnpj === 'estrangeira') avisoEstrangeira();
     } else mostrarConfianca(Math.max(0, 100 - Math.max(70, pontos)), limiteDaConfig());
-    // v3.15: o que a extensão já conferiu (CNPJ) e o botão do site oficial da marca imitada
+    // v3.15: o botão do site oficial da marca imitada (o que foi conferido do CNPJ agora está nas duas listas)
     const conta = res && res.conta;
-    if (conta && Array.isArray(conta.conferencia) && conta.conferencia.length) {
-      $('caixaConf').hidden = false;
-      for (const l of conta.conferencia.slice(0, 3)) { const li = document.createElement('li'); li.textContent = String(l); $('confLinhas').appendChild(li); }
-    }
     if (conta && conta.oficial && /^[a-z0-9.-]+$/.test(conta.oficial.host || '')) {
       $('oficial').hidden = false;
       $('oficial').textContent = 'Abrir o site oficial (' + conta.oficial.host + ')';

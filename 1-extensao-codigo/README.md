@@ -180,6 +180,25 @@ node ml/testar_gov_marca.js && node ml/testar_pontuacao.js
 A extensão e o aplicativo passaram a se chamar **Isso é golpe?** (antes: "É Golpe?"), igual aos slides e ao pitch:
 nome no Chrome, popup, boas-vindas, tela de bloqueio, aplicativo, aviso no Reclame Aqui e mensagens para a pessoa de confiança.
 
+## v3.17.0: duas listas, confirmações abertas e aviso também para lojas confiáveis
+
+- **Duas listas coloridas** no aviso e na tela de bloqueio, em vez de uma lista só: **⚠ Pontos de atenção** (vermelho, com ✕) e
+  **✓ Pontos a favor** (verde, com ✓). O que a loja tem a favor agora aparece em frases (site com mais de N anos, cadeado, CNPJ válido,
+  contato, políticas, meio de pagamento conhecido, CNPJ conferido na Receita). Para daltônicos, laranja/preto e azul.
+- **Reclame Aqui num cartão verde só:** em cima, a nota ("De acordo com o Reclame Aqui: [escudos] 4 de 5") ou a mensagem "O Reclame Aqui
+  ainda não analisou este site"; embaixo, "→ Confira você mesmo no Reclame Aqui". Sem a nota, aparece só a linha de baixo.
+- **Três confirmações abertas** (entram nas listas quando chegam, sem texto de "carregando"; não mudam a porcentagem):
+  - **Ranking Tranco** (arquivo local `dados/tranco-100k.txt`, os 100 mil sites mais visitados, lista de 07/11/2026; Tranco, tranco-list.eu,
+    Le Pochat et al., NDSS 2019). Estar na lista é a favor; não estar não vira linha (é normal para lojas menores).
+  - **Internet Archive (Wayback Machine):** desde quando o site aparece nos arquivos. Sem histórico entra em "atenção".
+  - **crt.sh:** data do primeiro certificado público do domínio. Demora de 15 a 25 segundos em domínios grandes, por isso chega por último;
+    certificado de menos de 90 dias entra em "atenção". Cada resposta fica guardada (7 dias o Archive, 30 dias o crt.sh).
+  - Podem ser desligadas no popup ("Conferir também no Internet Archive, no ranking Tranco e no crt.sh"). Envia o domínio ao Internet Archive e ao crt.sh.
+- **Aviso também para lojas confiáveis (80% ou mais), no popup:** "Só avisar sobre sites suspeitos" (padrão), "Mostrar também um selo verde
+  pequeno nos confiáveis" ou "Mostrar o aviso total até nos confiáveis" (tela verde "Esta loja parece confiável", com as duas listas).
+  Aparece uma vez por site por dia e só em páginas de compra. O popup tem botões para ver os dois exemplos.
+- Testes: `node ml/testar_confirmacoes.js` (18) e o teste no Chrome.
+
 ## v3.16.4: limite de 80%, layout verde do Reclame Aqui e recarga automática
 
 - **Confiável a partir de 80%** (antes 90%, desde a v3.3). Rigor normal continua 60%. Mudou em `limiteConfianca` (background.js), na tela de

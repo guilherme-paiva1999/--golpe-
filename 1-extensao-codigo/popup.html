@@ -73,6 +73,14 @@
     <option value="2">Mais proteção</option>
     <option value="1">Máxima</option>
   </select>
+  <label for="avisoConfiaveis">Avisos para lojas confiáveis (80% ou mais)</label>
+  <select id="avisoConfiaveis">
+    <option value="suspeitos">Só avisar sobre sites suspeitos</option>
+    <option value="selo">Mostrar também um selo verde pequeno nos confiáveis</option>
+    <option value="total">Mostrar o aviso total até nos confiáveis</option>
+  </select>
+  <small>Nos confiáveis, o aviso aparece uma vez por site por dia e só em páginas de compra.</small>
+  <label for="confirmacoes"><input type="checkbox" id="confirmacoes"> Conferir também no Internet Archive, no ranking Tranco e no crt.sh<br><small>Mostra há quanto tempo o site existe e se é muito visitado. Envia o domínio ao Internet Archive e ao crt.sh. O Tranco é local.</small></label>
   <label for="rigor">Rigor dos avisos</label>
   <select id="rigor">
     <option value="alto">Alto: todo site é suspeito até provar o contrário</option>
@@ -95,6 +103,8 @@
   <button id="demoAtencao" type="button">Aviso de atenção</button>
   <button id="demoPerigo" type="button">Aviso de perigo</button>
   <button id="demoPagamento" type="button">Aviso de pagamento</button>
+  <button id="demoConfiavel" type="button">Aviso de loja confiável</button>
+  <button id="demoSelo" type="button">Selo de loja confiável</button>
   <button id="demoBloqueio" type="button">Tela de bloqueio</button>
   <small>Só para ver como ficam. Use "Modo simples" acima para comparar.</small>
 </section>

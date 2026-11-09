@@ -1,7 +1,7 @@
 'use strict';
 
 const $ = (id) => document.getElementById(id);
-const PADRAO = { limite: 3, consultaIdade: false, imagens: false, modoSimples: false, rigor: 'alto', perfis: [], vozAutomatica: false, daltonico: false, raAuto: true };
+const PADRAO = { limite: 3, consultaIdade: false, imagens: false, modoSimples: false, rigor: 'alto', perfis: [], vozAutomatica: false, daltonico: false, raAuto: true, avisoConfiaveis: 'suspeitos', confirmacoes: true };
 const P = self.EGolpePessoa;
 const TEXTO = { ok: 'Nenhum sinal forte de golpe', atencao: 'Atenção: confira antes de pagar', perigo: 'Provável golpe' };
 
@@ -120,6 +120,10 @@ async function iniciar() {
   $('limite').value = String(cfg.limite);
   $('idade').checked = cfg.consultaIdade;
   $('raAuto').checked = cfg.raAuto;
+  $('avisoConfiaveis').value = cfg.avisoConfiaveis;
+  $('avisoConfiaveis').addEventListener('change', () => salvar({ avisoConfiaveis: $('avisoConfiaveis').value }));
+  $('confirmacoes').checked = cfg.confirmacoes !== false;
+  $('confirmacoes').addEventListener('change', () => salvar({ confirmacoes: $('confirmacoes').checked }));
   $('raAuto').addEventListener('change', () => salvar({ raAuto: $('raAuto').checked }));
   $('rigor').value = cfg.rigor;
   $('rigor').addEventListener('change', () => salvar({ rigor: $('rigor').value }));
@@ -153,6 +157,8 @@ async function iniciar() {
   $('demoAtencao').addEventListener('click', () => demo('atencao'));
   $('demoPerigo').addEventListener('click', () => demo('perigo'));
   $('demoPagamento').addEventListener('click', () => demo('pagamento'));
+  $('demoConfiavel').addEventListener('click', () => demo('confiavel'));
+  $('demoSelo').addEventListener('click', () => demo('selo'));
   $('demoBloqueio').addEventListener('click', () => {
     chrome.tabs.create({ url: chrome.runtime.getURL('bloqueado.html') + '?u=' + encodeURIComponent('https://nubank-atualizar-cadastro.xyz/login') });
   });

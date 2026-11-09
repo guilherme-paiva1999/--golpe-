@@ -27,6 +27,7 @@ node ml/testar_cnpj.js
 node ml/testar_alfabetos.js
 node ml/testar_loja.js
 node ml/testar_ra_nota.js
+node ml/testar_confirmacoes.js
 node ml/testar_modelo_pagina.js
 node ml/testar_modelo_pagina_extensao.js
 ```
@@ -64,6 +65,10 @@ As capturas de tela ficam em `teste-real/capturas/` (não vão para o GitHub).
   **modelo da página** (regressão logística com texto + características; AUC 0,92, ~52% dos golpes com 2% de falsos alertas).
   A **rede neural foi testada e não ganhou** do clássico com estes dados (`8-treino-ml/README.md`). Sem página para ler,
   vale o modelo do nome do site (~10% dos golpes com ~1% de falsos alertas).
+- **Duas listas (contra/a favor) e confirmações abertas** (3.17.0, pedido do Guilherme): ranking Tranco local, Internet Archive e crt.sh só
+  mostram linhas, não mudam a porcentagem. Reclame Aqui é um cartão verde só. Opção de mostrar o aviso também nas lojas confiáveis.
+  Meta do Guilherme: "a melhor verificação do mercado". Pendente: Site Confiável (siteconfiavel.com.br não abre neste ambiente; falta o
+  endereço da página de resultado e uma foto, enviados por ele).
 - **Confiança da loja parte da empresa** (3.16.0, pedido do Guilherme): CNPJ ativo: menos de 5 anos = baixa (35 a 50%), 5 a 10 = média (50 a 70%), 10 ou mais = alta
   (70%) e a pressão não pesa; sem CNPJ ativo = cai muito (parte de 20% e só cai); pressão pesa 100% até 5 anos e perde o peso até 10 anos. Não desfazer sem combinar. `node ml/testar_loja.js`.
 - **Nota do Reclame Aqui no aviso** (3.16.0, opção desligada): lê o JSON-LD público; não contorna o desafio anti-robô do Cloudflare.

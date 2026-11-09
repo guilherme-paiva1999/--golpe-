@@ -7,7 +7,7 @@
 
   // ---------- Estado e configuração ----------
   let ativo = true;
-  let config = { limite: 3, imagens: false, modoSimples: false, vozAutomatica: false, daltonico: false, raAuto: true };
+  let config = { limite: 3, imagens: false, modoSimples: false, vozAutomatica: false, daltonico: false, raAuto: true, avisoConfiaveis: 'suspeitos', confirmacoes: true };
   let pessoa = null;                       // pessoa de confiança (fica só neste computador)
   let siteRes = null;
   let avisoSite = null;
@@ -66,6 +66,32 @@
     .tela{position:fixed;inset:0;overflow-y:auto;color:#fff;font:19px/1.6 Arial,Helvetica,sans-serif;text-align:left;
       --fundo:#7f1d1d;--escuro:rgba(0,0,0,.25);background:var(--fundo);padding:28px 20px 48px}
     .tela.atencao{--fundo:#7a4a00}
+    .tela.ok{--fundo:#14532d}
+    /* Duas listas bem visíveis: o que pesa contra (vermelho) e o que pesa a favor (verde) */
+    .cartao{margin-top:18px;border-radius:10px;padding:14px 18px;color:#111}
+    .cartao h3{margin:0 0 8px;font-size:1.15em;display:flex;align-items:center;gap:10px}
+    .cartao ul{list-style:none;margin:0;padding:0}
+    .cartao li{position:relative;padding:7px 0 7px 36px;font-size:.98em;line-height:1.4}
+    .cartao li::before{position:absolute;left:0;top:7px;width:26px;height:26px;border-radius:50%;text-align:center;line-height:26px;font-weight:bold;color:#fff}
+    .cartao.contra{background:#fde7e7;border-left:10px solid #e53935}
+    .cartao.contra h3{color:#b71c1c}
+    .cartao.contra li::before{content:'✕';background:#e53935}
+    .cartao.favor{background:#e4f6e8;border-left:10px solid #2e9e4f}
+    .cartao.favor h3{color:#14532d}
+    .cartao.favor li::before{content:'✓';background:#2e9e4f}
+    .tela.daltonico .cartao.contra{background:#fff3e0;border-left-color:#e69f00}.tela.daltonico .cartao.contra h3{color:#6b4500}.tela.daltonico .cartao.contra li::before{background:#000}
+    .tela.daltonico .cartao.favor{background:#dcecf8;border-left-color:#0072b2}.tela.daltonico .cartao.favor h3{color:#00507d}.tela.daltonico .cartao.favor li::before{background:#0072b2}
+    /* Reclame Aqui: um cartão verde só (a nota, quando existe, e o link para conferir) */
+    .racard{display:flex;align-items:flex-start;gap:14px;margin-top:18px;background:#056734;color:#fff;border:2px solid #056734;border-radius:10px;padding:14px 20px;font-weight:bold;text-decoration:none;cursor:pointer}
+    .racard .racorpo{display:flex;flex-direction:column;gap:6px}
+    .racard .ratopo{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .racard .raconfira{text-decoration:underline}
+    .racard:focus-visible{outline:3px solid #fff;outline-offset:3px}
+    .selo .racard{margin-top:10px;padding:10px 14px;font-size:.95em}
+    .selo{max-width:440px;margin:0 16px 16px 0;background:#14532d;color:#fff;border-radius:10px;padding:14px 16px;box-shadow:0 4px 18px rgba(0,0,0,.4);font-size:16px;line-height:1.45;text-align:left}
+    .selo.daltonico{background:#1e3a5f}
+    .selo .cab{gap:10px}.selo .ico{width:34px;height:34px}.selo .t{font-weight:bold;font-size:1.05em}.selo .passo{margin-top:8px;font-size:.92em}
+    .selo button{margin:10px 0 0;font-size:15px;padding:6px 12px;background:none;color:#fff;border:1px solid #fff}
     .tela.daltonico{--fundo:#1e3a5f}
     .tela.grande{font-size:23px}
     .miolo{max-width:640px;margin:0 auto}
@@ -173,11 +199,14 @@
   const PASSOS = {
     perigo: 'Feche esta página. Não digite senha, CPF nem dados do cartão. Se chegou por mensagem, apague a mensagem.',
     atencao: 'Já conferimos o CNPJ e o dono deste endereço para você (veja abaixo). Só pague se estiver tudo certo.',
+    ok: 'Já conferimos esta loja e ela passou nas verificações. Mesmo assim, olhe os dados abaixo antes de pagar.',
     atencaoSemConf: 'Não digite senha nem dados do cartão enquanto não tiver certeza de que este é o endereço certo.'
   };
 
   // Desenhos fixos do cartaz (texto estático da extensão, nunca vindo da página).
   const DESENHOS = {
+    ok: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" class="ico" aria-hidden="true">' +
+      '<circle cx="16" cy="16" r="14" fill="#fff"/><path d="M9.500 16.500l4.500 4.500 8.500-9.500" fill="none" stroke="#14532d" stroke-width="3.400" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     perigo: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" class="ico" aria-hidden="true">' +
       '<path d="M11 2h10l9 9v10l-9 9H11l-9-9V11z" fill="#fff"/><path d="M11.5 11.5l9 9M20.5 11.5l-9 9" stroke="#b42323" stroke-width="3.4" stroke-linecap="round"/></svg>',
     atencao: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" class="ico" aria-hidden="true">' +
@@ -206,6 +235,51 @@
     return span;
   }
 
+  const chipRA = () => {
+    const logo = el('img', { src: chrome.runtime.getURL('icons/reclameaqui.png'), alt: '' });
+    const chip = el('span', { class: 'logo-ra', 'aria-hidden': 'true' }, logo);
+    logo.addEventListener('error', () => chip.remove());        // se a página bloquear a imagem, fica só o texto
+    return chip;
+  };
+  // Uma linha de confirmação é "a favor" quando achou algo bom; senão, "contra" (mesma regra do background.js).
+  const linhaFavor = (t) => /conferido na Receita Federal|aparece nos arquivos desde|está entre os|primeiro certificado público deste domínio é de \d{4}/.test(String(t));
+  // Cartão de lista: tipo 'contra' (vermelho) ou 'favor' (verde); some quando está vazio; itens podem chegar depois.
+  function cartaoLista(tipo, titulo, itens) {
+    const ul = el('ul', {});
+    const h = el('span', {});
+    const raiz = el('div', { class: 'cartao ' + tipo }, el('h3', {}, h), ul);
+    let n = 0;
+    const add = (t) => { if (typeof t !== 'string' || !t) return; n++; ul.append(el('li', {}, t)); h.textContent = titulo + ' (' + n + ')'; raiz.hidden = false; };
+    raiz.hidden = true;
+    (itens || []).forEach(add);
+    return { el: raiz, add };
+  }
+  // Cartão verde ÚNICO do Reclame Aqui: em cima a nota (ou a mensagem de que ainda não há análise), embaixo "Confira você mesmo".
+  function cartaoRA(dominio) {
+    const topo = el('span', { class: 'ratopo' });
+    topo.hidden = true;
+    const raiz = el('a', { href: self.EGolpeRA.link(dominio), target: '_blank', rel: 'noopener', class: 'racard' }, chipRA(),
+      el('span', { class: 'racorpo' }, topo, el('span', { class: 'raconfira' }, '→ Confira você mesmo no Reclame Aqui')));
+    return { el: raiz, topo: (nodes) => { topo.replaceChildren(...nodes); topo.hidden = false; } };
+  }
+  // Nota do Reclame Aqui (opcional): consulta em segundo plano e entrega o conteúdo do topo do cartão.
+  function pedirNotaRA(entregar) {
+    if (!config.raAuto) return;
+    enviar({ tipo: 'ra-nota' }).then((ra) => {
+      if (!ra || !ra.ok || !/^https:\/\/www\.reclameaqui\.com\.br\/detector-site-confiavel\/[a-z0-9.-]+$/.test(ra.link || '')) return;
+      const semNota = ra.bloqueado ? 'O Reclame Aqui não deixou consultar a nota automaticamente.'
+        : ra.nota === undefined ? 'O Reclame Aqui ainda não analisou este site.' : '';
+      entregar(semNota ? [el('span', {}, semNota)]
+        : [el('span', {}, 'De acordo com o Reclame Aqui:'), escudos(ra.nota), el('span', {}, ra.nota + ' de 5 escudos (' + ra.rotulo + ')')]);
+    });
+  }
+  // Confirmações abertas (Tranco, Internet Archive, crt.sh): cada linha entra quando chega.
+  function pedirConfirmacoes(entregarLinha) {
+    if (config.confirmacoes === false) return;
+    enviar({ tipo: 'confirmacoes' }).then((r) => { if (r && Array.isArray(r.linhas)) r.linhas.filter((l) => typeof l === 'string').slice(0, 3).forEach(entregarLinha); });
+    enviar({ tipo: 'confirmacao-crt' }).then((r) => { if (r && typeof r.linha === 'string') entregarLinha(r.linha); });
+  }
+
   function barraConf(valor, limite) {
     const fill = el('i', {}); fill.style.width = Math.max(0, Math.min(100, valor)) + '%';
     const marca = el('b', {}); marca.style.left = 'calc(' + limite + '% - 2px)';
@@ -215,10 +289,12 @@
   function mostrarAvisoSite(res) {
     if (avisoSite) return;
     const perigo = res.nivel === 'perigo';
-    const nivel = perigo ? 'perigo' : 'atencao';
+    const confiavel = res.nivel === 'ok';                      // v3.17: opção "mostrar o aviso total também nos confiáveis"
+    const nivel = confiavel ? 'ok' : perigo ? 'perigo' : 'atencao';
     const simples = !!config.modoSimples;
     const motivos = res.motivos.slice(0, simples ? 2 : 4);
-    const titulo = res.comercio
+    const titulo = confiavel ? 'Esta loja parece confiável'
+      : res.comercio
       ? (perigo ? 'Esta loja tem cara de golpe' : 'Esta loja ainda não provou ser confiável')
       : (perigo ? 'Este site pode ser um golpe' : 'Este site é suspeito');
     // Porcentagem: só é confiável quem chega ao limite (80% ou mais no rigor padrão).
@@ -259,16 +335,11 @@
     const dominioRA = (res.dominio || location.hostname).replace(/^www\./, '');
     // Botão grande: uma fonte externa, além do nosso aviso. Verde da marca, com a logo numa etiqueta branca.
     // v3.16.3: um só botão verde do Reclame Aqui: "Confira você mesmo" (link direto para a nota do site)
-    const chipRA = () => {
-      const logo = el('img', { src: chrome.runtime.getURL('icons/reclameaqui.png'), alt: '' });
-      const chip = el('span', { class: 'logo-ra', 'aria-hidden': 'true' }, logo);
-      logo.addEventListener('error', () => chip.remove());        // se a página bloquear a imagem, fica só o texto
-      return chip;
-    };
-    const ra = el('a', { href: self.EGolpeRA.link(dominioRA), target: '_blank', rel: 'noopener', class: 'b ra' }, chipRA(), el('span', {}, '→ Confira você mesmo no Reclame Aqui'));
-    const acoes = el('div', { class: 'acoes' }, voltar);
+    const raCard = cartaoRA(dominioRA);
+    const entrar = el('button', { type: 'button', class: 'b seguro', onclick: () => { enviar({ tipo: 'parar-fala' }); fechar(); } }, 'Continuar para a loja');
+    const acoes = el('div', { class: 'acoes' }, confiavel ? entrar : voltar);
     const P = self.EGolpePessoa;
-    if (P && P.valida(pessoa)) {
+    if (!confiavel && P && P.valida(pessoa)) {
       const msg = P.mensagem(pessoa.nome, location.href);
       const link = P.linkWhats(pessoa, msg) || P.linkEmail(pessoa, msg);
       acoes.append(el('button', {
@@ -278,55 +349,75 @@
     }
     // v3.15: abre o site oficial da marca imitada (endereço escrito na extensão, nunca tirado da página)
     const oficial = res.oficial && /^[a-z0-9.-]+$/.test(res.oficial.host || '') ? res.oficial : null;
-    if (oficial) {
+    if (oficial && !confiavel) {
       acoes.append(el('button', {
         type: 'button', class: 'b',
         onclick: () => window.open('https://' + oficial.host + '/', '_blank', 'noopener')
       }, el('span', {}, 'Abrir o site oficial (' + oficial.host + ')')));
     }
-    acoes.append(ra);
     const conferencia = Array.isArray(res.conferencia) ? res.conferencia.filter((x) => typeof x === 'string').slice(0, 3) : [];
     const passoTexto = nivel === 'atencao' && !conferencia.length ? PASSOS.atencaoSemConf : PASSOS[nivel];
-    const textoVoz = 'Pare. ' + titulo + '. ' + (confTexto ? confTexto + ' ' : '') + motivos.join(' ') + ' O que fazer: ' + passoTexto +
+    const textoVoz = (confiavel ? 'Tudo certo. ' : 'Pare. ') + titulo + '. ' + (confTexto ? confTexto + ' ' : '') + motivos.join(' ') + ' O que fazer: ' + passoTexto +
       (conferencia.length ? ' ' + conferencia.join(' ') : '');
     const ouvir = botaoOuvir(textoVoz);
     if (ouvir) ouvir.className = 'leve';
+    // v3.17: duas listas coloridas (o que pesa contra e o que pesa a favor). O que chega depois (Tranco, Internet Archive, crt.sh) entra na lista certa.
+    const limiteItens = simples ? 3 : 6;
+    const separado = Array.isArray(res.contra) || Array.isArray(res.favor)
+      ? { contra: res.contra || [], favor: res.favor || [] }
+      : { contra: res.motivos.filter((m) => !/^A favor:/.test(m)).map((m) => m.replace(/^Contra:\s*/, '')), favor: res.motivos.filter((m) => /^A favor:/.test(m)).map((m) => m.replace(/^A favor:\s*/, '')) };
+    const cartaoContra = cartaoLista('contra', '⚠ Pontos de atenção', separado.contra.slice(0, limiteItens));
+    const cartaoFavor = cartaoLista('favor', '✓ Pontos a favor', separado.favor.slice(0, limiteItens));
 
 
     const tela = el('div', {
-      class: 'tela ' + nivel + (simples ? ' grande' : '') + (config.daltonico ? ' daltonico' : ''), role: 'alertdialog', 'aria-modal': 'true', 'aria-labelledby': 'pg-tit'
+      class: 'tela ' + nivel + (simples ? ' grande' : '') + (config.daltonico ? ' daltonico' : ''), role: confiavel ? 'dialog' : 'alertdialog', 'aria-modal': 'true', 'aria-labelledby': 'pg-tit'
     },
       el('div', { class: 'miolo' },
         el('div', { class: 'cab' }, desenho(nivel),
-          el('div', {}, el('div', { class: 'rotulo' }, perigo ? 'PERIGO' : 'ATENÇÃO'), el('div', { class: 'h1', id: 'pg-tit' }, titulo))),
+          el('div', {}, el('div', { class: 'rotulo' }, confiavel ? 'CONFIÁVEL' : perigo ? 'PERIGO' : 'ATENÇÃO'), el('div', { class: 'h1', id: 'pg-tit' }, titulo))),
         el('div', { class: 'host' }, location.hostname),
         ...(confNum === null ? [] : [el('div', { class: 'conf' },
           el('div', { class: 'conf-linha' }, el('span', { class: 'num' }, confNum + '%'), el('span', {}, 'de confiança'),
             el('span', { class: 'conf-txt' }, '· confiável só com ' + limiteConf + '% ou mais')),
           barraConf(confNum, limiteConf))]),
         el('p', { class: 'texto' }, passoTexto),
-        el('ul', { class: 'lista' }, ...motivos.map((m) => el('li', {}, m))),
-        ...(conferencia.length ? [el('div', { class: 'passo' }, el('b', {}, 'Já conferimos por você: '), ...conferencia.map((l) => el('div', {}, l)))] : []),
+        cartaoContra.el,
+        cartaoFavor.el,
+        raCard.el,
         acoes,
         ...(ouvir ? [ouvir] : []),
-        continuar));
+        ...(confiavel ? [] : [continuar])));
     root.appendChild(tela);
     document.documentElement.appendChild(host);
     avisoSite = host;
-    voltar.focus({ preventScroll: true });                       // Enter = ação segura; leitor de tela anuncia o alerta
+    (confiavel ? entrar : voltar).focus({ preventScroll: true });   // Enter = ação segura; leitor de tela anuncia o alerta
     if (config.vozAutomatica) enviar({ tipo: 'falar', texto: textoVoz });
-    // v3.16 (opcional): nota do Reclame Aqui, consultada em segundo plano e mostrada aqui, com o link para a pessoa conferir
-    if (config.raAuto && res.comercio) {
-      enviar({ tipo: 'ra-nota' }).then((ra) => {
-        if (!ra || !ra.ok || !/^https:\/\/www\.reclameaqui\.com\.br\/detector-site-confiavel\/[a-z0-9.-]+$/.test(ra.link || '')) return;
-        const semNota = ra.bloqueado ? 'O Reclame Aqui não deixou consultar a nota automaticamente.'
-          : ra.nota === undefined ? 'O Reclame Aqui ainda não analisou este site.' : '';
-        const caixa = el('div', { class: 'notara' }, chipRA(),
-          ...(semNota ? [el('span', {}, semNota)]
-            : [el('span', {}, 'De acordo com o Reclame Aqui:'), escudos(ra.nota), el('span', {}, ra.nota + ' de 5 escudos (' + ra.rotulo + ')')]));
-        acoes.before(caixa);
-      });
+    if (res.comercio) {
+      pedirNotaRA((topo) => raCard.topo(topo));
+      pedirConfirmacoes((linha) => (linhaFavor(linha) ? cartaoFavor : cartaoContra).add(linha));
     }
+  }
+
+  // v3.17: selo pequeno e verde para loja confiável ("estamos de olho"), no canto da página, sem travar nada
+  function mostrarSeloOk(res) {
+    const { host, root } = criarCaixa({ position: 'fixed', bottom: '0', right: '0', 'z-index': '2147483647', display: 'block' });
+    const confNum = typeof res.confianca === 'number' ? res.confianca : null;
+    const conferencia = Array.isArray(res.conferencia) ? res.conferencia.filter((x) => typeof x === 'string').slice(0, 2) : [];
+    const blocoConf = el('div', { class: 'passo' }, ...conferencia.map((l) => el('div', {}, l)));
+    blocoConf.hidden = !conferencia.length;
+    const raCard = cartaoRA((res.dominio || location.hostname).replace(/^www\./, ''));
+    const selo = el('div', { class: 'selo' + (config.daltonico ? ' daltonico' : ''), role: 'status', 'aria-live': 'polite' },
+      el('div', { class: 'cab' }, desenho('ok'),
+        el('div', {}, el('div', { class: 't' }, 'Isso é golpe? está de olho: esta loja parece confiável'),
+          ...(confNum === null ? [] : [el('div', {}, confNum + '% de confiança (confiável a partir de ' + (res.limite || 80) + '%)')]))),
+      blocoConf,
+      raCard.el,
+      el('button', { type: 'button', onclick: () => host.remove() }, 'Fechar'));
+    root.appendChild(selo);
+    document.documentElement.appendChild(host);
+    pedirNotaRA((topo) => raCard.topo(topo));
+    pedirConfirmacoes((linha) => { blocoConf.hidden = false; blocoConf.append(el('div', {}, linha)); });
   }
 
   // ---------- 2) Página pedindo pagamento ----------
@@ -502,7 +593,20 @@
     ultimoEnvio = chave;
     const res = await enviar({ tipo: 'avaliar-pagina', host: location.hostname, protocolo: location.protocol, url: location.href, sinais,
       medidas: medidasDaPagina() });
-    if (res) { siteRes = res; if (res.nivel !== 'ok') mostrarAvisoSite(res); }
+    if (res) {
+      siteRes = res;
+      if (res.nivel !== 'ok') mostrarAvisoSite(res);
+      else if (res.comercio && !res.conhecido && !res.permitido && config.avisoConfiaveis && config.avisoConfiaveis !== 'suspeitos') {
+        // v3.17: opção "mostrar também nos confiáveis" (selo pequeno ou aviso total), uma vez por site por dia
+        const { okVisto = {} } = await chrome.storage.local.get('okVisto');
+        if (!okVisto[location.hostname] || Date.now() - okVisto[location.hostname] > 86400000) {
+          okVisto[location.hostname] = Date.now();
+          if (Object.keys(okVisto).length > 200) for (const k of Object.keys(okVisto)) if (k !== location.hostname) delete okVisto[k];
+          await chrome.storage.local.set({ okVisto });
+          if (config.avisoConfiaveis === 'total') mostrarAvisoSite(res); else mostrarSeloOk(res);
+        }
+      }
+    }
   }
 
   // ---------- 3) Posts, imagens e vídeos ----------
@@ -650,7 +754,16 @@
   };
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (!msg || msg.tipo !== 'demo') return;
-    if (msg.nivel === 'pagamento') {
+    if (msg.nivel === 'confiavel' || msg.nivel === 'selo') {          // v3.17: exemplo de loja confiável (aviso total ou selo)
+      if (fecharAvisoAtual) fecharAvisoAtual();
+      avisoSite = null;
+      const exemplo = { nivel: 'ok', comercio: true, dominio: location.hostname, confianca: 87, limite: 80,
+        motivos: ['A favor: empresa ativa na Receita Federal (LOJA EXEMPLO), aberta há 15 anos: a confiança parte de 70%.'],
+        conferencia: ['CNPJ 11.222.333/0001-81 (do dono do site no registro.br) conferido na Receita Federal: LOJA EXEMPLO, ativa, aberta há 15 anos.'],
+        contra: ['A página usa mensagens de pressão (tempo curto, poucas unidades), mas a empresa é antiga e ativa, então isso pesa menos.', 'Não achamos política de trocas, privacidade ou entrega.'],
+        favor: ['CNPJ 11.222.333/0001-81 (do dono do site no registro.br) conferido na Receita Federal: LOJA EXEMPLO, ativa, aberta há 15 anos.', 'O site existe há mais de 10 anos.', 'Usa conexão segura (cadeado).', 'Tem contato claro (e-mail, telefone ou endereço).'] };
+      if (msg.nivel === 'selo') mostrarSeloOk(exemplo); else mostrarAvisoSite(exemplo);
+    } else if (msg.nivel === 'pagamento') {
       mostrarAvisoPagamento();
     } else if (MOTIVOS_DEMO[msg.nivel]) {
       if (fecharAvisoAtual) fecharAvisoAtual();

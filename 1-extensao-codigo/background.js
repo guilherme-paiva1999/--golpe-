@@ -13,7 +13,7 @@ if (typeof importScripts === 'function') importScripts('alfabetos.js', 'modelo.j
 
 // ---------- Configuração ----------
 const CONFIG_PADRAO = { limite: 3, consultaIdade: false, imagens: false, modoSimples: false, rigor: 'alto',
-  perfis: [], vozAutomatica: false, daltonico: false, raAuto: true };
+  perfis: [], vozAutomatica: false, daltonico: false, raAuto: true, avisoConfiaveis: 'suspeitos', confirmacoes: true };
 const TTL_CACHE_MS = 6 * 3600 * 1000;
 const LIMITE_PERIGO = 70;
 const LIMITE_ATENCAO = 30;
@@ -626,21 +626,22 @@ function pontuarConfianca(sinais, dias, protocolo, pontosDoEndereco, gratuito, o
   const alertas = [], faltou = [];
   const pesoPressao = opcoes.pesoPressao === undefined ? 1 : opcoes.pesoPressao;
   let positivos = 0, negativos = 0;
+  const favoraveis = [];                         // v3.17: o que a loja tem a favor, em frases, para a lista verde
   const add = (d) => { if (d >= 0) positivos += d; else negativos -= d; };
   if (gratuito) { add(-15); faltou.push('A loja está em hospedagem gratuita, onde qualquer pessoa cria páginas. A idade do serviço não prova a idade da loja.'); }
   else if (dias === null || dias === undefined) faltou.push('Não conseguimos provar há quanto tempo esta loja existe.');
-  else if (dias >= 1095) add(35);
-  else if (dias >= 365) add(25);
+  else if (dias >= 1095) { add(35); favoraveis.push('O site existe há mais de ' + Math.floor(dias / 365) + ' anos.'); }
+  else if (dias >= 365) { add(25); favoraveis.push('O site existe há mais de 1 ano.'); }
   else if (dias >= 180) { add(10); faltou.push('Esta loja tem menos de 1 ano de vida.'); }
   else if (dias >= 90) faltou.push('Esta loja tem menos de 6 meses de vida.');
   else if (dias >= 30) { add(-25); faltou.push('Esta loja tem só ' + Math.round(dias) + ' dias de vida.'); }
   else { add(-40); faltou.push('Esta loja foi criada há apenas ' + Math.max(1, Math.round(dias)) + ' dias.'); }
-  if (protocolo === 'https:') add(10); else faltou.push('O site não usa conexão segura (sem cadeado).');
-  if (sinais.cnpjValido) add(10); else faltou.push(sinais.cnpjInvalido ? 'O CNPJ que aparece na página é inválido.' : 'Não achamos CNPJ na página.');
-  if (sinais.contato) add(10); else faltou.push('Não achamos contato claro (e-mail, telefone ou endereço).');
-  if (sinais.emailMesmoDominio) add(5);
-  if (sinais.politicas) add(15); else faltou.push('Não achamos política de trocas, privacidade ou entrega.');
-  if (sinais.gateway) add(10);
+  if (protocolo === 'https:') { add(10); favoraveis.push('Usa conexão segura (cadeado).'); } else faltou.push('O site não usa conexão segura (sem cadeado).');
+  if (sinais.cnpjValido) { add(10); favoraveis.push('A página mostra um CNPJ válido.'); } else faltou.push(sinais.cnpjInvalido ? 'O CNPJ que aparece na página é inválido.' : 'Não achamos CNPJ na página.');
+  if (sinais.contato) { add(10); favoraveis.push('Tem contato claro (e-mail, telefone ou endereço).'); } else faltou.push('Não achamos contato claro (e-mail, telefone ou endereço).');
+  if (sinais.emailMesmoDominio) { add(5); favoraveis.push('O e-mail de contato é do próprio site.'); }
+  if (sinais.politicas) { add(15); favoraveis.push('Tem política de trocas, privacidade ou entrega.'); } else faltou.push('Não achamos política de trocas, privacidade ou entrega.');
+  if (sinais.gateway) { add(10); favoraveis.push('Usa um meio de pagamento conhecido.'); }
   if (sinais.formExterno) { add(-20); alertas.push('O formulário envia os seus dados para outro site.'); }
   if (sinais.pressao && pesoPressao > 0) {
     add(-15 * pesoPressao);
@@ -653,7 +654,7 @@ function pontuarConfianca(sinais, dias, protocolo, pontosDoEndereco, gratuito, o
   }
   if (pontosDoEndereco > 0) add(-Math.min(pontosDoEndereco, 40));
   const bruto = positivos - negativos;
-  return { confianca: Math.max(0, Math.min(100, bruto)), bruto, positivos, negativos, motivos: [...alertas, ...faltou] };
+  return { confianca: Math.max(0, Math.min(100, bruto)), bruto, positivos, negativos, favoraveis, motivos: [...alertas, ...faltou] };
 }
 
 // v3.16: a confiança de uma LOJA parte da empresa (CNPJ na Receita Federal).
@@ -862,6 +863,112 @@ function situacaoCnpj(cnpjUsado, empresa, rdap) {
   return empresa.existe && empresa.ativa ? 'ativo' : 'irregular';
 }
 
+// ---------- v3.17: duas listas, o que pesa contra e o que pesa a favor ----------
+// Uma linha de confirmação (CNPJ, Tranco, Internet Archive, crt.sh) é "a favor" quando achou algo bom; senão, "contra".
+function classificarLinha(t) {
+  return /conferido na Receita Federal|aparece nos arquivos desde|está entre os|primeiro certificado público deste domínio é de \d{4}/.test(String(t)) ? 'favor' : 'contra';
+}
+function separarMotivos(motivos, favoraveis, conferencia) {
+  const favor = [...(favoraveis || [])], contra = [];
+  for (const m of motivos || []) {
+    if (/^A favor: empresa ativa na Receita/.test(m)) continue;          // a linha "conferido na Receita Federal" já diz isso, com o CNPJ
+    if (/^A favor:/.test(m)) favor.push(m.replace(/^A favor:\s*/, ''));
+    else contra.push(m.replace(/^Contra:\s*/, ''));
+  }
+  for (const l of conferencia || []) (classificarLinha(l) === 'favor' ? favor : contra).push(l);
+  return { favor: [...new Set(favor)], contra: [...new Set(contra)] };
+}
+
+// ---------- v3.17: confirmações abertas (ranking Tranco, Internet Archive e crt.sh) ----------
+// Três fontes abertas, feitas para máquinas, que confirmam por outro lado o que as outras provas dizem:
+//  - Ranking Tranco (lista aberta dos sites mais visitados): arquivo dentro da extensão (dados/tranco-100k.txt), sem rede.
+//  - Internet Archive (Wayback Machine): desde quando o site aparece nos arquivos da internet.
+//  - crt.sh (certificados públicos): data do primeiro certificado do domínio.
+// Só mostram o que acharam ("Já conferimos por você"); não mudam a porcentagem. Falha ou demora: a linha simplesmente não aparece.
+let trancoMapa = null;
+async function carregarTranco() {
+  if (trancoMapa) return trancoMapa;
+  try {
+    const t = await (await fetch(chrome.runtime.getURL('dados/tranco-100k.txt'))).text();
+    trancoMapa = new Map();
+    t.split('\n').forEach((d, i) => { if (d && d !== '-' && !trancoMapa.has(d)) trancoMapa.set(d, i + 1); });
+  } catch (e) { trancoMapa = new Map(); }
+  return trancoMapa;
+}
+const milhar = (n) => n.toLocaleString('pt-BR');
+function linhaTranco(rank) {
+  if (!rank) return null;                       // fora dos 100 mil: normal para lojas menores, não vira linha
+  const faixa = rank <= 1000 ? 'os 1.000' : rank <= 10000 ? 'os 10 mil' : 'os 100 mil';
+  return 'Ranking Tranco: está entre ' + faixa + ' sites mais visitados do mundo (posição ' + milhar(rank) + ').';
+}
+function textoAnos(anos) { return anos < 1 ? 'menos de 1 ano' : Math.floor(anos) === 1 ? '1 ano' : Math.floor(anos) + ' anos'; }
+// resposta de https://archive.org/wayback/available?url=...&timestamp=19960101  -> linha de texto
+function linhaWayback(j) {
+  const c = j && j.archived_snapshots && j.archived_snapshots.closest;
+  if (!c || !/^\d{14}$/.test(String(c.timestamp || ''))) return 'Internet Archive: não achamos histórico deste site (site novo ou pouco visitado).';
+  const ano = Number(String(c.timestamp).slice(0, 4));
+  const anos = (Date.now() - Date.UTC(ano, Number(String(c.timestamp).slice(4, 6)) - 1, 1)) / (365.25 * 86400000);
+  return 'Internet Archive: o site aparece nos arquivos desde ' + ano + ' (' + textoAnos(anos) + ' de histórico).';
+}
+// lista de certificados do crt.sh (JSON) -> linha de texto (primeiro certificado do domínio)
+function linhaCrt(lista) {
+  if (!Array.isArray(lista) || !lista.length) return 'crt.sh: não achamos certificados públicos deste domínio.';
+  let min = Infinity;
+  for (const c of lista) { const t = Date.parse(String(c.not_before || '') + 'Z'); if (Number.isFinite(t) && t < min) min = t; }
+  if (!Number.isFinite(min)) return null;
+  const dias = (Date.now() - min) / 86400000;
+  const ano = new Date(min).getUTCFullYear();
+  return dias < 90 ? 'crt.sh: o primeiro certificado público deste domínio é de ' + Math.max(1, Math.round(dias)) + ' dias atrás (recente).'
+    : 'crt.sh: o primeiro certificado público deste domínio é de ' + ano + ' (' + textoAnos(dias / 365.25) + ').';
+}
+async function extrasEmCache(dom, campo, ttl, buscar) {
+  const { extras = {} } = await chrome.storage.local.get('extras');
+  const e = (extras[dom] || {})[campo];
+  if (e && Date.now() - e.t < ttl) return e.linha;
+  let linha = null;
+  try { linha = await buscar(); } catch (err) { /* sem resposta: não mostra nada */ }
+  if (linha) {
+    if (Object.keys(extras).length > 400) for (const k of Object.keys(extras)) delete extras[k];
+    extras[dom] = { ...(extras[dom] || {}), [campo]: { t: Date.now(), linha } };
+    await chrome.storage.local.set({ extras });
+  }
+  return linha;
+}
+// Rápidas (Tranco local + Internet Archive): devolve as linhas que conseguiu.
+async function confirmacoesRapidas(host) {
+  const dom = dominioRaiz(String(host || '').replace(/^www\./, ''));
+  if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(dom) || ehIPv4(dom)) return [];
+  const [mapa, wb] = await Promise.all([carregarTranco(), extrasEmCache(dom, 'wayback', 7 * 86400000, async () => {
+    const r = await fetch('https://archive.org/wayback/available?url=' + encodeURIComponent(dom) + '&timestamp=19960101', { signal: AbortSignal.timeout(10000), credentials: 'omit' });
+    if (!r.ok) throw new Error('sem resposta');
+    return linhaWayback(await r.json());
+  })]);
+  const linhas = [];
+  const tr = mapa.size ? linhaTranco(mapa.get(dom)) : null;
+  if (tr) linhas.push(tr);
+  if (wb) linhas.push(wb);
+  return linhas;
+}
+// Lenta (o crt.sh leva de 15 a 25 segundos em domínios grandes): chega depois, quando chega.
+async function confirmacaoCrt(host) {
+  const dom = dominioRaiz(String(host || '').replace(/^www\./, ''));
+  if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(dom) || ehIPv4(dom)) return null;
+  return extrasEmCache(dom, 'crt', 30 * 86400000, async () => {
+    const r = await fetch('https://crt.sh/?q=' + encodeURIComponent(dom) + '&output=json', { signal: AbortSignal.timeout(28000), credentials: 'omit' });
+    if (!r.ok) throw new Error('sem resposta');
+    return linhaCrt(await r.json());
+  });
+}
+// Site da aba que pediu (a própria página, ou a tela de bloqueio dela). Nunca confia em um endereço mandado pela página.
+function hostDoRemetente(sender) {
+  if (!sender || !sender.tab || typeof sender.tab.url !== 'string') return '';
+  try {
+    const u = new URL(sender.tab.url);
+    const alvo = u.href.startsWith(chrome.runtime.getURL('bloqueado.html')) ? new URL(u.searchParams.get('u')) : u;
+    return alvo.hostname.toLowerCase().replace(/^www\./, '');
+  } catch (e) { return ''; }
+}
+
 // ---------- v3.16: nota do Reclame Aqui em segundo plano (opcional) ----------
 // O Detector de Site Confiável publica o veredito de cada site em dados estruturados (schema.org, JSON-LD) na própria página
 // pública: https://www.reclameaqui.com.br/detector-site-confiavel/<site>. A extensão faz UMA consulta comum (sem cookies) e mostra
@@ -1033,8 +1140,10 @@ async function avaliarPagina(host, protocolo, sinais, medidas = null) {
       nivel = 'perigo';
       motivos.unshift('O CNPJ desta loja não existe ou não está ativo na Receita Federal.');
     }
+    const listas = separarMotivos(motivos, c.favoraveis, conf.linhas);
     return { nivel, pontos: 100 - c.confianca, confianca: c.confianca, limite, comercio: true, cnpj,
-      motivos, dominio: r.dominio, conhecido: false, provado: nivel === 'ok' && !internacional, dias, conferencia: conf.linhas, oficial, internacional };
+      motivos, dominio: r.dominio, conhecido: false, provado: nivel === 'ok' && !internacional, dias, conferencia: conf.linhas, oficial, internacional,
+      favor: listas.favor, contra: listas.contra };
   }
   let pontos = r.pontos + (protocolo === 'http:' ? 10 : 0);
   const motivos = [...r.motivos];
@@ -1269,7 +1378,7 @@ async function tratar(msg, sender) {
         try {
           if (new URL(msg.url).hostname.toLowerCase() === host) {
             bloquear(sender.tab.id, msg.url, res.motivos, res.comercio
-              ? { confianca: res.confianca, limite: res.limite, cnpj: res.cnpj, conferencia: res.conferencia, oficial: res.oficial }
+              ? { confianca: res.confianca, limite: res.limite, cnpj: res.cnpj, conferencia: res.conferencia, oficial: res.oficial, favor: res.favor, contra: res.contra }
               : (res.oficial ? { oficial: res.oficial } : null));
           }
         } catch (e) { /* ignora */ }
@@ -1329,17 +1438,23 @@ async function tratar(msg, sender) {
       falar(String(msg.texto || ''));
       return { ok: true };
     case 'ra-nota': {
-      // v3.16 (opcional): consulta em segundo plano o veredito público do Reclame Aqui para o site da aba que pediu
-      // (a própria página da loja ou a tela de bloqueio dela) e devolve a nota. Vem ligado; a pessoa pode desligar no popup.
+      // v3.16: consulta em segundo plano o veredito público do Reclame Aqui para o site da aba que pediu e devolve a nota.
       const cfgRA = await lerConfig();
-      if (!cfgRA.raAuto || !sender.tab || typeof sender.tab.url !== 'string') return { ok: false };
-      let h;
-      try {
-        const u = new URL(sender.tab.url);
-        const alvo = u.href.startsWith(chrome.runtime.getURL('bloqueado.html')) ? new URL(u.searchParams.get('u')) : u;
-        h = alvo.hostname.toLowerCase().replace(/^www\./, '');
-      } catch (e) { return { ok: false }; }
+      const h = hostDoRemetente(sender);
+      if (!cfgRA.raAuto || !h) return { ok: false };
       return await consultarReclameAqui(h);
+    }
+    case 'confirmacoes': {                               // v3.17: Tranco + Internet Archive
+      const cfgC = await lerConfig();
+      const h = hostDoRemetente(sender);
+      if (cfgC.confirmacoes === false || !h) return { linhas: [] };
+      return { linhas: await confirmacoesRapidas(h) };
+    }
+    case 'confirmacao-crt': {                            // v3.17: crt.sh (demora)
+      const cfgC = await lerConfig();
+      const h = hostDoRemetente(sender);
+      if (cfgC.confirmacoes === false || !h) return { linha: null };
+      return { linha: await confirmacaoCrt(h) };
     }
     case 'parar-fala':
       if (chrome.tts) chrome.tts.stop();
