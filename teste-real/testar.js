@@ -144,6 +144,14 @@ const conferir = (nome, cond, extra) => { console.log((cond ? 'OK   ' : 'FALHA '
   conferir('site sem recarregar: ao clicar no produto, o aviso aparece sem apertar F5', avisouSpa, spa.url());
   await spa.close();
 
+  // 3c) Rede social com login, "código de segurança", salário em R$ e link de checkout do Premium: NÃO é loja, não pode avisar nem bloquear
+  const rede = await ctx.newPage();
+  await rede.goto('http://loja-teste.example/rede-social.html');
+  await espera(7000);
+  const avisouRede = rede.url().includes('bloqueado.html') || await rede.evaluate(() => !!document.querySelector('[data-pg]')).catch(() => false);
+  conferir('rede social (login, código de segurança, salário em R$, link de checkout) não avisa nem bloqueia', !avisouRede, rede.url());
+  await rede.close();
+
   // 4) Verificação completa com dados reais (RDAP + BrasilAPI + consumidor.gov.br)
   for (const u of ['https://www.kabum.com.br/', 'https://www.magazineluiza.com.br/']) {
     const v = await bv.evaluate((u) => chrome.runtime.sendMessage({ tipo: 'investigar', url: u }), u);

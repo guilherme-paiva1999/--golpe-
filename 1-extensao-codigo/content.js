@@ -438,7 +438,7 @@
   ];
   const PAGAMENTO = [
     /chave\s+pix/i, /pague\s+(agora|com\s+pix)/i, /finalizar\s+(a\s+)?compra/i, /boleto\s+banc[áa]rio/i,
-    /n[úu]mero\s+do\s+cart[ãa]o/i, /c[óo]digo\s+de\s+seguran[çc]a|\bcvv\b/i, /pagamento\s+(via|por)\s+pix/i, /pix\s+copia\s+e\s+cola/i,
+    /n[úu]mero\s+do\s+cart[ãa]o/i, /c[óo]digo\s+de\s+seguran[çc]a\s+(do|de)\s+cart[ãa]o|\bcv[vc]\b/i,   /* só o código DO CARTÃO: "código de segurança" sozinho aparece em login e verificação em duas etapas (LinkedIn, bancos) */ /pagamento\s+(via|por)\s+pix/i, /pix\s+copia\s+e\s+cola/i,
     /taxa\s+(de\s+)?(libera[cç][aã]o|desbloqueio)/i
   ];
   const CNPJ = /\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}/;
@@ -503,7 +503,7 @@
       const t = (e.innerText || e.value || e.getAttribute('aria-label') || '').trim().slice(0, 60);
       if (t && TEXTO_COMPRA.test(t)) return true;
     }
-    return !!document.querySelector('a[href*="carrinho" i], a[href*="sacola" i], a[href*="/cart" i], a[href*="/bag" i], a[href*="checkout" i], [class*="minicart" i], [id*="minicart" i]');
+    return !!document.querySelector('a[href*="carrinho" i], a[href*="sacola" i], a[href*="/cart" i], a[href*="/bag" i], [class*="minicart" i], [id*="minicart" i]');
   }
 
   function lerSinais() {
@@ -515,9 +515,9 @@
     // v3.8: loja de verdade tem BOTÃO de compra ou link de carrinho. "R$" e "comprar" soltos no texto aparecem em notícias
     // (cotações, "vendido por R$ 22 milhões") e faziam sites de notícias parecerem lojas.
     const compraUI = botaoDeCompra();
-    // v3.15: em site de fora do Brasil (.com etc.), carrinho ou botão de compra já bastam para contar como loja:
-    // muitas lojas internacionais mostram os preços só depois de um clique, e o aviso de "site internacional" precisa aparecer.
-    const venda = compraUI && (preco >= 1 || !/\.br$/i.test(location.hostname));
+    // v3.18.6: loja é página com PREÇO e botão de compra ou carrinho. (Na v3.16 um carrinho já bastava fora do .br, mas isso fazia o LinkedIn
+    // virar "loja": a página tem links de checkout do Premium. Voltou à regra da v3.8.)
+    const venda = preco >= 1 && compraUI;
     const contador = !!document.querySelector('[class*="countdown" i], [id*="countdown" i], [class*="timer" i], [id*="timer" i]');
     const pressao = contador || PRESSAO.some((p) => p.test(texto));
     let formExterno = false, gateway = false;

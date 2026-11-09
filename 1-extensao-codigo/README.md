@@ -180,6 +180,18 @@ node ml/testar_gov_marca.js && node ml/testar_pontuacao.js
 A extensão e o aplicativo passaram a se chamar **Isso é golpe?** (antes: "É Golpe?"), igual aos slides e ao pitch:
 nome no Chrome, popup, boas-vindas, tela de bloqueio, aplicativo, aviso no Reclame Aqui e mensagens para a pessoa de confiança.
 
+## v3.18.6: o LinkedIn não é loja (mais rigor para chamar uma página de loja)
+
+O LinkedIn foi bloqueado sem pedir nada de compra. Reproduzido com uma página que imita o LinkedIn (`teste/rede-social.html`: login, "código de
+segurança" da verificação em duas etapas, vaga com salário em R$ e um link de checkout do Premium): o código antigo bloqueava. Dois sinais fracos
+faziam a página virar "loja":
+- A frase **"código de segurança"** valia como sinal de pagamento (é o CVV do cartão), mas ela aparece em login e verificação em duas etapas de
+  LinkedIn, bancos e outros. Agora só conta "código de segurança **do cartão**", "cvv" ou "cvc".
+- **Link de "checkout"** contava como carrinho, e desde a v3.16 um carrinho bastava, sem preço, para sites fora do .br. Agora o link de checkout
+  sozinho não conta, e loja volta a ser **preço em R$ + botão de compra ou carrinho**, como na v3.8.
+Quem pede cartão, Pix ou vende de verdade continua sendo avisado (testes de loja, SPA e bloqueio seguem passando). Teste novo no Chrome: a página de
+rede social não avisa nem bloqueia.
+
 ## v3.18.5: a mesma loja não pode dar 44% numa página e 74% em outra (caso H&M)
 
 Na H&M, uma página dava 74% e outra 44%. Investigado com os dados reais:
