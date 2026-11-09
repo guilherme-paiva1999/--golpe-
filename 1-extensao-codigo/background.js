@@ -724,31 +724,40 @@ function normalizarNome(s) {
   return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
+// v3.16: duas fontes abertas com os mesmos dados da Receita (BrasilAPI e Minha Receita). As duas são consultadas ao mesmo tempo e vale
+// a primeira que responder: a BrasilAPI chegou a levar 9 segundos para um CNPJ grande (Magazine Luiza) e a consulta falhava.
+function lerCnpj(j) {
+  return { existe: true, ativa: /^ATIVA$/i.test(String(j.descricao_situacao_cadastral || '').trim()),
+    situacao: j.descricao_situacao_cadastral || '', razao: j.razao_social || '', fantasia: j.nome_fantasia || '',
+    abertura: j.data_inicio_atividade || '',
+    // v3.9: atividades econômicas (CNAE principal e secundárias) e MEI
+    cnaes: [j.cnae_fiscal, ...(Array.isArray(j.cnaes_secundarios) ? j.cnaes_secundarios.map((c) => c && c.codigo) : [])]
+      .filter(Boolean).map(String).slice(0, 60),
+    atividade: String(j.cnae_fiscal_descricao || '').slice(0, 160), mei: j.opcao_pelo_mei === true };
+}
+async function buscarCnpjEm(url, cnpj) {
+  const r = await fetch(url + cnpj, { signal: AbortSignal.timeout(12000), credentials: 'omit' });
+  if (r.status === 404) return { existe: false };
+  if (!r.ok) throw new Error('sem resposta ' + r.status);
+  const j = await r.json();
+  if (!j || !j.razao_social) throw new Error('resposta vazia');
+  return lerCnpj(j);
+}
 async function consultarCnpj(cnpj) {
   const { cnpjs = {} } = await chrome.storage.local.get('cnpjs');
   const c = cnpjs[cnpj];
   if (c && Date.now() - c.t < 7 * 86400000) return c.info;
   let info = null;
   try {
-    const r = await fetch('https://brasilapi.com.br/api/cnpj/v1/' + cnpj, { signal: AbortSignal.timeout(6000), credentials: 'omit' });
-    if (r.status === 404) info = { existe: false };
-    else if (r.ok) {
-      const j = await r.json();
-      info = { existe: true, ativa: /^ATIVA$/i.test(String(j.descricao_situacao_cadastral || '').trim()),
-        situacao: j.descricao_situacao_cadastral || '', razao: j.razao_social || '', fantasia: j.nome_fantasia || '',
-        abertura: j.data_inicio_atividade || '',
-        // v3.9: atividades econômicas (CNAE principal e secundárias) e MEI
-        cnaes: [j.cnae_fiscal, ...(Array.isArray(j.cnaes_secundarios) ? j.cnaes_secundarios.map((c) => c && c.codigo) : [])]
-          .filter(Boolean).map(String).slice(0, 60),
-        atividade: String(j.cnae_fiscal_descricao || '').slice(0, 160), mei: j.opcao_pelo_mei === true };
-    }
-  } catch (e) { /* sem resposta: não conta nem a favor nem contra */ }
+    info = await Promise.any([buscarCnpjEm('https://brasilapi.com.br/api/cnpj/v1/', cnpj), buscarCnpjEm('https://minhareceita.org/', cnpj)]);
+  } catch (e) { /* nenhuma fonte respondeu */ }
   if (info) {
     if (Object.keys(cnpjs).length > 500) for (const k of Object.keys(cnpjs)) delete cnpjs[k];
     cnpjs[cnpj] = { t: Date.now(), info };
     await chrome.storage.local.set({ cnpjs });
+    return info;
   }
-  return info;
+  return c ? c.info : null;      // sem resposta agora: usa o último resultado guardado (mesmo velho), se houver
 }
 
 // comercio: soma na confiança (0 a 100). Senão: o contrário nos pontos de risco.
@@ -914,7 +923,7 @@ function conferenciaCnpj({ cnpjPagina, cnpjRegistro, empresa, doRegistro }) {
     return { linhas, diverge };
   }
   const onde = doRegistro ? 'do dono do site no registro.br' : 'mostrado na página';
-  if (!empresa) linhas.push('CNPJ ' + mascaraCnpj(usado) + ' (' + onde + '): a Receita Federal não respondeu agora, confira de novo mais tarde.');
+  if (!empresa) linhas.push('CNPJ ' + mascaraCnpj(usado) + ' (' + onde + '): não conseguimos consultar a Receita Federal agora (os serviços abertos demoraram a responder). Tente de novo em instantes.');
   else if (empresa.existe === false) linhas.push('CNPJ ' + mascaraCnpj(usado) + ' (' + onde + '): não existe na Receita Federal.');
   else if (!empresa.ativa) linhas.push('CNPJ ' + mascaraCnpj(usado) + ' (' + onde + '): situação "' + (empresa.situacao || 'irregular') + '" na Receita Federal.');
   else {

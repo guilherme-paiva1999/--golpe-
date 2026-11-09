@@ -180,6 +180,13 @@ node ml/testar_gov_marca.js && node ml/testar_pontuacao.js
 A extensão e o aplicativo passaram a se chamar **Isso é golpe?** (antes: "É Golpe?"), igual aos slides e ao pitch:
 nome no Chrome, popup, boas-vindas, tela de bloqueio, aplicativo, aviso no Reclame Aqui e mensagens para a pessoa de confiança.
 
+## v3.16.1: consulta do CNPJ mais confiável
+
+No Magazine Luiza o aviso dizia "a Receita Federal não respondeu agora" e a confiança caía: a BrasilAPI levou 8,8 segundos para esse
+CNPJ e a extensão desistia aos 6. Agora a consulta usa **duas fontes abertas ao mesmo tempo** (BrasilAPI e Minha Receita, mesmos dados da
+Receita) e vale a primeira que responder (271 ms no teste), espera até 12 segundos e, se as duas falharem, usa o último resultado
+guardado, mesmo velho. A mensagem de falha também ficou mais clara.
+
 ## v3.16: a confiança da loja parte da empresa; nota do Reclame Aqui no aviso; "Ouvir" só para quem pede
 
 **Nova conta da loja (decisão do Guilherme).** O ponto de partida é a empresa (CNPJ na Receita Federal):
