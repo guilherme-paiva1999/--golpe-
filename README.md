@@ -38,8 +38,9 @@ Veja [`CONTINUAR.md`](CONTINUAR.md): como baixar, instalar, rodar os testes e as
 
 ## Novidades da 3.16.0
 
-- **Nova conta de confiança da loja:** parte da empresa. CNPJ ativo há 10 anos ou mais parte de 70% e as palavras de pressão deixam de
-  pesar; sem CNPJ ativo a loja não é confiável (parte de 50% e só cai); o peso da pressão diminui de forma gradual entre 5 e 10 anos.
+- **Nova conta de confiança da loja:** parte da empresa. CNPJ ativo há 10 anos ou mais parte de 70% (confiança alta; de 5 a 10 anos,
+  média; menos de 5, baixa) e as palavras de pressão deixam de pesar; sem CNPJ ativo a confiança cai muito (parte de 20% e só cai); o
+  peso da pressão diminui de forma gradual entre 5 e 10 anos.
 - **Nota do Reclame Aqui no aviso** (opção desligada): "Segundo o Reclame Aqui: ...", com o link para a pessoa conferir.
 - O botão **"Ouvir o aviso"** só aparece para quem marcou a leitura em voz alta no início.
 

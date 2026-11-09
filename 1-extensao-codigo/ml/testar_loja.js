@@ -1,5 +1,5 @@
-// v3.16: a confiança da loja parte da empresa (CNPJ). Empresa antiga e ativa parte de 70% e a pressão deixa de pesar;
-// sem CNPJ ativo parte de 50% e só cai. As consultas (registro.br e BrasilAPI) são simuladas.
+// v3.16: a confiança da loja parte da empresa (CNPJ): pouca abaixo de 5 anos, média de 5 a 10, alta com 10 ou mais (70%). A pressão deixa de pesar;
+// sem CNPJ ativo a confiança cai muito (parte de 20% e só cai). As consultas (registro.br e BrasilAPI) são simuladas.
 const fs = require('fs'), vm = require('vm'), path = require('path');
 const noop = () => {}, ev = { addListener: noop };
 const chrome = { runtime: { onInstalled: ev, onStartup: ev, onMessage: ev, id: 'x', getPlatformInfo: noop }, alarms: { get: async () => ({}), create: noop, onAlarm: ev },
@@ -34,16 +34,16 @@ const chk = (nome, cond, extra) => { n++; ok += !!cond; console.log((cond ? 'OK 
   chk('empresa de 2 anos: a pressão pesa por inteiro (perde 15)', D0.confianca - D1.confianca === 15, D0.confianca + '% -> ' + D1.confianca + '%');
   const E0 = await av('semcnpj0.com.br', { ...pouco }, '', null);
   const E1 = await av('semcnpj1.com.br', { ...pouco, pressao: true }, '', null);
-  chk('sem CNPJ: confiança de no máximo 50%', E0.confianca <= 50, E0.confianca + '%');
+  chk('sem CNPJ: a confiança cai muito (no máximo 20%)', E0.confianca <= 20, E0.confianca + '%');
   chk('sem CNPJ: a pressão faz cair mais', E1.confianca < E0.confianca, E0.confianca + '% -> ' + E1.confianca + '%');
   chk('sem CNPJ: não é confiável (perigo, sem CNPJ registrado)', E0.nivel === 'perigo' && E0.cnpj === 'nenhum');
   const F = await av('baixada.com.br', { ...tudo }, '99888777000166', '99888777000166');
-  chk('CNPJ baixado: confiança de no máximo 50% e perigo, mesmo com todas as provas', F.confianca <= 50 && F.nivel === 'perigo', F.confianca + '%');
+  chk('CNPJ baixado: confiança de no máximo 20% e perigo, mesmo com todas as provas', F.confianca <= 20 && F.nivel === 'perigo', F.confianca + '%');
   const G = await av('golpe-copiou.com.br', { ...tudo, pressao: true }, '11000000000191', '33000000000100');
   chk('CNPJ de empresa antiga copiado numa loja de outra empresa: não ganha os 70%', G.confianca < 70 && G.motivos.some((m) => /não é o da empresa dona/.test(m)), G.confianca + '%');
   const H = await av('novissima.com.br', { ...tudo }, '44000000000100', '44000000000100');
-  chk('empresa aberta há 4 meses: parte de ~50% e perde pontos por ser nova', H.confianca < 85 && H.motivos.some((m) => /menos de 6 meses/.test(m)), H.confianca + '%');
-  chk('empresa mais antiga parte de uma base maior (29 anos > 7 anos > 2 anos), com as mesmas provas', B.confianca > C0.confianca && C0.confianca > D0.confianca, B.confianca + ' > ' + C0.confianca + ' > ' + D0.confianca);
+  chk('empresa aberta há 4 meses: confiança baixa e perde pontos por ser nova', H.confianca < 85 && H.motivos.some((m) => /menos de 6 meses/.test(m)), H.confianca + '%');
+  chk('mais anos de empresa, mais confiança (29 anos > 7 anos > 2 anos), com as mesmas provas', B.confianca > C0.confianca && C0.confianca > D0.confianca, B.confianca + ' > ' + C0.confianca + ' > ' + D0.confianca);
   console.log(ok + '/' + n + ' como esperado');
   process.exitCode = ok === n ? 0 : 1;
 })();

@@ -183,16 +183,17 @@ nome no Chrome, popup, boas-vindas, tela de bloqueio, aplicativo, aviso no Recla
 ## v3.16: a confiança da loja parte da empresa; nota do Reclame Aqui no aviso; "Ouvir" só para quem pede
 
 **Nova conta da loja (decisão do Guilherme).** O ponto de partida é a empresa (CNPJ na Receita Federal):
-- **CNPJ ativo:** parte de 50% e sobe aos poucos com os anos de empresa, até **70% com 10 anos ou mais**. As provas da página
-  (cadeado, contato, políticas, idade do site...) somam por cima, com peso de 30%.
-- **Sem CNPJ ativo** (não existe, baixado, inapto ou nenhum): já **não é confiável**. Parte de 50% e só cai.
+- **CNPJ ativo, pelos anos de empresa:** menos de 5 anos = confiança **baixa** (parte de 35% a 50%); de 5 a 10 anos = **média** (50% a
+  70%); **10 anos ou mais = alta (70%)**. Sobe aos poucos, sem degraus bruscos. As provas da página (cadeado, contato, políticas,
+  idade do site...) somam por cima, com peso de 30%.
+- **Sem CNPJ ativo** (não existe, baixado, inapto ou nenhum): já **não é confiável** e a confiança **cai muito**: parte de no máximo 20% e só cai.
 - **Palavras de pressão e descontos grandes:** pesam por inteiro (15 pontos cada) quando a empresa não tem CNPJ ativo ou tem até 5 anos;
   vão perdendo peso até 10 anos; **de 10 anos em diante deixam de pesar** ("promoção com prazo" é normal em empresa antiga).
 - Empresa com menos de 6 meses perde 15; menos de 1 ano, 5. Sem atividade de comércio na Receita, perde 10 (como antes).
 - O CNPJ da página que não é o do dono do domínio (registro.br) não ganha a base de idade: protege contra golpe que copia o CNPJ de
   uma empresa antiga. Se a Receita não responde, a conta segue sem a empresa (não pune a loja).
-- Exemplos (testes): empresa de 29 anos com pressão, desconto e todas as provas: 98%; com poucas provas: 87%; 7 anos: 81%, e a
-  pressão tira só uma parte; 2 anos: 71%, e a pressão tira 15; sem CNPJ: 50%, e com pressão 35%.
+- Exemplos (testes): empresa de 29 anos com pressão, desconto e todas as provas: 99%; com poucas provas: 87%; 7 anos: 75%, e a
+  pressão tira só uma parte (66%); 2 anos: 58%, e a pressão tira 15 (43%); sem CNPJ: 20%, e com pressão 5%.
 - Testes: `node ml/testar_loja.js` (12). Substitui, na loja, o `aplicarEmpresa` (continua valendo fora das lojas).
 
 **Nota do Reclame Aqui no aviso (opcional, desligada).** No popup: "Mostrar a nota do Reclame Aqui nos avisos". A extensão consulta

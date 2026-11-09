@@ -644,9 +644,11 @@ function pontuarConfianca(sinais, dias, protocolo, pontosDoEndereco, gratuito, o
 }
 
 // v3.16: a confiança de uma LOJA parte da empresa (CNPJ na Receita Federal).
-//  - CNPJ ativo: parte de 50% e sobe aos poucos com os anos de empresa, até 70% com 10 anos ou mais. As provas da página
-//    (cadeado, contato, políticas, idade do site...) somam por cima, com peso menor.
-//  - Sem CNPJ ativo (não existe, baixado, inapto ou nenhum): já não é confiável. Parte de 50% e só cai (pressão, endereço suspeito...).
+//  - CNPJ ativo, pelos anos de empresa: menos de 5 anos = confiança baixa (parte de 35% a 50%); de 5 a 10 anos = média (50% a 70%);
+//    10 anos ou mais = alta (70%). Sobe aos poucos, sem degraus bruscos. As provas da página (cadeado, contato, políticas, idade do
+//    site...) somam por cima, com peso menor.
+//  - Sem CNPJ ativo (não existe, baixado, inapto ou nenhum): já não é confiável, a confiança cai muito. Parte de no máximo 20% e só
+//    cai (pressão, endereço suspeito...).
 //  - Palavras de pressão e descontos grandes pesam 100% quando a empresa não tem CNPJ ativo ou é nova (até 5 anos) e vão perdendo o
 //    peso até 10 anos; de 10 anos em diante deixam de pesar ("promoção com prazo" é normal em empresa antiga).
 function pesoDaPressao(empresa) {
@@ -657,12 +659,13 @@ function pesoDaPressao(empresa) {
 function confiancaDaLoja(c, empresa, motivos) {
   const ativa = !!(empresa && empresa.existe && empresa.ativa);
   if (!ativa) {
-    if (empresa) motivos.push('Contra: sem CNPJ ativo na Receita Federal a loja não é confiável: a confiança parte de 50% e só cai.');
-    return Math.max(0, Math.min(50, 50 - c.negativos));
+    if (empresa) motivos.push('Contra: sem CNPJ ativo na Receita Federal a loja não é confiável: a confiança cai muito (parte de 20%).');
+    return Math.max(0, 20 - c.negativos);
   }
   const dias = diasDeEmpresa(empresa);
   const anos = (dias || 0) / 365;
-  const base = Math.round(50 + 2 * Math.min(anos, 10));
+  // menos de 5 anos: 35% a 50%; de 5 a 10 anos: 50% a 70%; 10 anos ou mais: 70%
+  const base = Math.round(anos < 5 ? 35 + 3 * anos : anos < 10 ? 50 + 4 * (anos - 5) : 70);
   let conf = base + 0.3 * c.positivos - c.negativos;
   motivos.push('A favor: empresa ativa na Receita Federal (' + (empresa.fantasia || empresa.razao || 'sem nome') +
     (dias !== null ? ', ' + textoIdadeEmpresa(dias) : '') + '): a confiança parte de ' + base + '%.');
