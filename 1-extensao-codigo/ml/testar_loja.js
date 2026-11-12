@@ -37,6 +37,9 @@ const chk = (nome, cond, extra) => { n++; ok += !!cond; console.log((cond ? 'OK 
   const E1 = await av('semcnpj1.com.br', { ...pouco, pressao: true }, '', null);
   chk('sem CNPJ: a confiança cai muito (no máximo 20%)', E0.confianca <= 20, E0.confianca + '%');
   chk('sem CNPJ: a pressão faz cair mais', E1.confianca < E0.confianca, E0.confianca + '% -> ' + E1.confianca + '%');
+  const R = await av('registro.com.br', { ...pouco }, '', '11000000000191');
+  chk('CNPJ só no registro.br: diz que achamos pelo registro.br, sem "Não achamos CNPJ na página."',
+    !R.motivos.includes('Não achamos CNPJ na página.') && R.motivos.some((m) => /não mostra o CNPJ\. Achamos o CNPJ do dono do site pelo registro\.br/.test(m)));
   chk('sem CNPJ: não é confiável (perigo, sem CNPJ registrado)', E0.nivel === 'perigo' && E0.cnpj === 'nenhum');
   const F = await av('baixada.com.br', { ...tudo }, '99888777000166', '99888777000166');
   chk('CNPJ baixado: confiança de no máximo 20% e perigo, mesmo com todas as provas', F.confianca <= 20 && F.nivel === 'perigo', F.confianca + '%');

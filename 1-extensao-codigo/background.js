@@ -1176,6 +1176,12 @@ async function avaliarPagina(host, protocolo, sinais, medidas = null) {
     const empresaDaLoja = conf.donoAtivo ? { ...dono, confirmado: true } : (conf.diverge && empresa ? { ...empresa, abertura: '' } : empresa);
     const c = pontuarConfianca(sinais, dias, protocolo, r.pontos, gratuito, { pesoPressao: pesoDaPressao(empresaDaLoja) });
     const motivos = [...r.motivos, ...c.motivos];
+    // v3.19.2: a página não mostra o CNPJ, mas achamos o do dono do site no registro.br. Diz isso com todas as letras,
+    // para não parecer contradição com o "CNPJ ... conferido" da lista a favor.
+    if (empresa && empresa.doRegistro && !sinais.cnpjInvalido) {
+      const i = motivos.indexOf('Não achamos CNPJ na página.');
+      if (i >= 0) motivos[i] = 'A página não mostra o CNPJ. Achamos o CNPJ do dono do site pelo registro.br (veja nos pontos a favor), mas toda loja on-line precisa mostrar o CNPJ na própria página.';
+    }
     // v3.16: a empresa (CNPJ) é o ponto de partida. Se a Receita não respondeu, vale a conta sem a empresa, sem punir a loja.
     if (!(cnpjUsado && !empresa)) c.confianca = confiancaDaLoja(c, empresaDaLoja, motivos);
     // v3.18: a nota do Reclame Aqui (escudos) entra na conta da menor forma possível: 5 escudos +10, 4 +5, 3 neutro, 2 -5, 1 -10.
