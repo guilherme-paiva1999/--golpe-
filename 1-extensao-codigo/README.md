@@ -180,6 +180,11 @@ node ml/testar_gov_marca.js && node ml/testar_pontuacao.js
 A extensão e o aplicativo passaram a se chamar **Isso é golpe?** (antes: "É Golpe?"), igual aos slides e ao pitch:
 nome no Chrome, popup, boas-vindas, tela de bloqueio, aplicativo, aviso no Reclame Aqui e mensagens para a pessoa de confiança.
 
+## v3.19.3: CNPJ do registro.br confirmado vale como prova
+
+- `pontuarConfianca(..., { cnpjDoRegistro })`: com o CNPJ do dono do domínio (registro.br) existente e ativo na Receita, soma o
+  mesmo que um CNPJ válido na página e não entra "Não achamos CNPJ na página". Teste em `ml/testar_loja.js` (mesma nota nos dois casos).
+
 ## v3.19.2: CNPJ só no registro.br, sem contradição
 
 - Se a página não mostra o CNPJ e o CNPJ veio do dono do domínio no registro.br, a linha de atenção vira "A página não mostra

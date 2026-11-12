@@ -642,7 +642,11 @@ function pontuarConfianca(sinais, dias, protocolo, pontosDoEndereco, gratuito, o
   else if (dias >= 30) { add(-25); faltou.push('Esta loja tem só ' + Math.round(dias) + ' dias de vida.'); }
   else { add(-40); faltou.push('Esta loja foi criada há apenas ' + Math.max(1, Math.round(dias)) + ' dias.'); }
   if (protocolo === 'https:') { add(10); favoraveis.push('Usa conexão segura (cadeado).'); } else faltou.push('O site não usa conexão segura (sem cadeado).');
-  if (sinais.cnpjValido) { add(10); favoraveis.push('A página mostra um CNPJ válido.'); } else faltou.push(sinais.cnpjInvalido ? 'O CNPJ que aparece na página é inválido.' : 'Não achamos CNPJ na página.');
+  // v3.19.3: CNPJ do dono do site (registro.br) confirmado e ativo na Receita vale como prova, mesmo fora da página.
+  // A Receita é a prova mais forte: um número no rodapé qualquer um copia. (CNPJ inválido escrito na página continua contando contra.)
+  if (sinais.cnpjValido) { add(10); favoraveis.push('A página mostra um CNPJ válido.'); }
+  else if (opcoes.cnpjDoRegistro && !sinais.cnpjInvalido) add(10);    // a frase a favor já vem da conferência do CNPJ
+  else faltou.push(sinais.cnpjInvalido ? 'O CNPJ que aparece na página é inválido.' : 'Não achamos CNPJ na página.');
   if (sinais.contato) { add(10); favoraveis.push('Tem contato claro (e-mail, telefone ou endereço).'); } else faltou.push('Não achamos contato claro (e-mail, telefone ou endereço).');
   if (sinais.emailMesmoDominio) { add(5); favoraveis.push('O e-mail de contato é do próprio site.'); }
   if (sinais.politicas) { add(15); favoraveis.push('Tem política de trocas, privacidade ou entrega.'); } else faltou.push('Não achamos política de trocas, privacidade ou entrega.');
@@ -1174,7 +1178,8 @@ async function avaliarPagina(host, protocolo, sinais, medidas = null) {
       empresa, doRegistro: !!(empresa && empresa.doRegistro), dono, grupo, diasSite: dias });
     // Dono do endereço real, ativo e do mesmo grupo: vale ele (confirmado pelo registro.br). Outra empresa, ou dono inexistente ou inativo (CNPJ copiado?): a idade da empresa da página não vale.
     const empresaDaLoja = conf.donoAtivo ? { ...dono, confirmado: true } : (conf.diverge && empresa ? { ...empresa, abertura: '' } : empresa);
-    const c = pontuarConfianca(sinais, dias, protocolo, r.pontos, gratuito, { pesoPressao: pesoDaPressao(empresaDaLoja) });
+    const cnpjDoRegistro = !!(empresa && empresa.doRegistro && empresa.existe && empresa.ativa);
+    const c = pontuarConfianca(sinais, dias, protocolo, r.pontos, gratuito, { pesoPressao: pesoDaPressao(empresaDaLoja), cnpjDoRegistro });
     const motivos = [...r.motivos, ...c.motivos];
     // v3.19.2: a página não mostra o CNPJ, mas achamos o do dono do site no registro.br. Diz isso com todas as letras,
     // para não parecer contradição com o "CNPJ ... conferido" da lista a favor.

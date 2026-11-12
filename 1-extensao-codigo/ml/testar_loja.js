@@ -38,8 +38,12 @@ const chk = (nome, cond, extra) => { n++; ok += !!cond; console.log((cond ? 'OK 
   chk('sem CNPJ: a confiança cai muito (no máximo 20%)', E0.confianca <= 20, E0.confianca + '%');
   chk('sem CNPJ: a pressão faz cair mais', E1.confianca < E0.confianca, E0.confianca + '% -> ' + E1.confianca + '%');
   const R = await av('registro.com.br', { ...pouco }, '', '11000000000191');
-  chk('CNPJ só no registro.br: diz que achamos pelo registro.br, sem "Não achamos CNPJ na página."',
-    !R.motivos.includes('Não achamos CNPJ na página.') && R.motivos.some((m) => /não mostra o CNPJ\. Achamos o CNPJ do dono do site pelo registro\.br/.test(m)));
+  const P = await av('napagina.com.br', { ...pouco }, '11000000000191', '11000000000191');
+  chk('CNPJ só no registro.br e ativo na Receita: nada de "não mostra o CNPJ" nos pontos de atenção',
+    !R.motivos.some((m) => /Não achamos CNPJ na página|não mostra o CNPJ/.test(m)), R.motivos.filter((m) => /CNPJ/.test(m)).join(' | '));
+  chk('CNPJ só no registro.br vale o mesmo que o CNPJ na página (mesma nota)', R.confianca === P.confianca, R.confianca + '% x ' + P.confianca + '%');
+  const RI = await av('invalido.com.br', { ...pouco, cnpjInvalido: true }, '', '11000000000191');
+  chk('CNPJ inválido escrito na página continua como atenção, mesmo com o do registro.br', RI.motivos.some((m) => /CNPJ que aparece na página é inválido/.test(m)));
   chk('sem CNPJ: não é confiável (perigo, sem CNPJ registrado)', E0.nivel === 'perigo' && E0.cnpj === 'nenhum');
   const F = await av('baixada.com.br', { ...tudo }, '99888777000166', '99888777000166');
   chk('CNPJ baixado: confiança de no máximo 20% e perigo, mesmo com todas as provas', F.confianca <= 20 && F.nivel === 'perigo', F.confianca + '%');
