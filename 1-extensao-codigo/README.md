@@ -180,6 +180,15 @@ node ml/testar_gov_marca.js && node ml/testar_pontuacao.js
 A extensão e o aplicativo passaram a se chamar **Isso é golpe?** (antes: "É Golpe?"), igual aos slides e ao pitch:
 nome no Chrome, popup, boas-vindas, tela de bloqueio, aplicativo, aviso no Reclame Aqui e mensagens para a pessoa de confiança.
 
+## v3.19.1: sites oficiais conhecidos
+
+- `CONHECIDOS` ganhou endereços oficiais conferidos fora do .gov.br: tesourodireto.com.br (registrado pela B3, CNPJ
+  09.346.601/0001-25, desde 2003), b3.com.br, bancos (bb, nubank, itau, bradesco, santander, caixa), correios, mercadopago,
+  grandes lojas, picpay, paypal, netflix. Vale para subdomínios (portalinvestidor.tesourodireto.com.br), nunca para
+  imitações (tesourodireto-reserva.com.br). A verificação completa (`investigar`) dá 100% para site conhecido, como o aplicativo.
+- Ponto em aberto: um site legítimo que não está na lista e tem "gov.br" no título ou num cabeçalho (como o botão
+  "Entrar com gov.br") e pede senha ainda pode ser tratado como imitação do governo.
+
 ## v3.19.0: sites internacionais explicam que estão fora do nosso controle
 
 Pedido do Guilherme (caso LinkedIn, que deu 10%): site de fora do .br tem que dizer que **não está no nosso controle e por quê**, em vez de só mostrar um

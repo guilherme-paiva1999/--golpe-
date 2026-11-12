@@ -21,7 +21,12 @@ const LIMITE_ATENCAO = 30;
 const CONHECIDOS = [
   'google.com', 'youtube.com', 'facebook.com', 'instagram.com',
   'whatsapp.com', 'wikipedia.org', 'gov.br', 'reclameaqui.com.br',
-  'mercadolivre.com.br', 'amazon.com.br', 'globo.com', 'uol.com.br'
+  'mercadolivre.com.br', 'amazon.com.br', 'globo.com', 'uol.com.br',
+  // v3.19.1: endereços oficiais conferidos fora do .gov.br. O Tesouro Direto (registrado pela B3) não passava de 80%:
+  // o portal pede senha e mostra "Entrar com gov.br", o que podia até parecer imitação do governo.
+  'tesourodireto.com.br', 'b3.com.br', 'bb.com.br', 'nubank.com.br', 'itau.com.br', 'bradesco.com.br',
+  'santander.com.br', 'caixa.gov.br', 'correios.com.br', 'mercadopago.com.br', 'magazineluiza.com.br',
+  'americanas.com.br', 'casasbahia.com.br', 'shopee.com.br', 'picpay.com', 'paypal.com', 'netflix.com'
 ];
 
 // Serviços onde qualquer pessoa publica páginas: nunca tratar como "conhecido".
@@ -1321,6 +1326,12 @@ async function investigar(urlTexto) {
   const host = u.hostname.toLowerCase();
   const r = avaliarHost(host);
   const { meusGolpes = [] } = await chrome.storage.local.get('meusGolpes');
+  // v3.19.1: site oficial conhecido tem 100%, igual ao aplicativo (antes a verificação completa mostrava ~65%).
+  if (ehConhecido(host) && !meusGolpes.includes(host)) {
+    const cfg = await lerConfig();
+    return { confianca: 100, itens: [{ efeito: 'favor', titulo: 'Site conhecido', texto: 'Está na lista de sites oficiais conhecidos.' }],
+      host, dominio: r.dominio, limite: limiteConfianca(cfg.rigor) };
+  }
   const lista = meusGolpes.includes(host) ? 'usuario' : await estaNaLista(host);
   const gratuito = sufixo(host, HOSPEDAGEM);
   const ml = gratuito ? null : await sinalML(r.dominio);

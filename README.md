@@ -1,7 +1,7 @@
 # É Golpe? · tudo o que foi produzido
 
 Extensão do Chrome que avisa sobre golpes, feita para o Hackathon "Negócios em Transformação" (UniSenac, Senac, Sebrae).
-Versão da extensão neste pacote: **3.19.0**.
+Versão da extensão neste pacote: **3.19.1**.
 
 ## O que tem em cada pasta
 
@@ -35,6 +35,12 @@ Veja [`CONTINUAR.md`](CONTINUAR.md): como baixar, instalar, rodar os testes e as
 3. **Carregar sem compactação** e escolha a pasta com o `manifest.json`.
 4. Na primeira vez abre a tela de boas-vindas: escolha a acessibilidade e, se quiser, a pessoa de confiança.
 5. Recarregue as abas abertas. O popup tem botões para testar os avisos.
+
+## Novidades da 3.19.1
+
+- Sites oficiais que não terminam em .gov.br (Tesouro Direto, B3, bancos, Correios e grandes lojas) entram na lista de
+  sites conhecidos e aparecem com 100%, também na verificação completa. O portal do Tesouro Direto não passava de 80%:
+  pede senha e mostra "Entrar com gov.br", o que ainda podia parecer imitação do governo.
 
 ## Novidades da 3.19.0
 
