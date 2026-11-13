@@ -175,15 +175,41 @@ function transacao(db, nome, fn) {
   });
 }
 
-// Grava em blocos pequenos: uma transação longa travaria as consultas por vários segundos.
+function chavesDaFonte(db, nome) {
+  return new Promise((resolve, reject) => {
+    const rq = db.transaction(nome, 'readonly').objectStore(nome).getAllKeys();
+    rq.onsuccess = () => resolve(rq.result);
+    rq.onerror = () => reject(rq.error);
+  });
+}
+function contarFonte(db, nome) {
+  return new Promise((resolve) => {
+    const rq = db.transaction(nome, 'readonly').objectStore(nome).count();
+    rq.onsuccess = () => resolve(rq.result);
+    rq.onerror = () => resolve(0);
+  });
+}
+
+// v3.20: grava só a diferença: primeiro entra o que é novo, depois sai o que saiu da lista. Antes a lista era apagada inteira e
+// regravada (cerca de 390 mil sites): durante esses segundos, golpes conhecidos não eram bloqueados. Agora não há esse buraco, e
+// num dia comum só alguns milhares de linhas mudam. Grava em blocos pequenos: uma transação longa travaria as consultas.
 async function substituirFonte(nome, dominios) {
   const db = await abrirDB();
-  await transacao(db, nome, (st) => st.clear());
+  const novos = new Set(dominios);
+  const antigos = await chavesDaFonte(db, nome);
+  const atuais = new Set(antigos);
+  const entrar = [...novos].filter((d) => !atuais.has(d));
+  const sair = antigos.filter((d) => !novos.has(d));
   const BLOCO = 5000;
-  for (let i = 0; i < dominios.length; i += BLOCO) {
-    const parte = dominios.slice(i, i + BLOCO);
+  for (let i = 0; i < entrar.length; i += BLOCO) {
+    const parte = entrar.slice(i, i + BLOCO);
     await transacao(db, nome, (st) => { for (const d of parte) st.put(1, d); });
   }
+  for (let i = 0; i < sair.length; i += BLOCO) {
+    const parte = sair.slice(i, i + BLOCO);
+    await transacao(db, nome, (st) => { for (const d of parte) st.delete(d); });
+  }
+  return { entrou: entrar.length, saiu: sair.length };
 }
 
 async function estaNaLista(host) {
@@ -235,10 +261,22 @@ function lerProcon(texto) {
   return dominios;
 }
 
-async function baixar(url) {
-  const r = await fetch(url, { signal: AbortSignal.timeout(90000), credentials: 'omit' });
+// v3.20: pergunta ao servidor se a lista mudou (ETag). Se não mudou, a resposta vem vazia (304) e nada é baixado nem regravado.
+// A lista principal tem 11 MB e era baixada inteira a cada 6 horas, mesmo sem mudança.
+// v3.20: guarda no máximo `max` itens; quando passa, tira os mais antigos e mantém 80%. Antes apagava tudo, e todas as
+// consultas (CNPJ, idade do site, Reclame Aqui) tinham de ser refeitas de uma vez.
+function aparar(obj, max, tempo = (v) => (v && v.t) || 0) {
+  const chaves = Object.keys(obj);
+  if (chaves.length <= max) return;
+  chaves.sort((a, b) => tempo(obj[a]) - tempo(obj[b]))
+    .slice(0, chaves.length - Math.floor(max * 0.8)).forEach((k) => delete obj[k]);
+}
+
+async function baixar(url, etag) {
+  const r = await fetch(url, { signal: AbortSignal.timeout(90000), credentials: 'omit', headers: etag ? { 'If-None-Match': etag } : {} });
+  if (r.status === 304) return { naoMudou: true };
   if (!r.ok) throw new Error('HTTP ' + r.status);
-  return r.text();
+  return { texto: await r.text(), etag: r.headers.get('etag') || null };
 }
 
 let atualizando = null;
@@ -249,12 +287,19 @@ function atualizarListas(so) {
     const ping = setInterval(() => chrome.runtime.getPlatformInfo(), 20000);
     try {
       let ok = 0;
+      const db = await abrirDB();
+      const { listasEtag = {} } = await chrome.storage.local.get('listasEtag');
       for (const fonte of FONTES_LISTAS.filter((f) => !so || so.includes(f.nome))) {
         try {
-          const texto = await baixar(fonte.url);
-          const dominios = fonte.tipo === 'procon' ? lerProcon(texto) : lerLista(texto);
+          // só pergunta "mudou?" se a lista já está gravada: se o banco foi apagado, baixa de novo
+          const etag = listasEtag[fonte.nome] && (await contarFonte(db, fonte.nome)) > 0 ? listasEtag[fonte.nome] : null;
+          const res = await baixar(fonte.url, etag);
+          if (res.naoMudou) { ok++; continue; }
+          const dominios = fonte.tipo === 'procon' ? lerProcon(res.texto) : lerLista(res.texto);
           if (dominios.length < (fonte.minimo || 100)) throw new Error('lista suspeita (muito pequena)');
           await substituirFonte(fonte.nome, dominios); // só troca se esta fonte deu certo
+          if (res.etag) listasEtag[fonte.nome] = res.etag; else delete listasEtag[fonte.nome];
+          await chrome.storage.local.set({ listasEtag });
           ok++;
         } catch (e) {
           console.warn('Falha ao atualizar', fonte.nome, e.message);
@@ -407,7 +452,7 @@ async function consultarRdap(dominio) {
     const r = await fetch(base + encodeURIComponent(dominio), { signal: AbortSignal.timeout(4000), credentials: 'omit' });
     if (r.ok) info = lerRdap(await r.json());
   } catch (e) { /* sem rede ou lento: segue sem a idade */ }
-  if (Object.keys(idades).length > 1500) for (const k of Object.keys(idades)) delete idades[k];
+  aparar(idades, 1500);
   idades[dominio] = { r: info.r, t: Date.now(), cnpj: info.cnpj, pf: info.pf };
   await chrome.storage.local.set({ idades });
   return { dias: info.r === null ? null : (Date.now() - info.r) / 86400000, cnpj: info.cnpj, pf: info.pf };
@@ -791,7 +836,7 @@ async function consultarCnpj(cnpj) {
     info = await Promise.any([buscarCnpjEm('https://brasilapi.com.br/api/cnpj/v1/', cnpj), buscarCnpjEm('https://minhareceita.org/', cnpj)]);
   } catch (e) { /* nenhuma fonte respondeu */ }
   if (info) {
-    if (Object.keys(cnpjs).length > 500) for (const k of Object.keys(cnpjs)) delete cnpjs[k];
+    aparar(cnpjs, 500);
     cnpjs[cnpj] = { t: Date.now(), info };
     await chrome.storage.local.set({ cnpjs });
     return info;
@@ -953,7 +998,7 @@ async function extrasEmCache(dom, campo, ttl, buscar) {
   let linha = null;
   try { linha = await buscar(); } catch (err) { /* sem resposta: não mostra nada */ }
   if (linha) {
-    if (Object.keys(extras).length > 400) for (const k of Object.keys(extras)) delete extras[k];
+    aparar(extras, 400, (v) => Math.max(0, ...Object.values(v || {}).map((x) => (x && x.t) || 0)));
     extras[dom] = { ...(extras[dom] || {}), [campo]: { t: Date.now(), linha } };
     await chrome.storage.local.set({ extras });
   }
@@ -1042,7 +1087,7 @@ async function consultarReclameAqui(host) {
     const v = lerVereditoRA(await r.text(), host);
     res = v || {};
   } catch (e) { return { ok: true, link }; }
-  if (Object.keys(raConsultas).length > 300) for (const k of Object.keys(raConsultas)) delete raConsultas[k];
+  aparar(raConsultas, 300);
   raConsultas[host] = { t: Date.now(), res };
   await chrome.storage.local.set({ raConsultas });
   return { ok: true, link, ...res };
