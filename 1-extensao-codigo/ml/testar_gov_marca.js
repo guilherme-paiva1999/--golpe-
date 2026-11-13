@@ -3,7 +3,7 @@ const fs=require('fs'),vm=require('vm'),path=require('path');
 const noop=()=>{},ev={addListener:noop};
 const chrome={runtime:{onInstalled:ev,onStartup:ev,onMessage:ev,id:'x',getPlatformInfo:noop},alarms:{get:async()=>({}),create:noop,onAlarm:ev},webNavigation:{onBeforeNavigate:ev},storage:{local:{get:async()=>({}),set:async()=>{}},session:{get:async()=>({}),set:async()=>{}}},action:{}};
 const ctx={chrome,console,AbortSignal,URL,TextDecoder,fetch:async()=>{throw 0}};vm.createContext(ctx);
-vm.runInContext(fs.readFileSync(path.join(__dirname,'../alfabetos.js'),'utf8')+fs.readFileSync(path.join(__dirname,'../background.js'),'utf8')+';this.T={imitaGoverno,avaliarHost,nivelDe,marcaFalsaNaPagina}',ctx);
+vm.runInContext(fs.readFileSync(path.join(__dirname,'../alfabetos.js'),'utf8')+fs.readFileSync(path.join(__dirname,'../background.js'),'utf8')+';this.T={imitaGoverno,avaliarHost,nivelDe,marcaFalsaNaPagina,ehConhecido}',ctx);
 const T=ctx.T; let ok=0,n=0;
 const t=(nome,obtido,esperado)=>{n++;const b=JSON.stringify(obtido)===JSON.stringify(esperado);ok+=b;console.log((b?'OK  ':'ERRO'),nome.padEnd(46),JSON.stringify(obtido));};
 console.log('--- imitação do governo (pontos) ---');
@@ -26,4 +26,8 @@ t('Microsoft + senha em login.microsoftonline.com',T.marcaFalsaNaPagina('login.m
 t('Gov.br + senha em resgate-valores-gov.me',!!T.marcaFalsaNaPagina('resgate-valores-gov.me',['govbr'],S({senha:true})),true);
 t('Gov.br + senha em sso.acesso.gov.br',T.marcaFalsaNaPagina('sso.acesso.gov.br',['govbr'],S({senha:true})),null);
 t('Microsoft citado, mas sem senha nem pagamento',T.marcaFalsaNaPagina('blog-de-tecnologia.com',['microsoft'],S({})),null);
+console.log('--- sites oficiais conhecidos (v3.19.1) ---');
+for(const [h,e] of [['portalinvestidor.tesourodireto.com.br',true],['tesourodireto.com.br',true],['www.nubank.com.br',true],['internetbanking.caixa.gov.br',true],
+  ['tesourodireto.com.br.resgate.xyz',false],['tesouro-direto.com',false],['tesourodireto-reserva.com.br',false],['nubank.com.br.app',false]])
+  t(h,T.ehConhecido(h),e);
 console.log(ok+'/'+n+' como esperado');

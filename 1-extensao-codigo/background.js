@@ -21,7 +21,12 @@ const LIMITE_ATENCAO = 30;
 const CONHECIDOS = [
   'google.com', 'youtube.com', 'facebook.com', 'instagram.com',
   'whatsapp.com', 'wikipedia.org', 'gov.br', 'reclameaqui.com.br',
-  'mercadolivre.com.br', 'amazon.com.br', 'globo.com', 'uol.com.br'
+  'mercadolivre.com.br', 'amazon.com.br', 'globo.com', 'uol.com.br',
+  // v3.19.1: endereços oficiais conferidos fora do .gov.br. O Tesouro Direto (registrado pela B3) não passava de 80%:
+  // o portal pede senha e mostra "Entrar com gov.br", o que podia até parecer imitação do governo.
+  'tesourodireto.com.br', 'b3.com.br', 'bb.com.br', 'nubank.com.br', 'itau.com.br', 'bradesco.com.br',
+  'santander.com.br', 'caixa.gov.br', 'correios.com.br', 'mercadopago.com.br', 'magazineluiza.com.br',
+  'americanas.com.br', 'casasbahia.com.br', 'shopee.com.br', 'picpay.com', 'paypal.com', 'netflix.com'
 ];
 
 // Serviços onde qualquer pessoa publica páginas: nunca tratar como "conhecido".
@@ -637,7 +642,11 @@ function pontuarConfianca(sinais, dias, protocolo, pontosDoEndereco, gratuito, o
   else if (dias >= 30) { add(-25); faltou.push('Esta loja tem só ' + Math.round(dias) + ' dias de vida.'); }
   else { add(-40); faltou.push('Esta loja foi criada há apenas ' + Math.max(1, Math.round(dias)) + ' dias.'); }
   if (protocolo === 'https:') { add(10); favoraveis.push('Usa conexão segura (cadeado).'); } else faltou.push('O site não usa conexão segura (sem cadeado).');
-  if (sinais.cnpjValido) { add(10); favoraveis.push('A página mostra um CNPJ válido.'); } else faltou.push(sinais.cnpjInvalido ? 'O CNPJ que aparece na página é inválido.' : 'Não achamos CNPJ na página.');
+  // v3.19.3: CNPJ do dono do site (registro.br) confirmado e ativo na Receita vale como prova, mesmo fora da página.
+  // A Receita é a prova mais forte: um número no rodapé qualquer um copia. (CNPJ inválido escrito na página continua contando contra.)
+  if (sinais.cnpjValido) { add(10); favoraveis.push('A página mostra um CNPJ válido.'); }
+  else if (opcoes.cnpjDoRegistro && !sinais.cnpjInvalido) add(10);    // a frase a favor já vem da conferência do CNPJ
+  else faltou.push(sinais.cnpjInvalido ? 'O CNPJ que aparece na página é inválido.' : 'Não achamos CNPJ na página.');
   if (sinais.contato) { add(10); favoraveis.push('Tem contato claro (e-mail, telefone ou endereço).'); } else faltou.push('Não achamos contato claro (e-mail, telefone ou endereço).');
   if (sinais.emailMesmoDominio) { add(5); favoraveis.push('O e-mail de contato é do próprio site.'); }
   if (sinais.politicas) { add(15); favoraveis.push('Tem política de trocas, privacidade ou entrega.'); } else faltou.push('Não achamos política de trocas, privacidade ou entrega.');
@@ -1169,8 +1178,15 @@ async function avaliarPagina(host, protocolo, sinais, medidas = null) {
       empresa, doRegistro: !!(empresa && empresa.doRegistro), dono, grupo, diasSite: dias });
     // Dono do endereço real, ativo e do mesmo grupo: vale ele (confirmado pelo registro.br). Outra empresa, ou dono inexistente ou inativo (CNPJ copiado?): a idade da empresa da página não vale.
     const empresaDaLoja = conf.donoAtivo ? { ...dono, confirmado: true } : (conf.diverge && empresa ? { ...empresa, abertura: '' } : empresa);
-    const c = pontuarConfianca(sinais, dias, protocolo, r.pontos, gratuito, { pesoPressao: pesoDaPressao(empresaDaLoja) });
+    const cnpjDoRegistro = !!(empresa && empresa.doRegistro && empresa.existe && empresa.ativa);
+    const c = pontuarConfianca(sinais, dias, protocolo, r.pontos, gratuito, { pesoPressao: pesoDaPressao(empresaDaLoja), cnpjDoRegistro });
     const motivos = [...r.motivos, ...c.motivos];
+    // v3.19.2: a página não mostra o CNPJ, mas achamos o do dono do site no registro.br. Diz isso com todas as letras,
+    // para não parecer contradição com o "CNPJ ... conferido" da lista a favor.
+    if (empresa && empresa.doRegistro && !sinais.cnpjInvalido) {
+      const i = motivos.indexOf('Não achamos CNPJ na página.');
+      if (i >= 0) motivos[i] = 'A página não mostra o CNPJ. Achamos o CNPJ do dono do site pelo registro.br (veja nos pontos a favor), mas toda loja on-line precisa mostrar o CNPJ na própria página.';
+    }
     // v3.16: a empresa (CNPJ) é o ponto de partida. Se a Receita não respondeu, vale a conta sem a empresa, sem punir a loja.
     if (!(cnpjUsado && !empresa)) c.confianca = confiancaDaLoja(c, empresaDaLoja, motivos);
     // v3.18: a nota do Reclame Aqui (escudos) entra na conta da menor forma possível: 5 escudos +10, 4 +5, 3 neutro, 2 -5, 1 -10.
@@ -1321,6 +1337,12 @@ async function investigar(urlTexto) {
   const host = u.hostname.toLowerCase();
   const r = avaliarHost(host);
   const { meusGolpes = [] } = await chrome.storage.local.get('meusGolpes');
+  // v3.19.1: site oficial conhecido tem 100%, igual ao aplicativo (antes a verificação completa mostrava ~65%).
+  if (ehConhecido(host) && !meusGolpes.includes(host)) {
+    const cfg = await lerConfig();
+    return { confianca: 100, itens: [{ efeito: 'favor', titulo: 'Site conhecido', texto: 'Está na lista de sites oficiais conhecidos.' }],
+      host, dominio: r.dominio, limite: limiteConfianca(cfg.rigor) };
+  }
   const lista = meusGolpes.includes(host) ? 'usuario' : await estaNaLista(host);
   const gratuito = sufixo(host, HOSPEDAGEM);
   const ml = gratuito ? null : await sinalML(r.dominio);

@@ -180,7 +180,7 @@ node ml/testar_gov_marca.js && node ml/testar_pontuacao.js
 A extensão e o aplicativo passaram a se chamar **Isso é golpe?** (antes: "É Golpe?"), igual aos slides e ao pitch:
 nome no Chrome, popup, boas-vindas, tela de bloqueio, aplicativo, aviso no Reclame Aqui e mensagens para a pessoa de confiança.
 
-## v3.19.1: modelo da página retreinado com páginas de produto e carrinho (mais dados reais)
+## v3.19.4: modelo da página retreinado com páginas de produto e carrinho (mais dados reais)
 
 A IA que lê a página só tinha visto **páginas iniciais** de lojas reais. Coletamos mais 1.095 páginas: 170 golpes atuais ligados ao Brasil (da
 Phishing.Database, só os que ainda estavam no ar) e, de 767 lojas brasileiras do ranking Tranco, a página inicial e, quando achamos, uma página de
@@ -195,6 +195,26 @@ Phishing.Database, só os que ainda estavam no ar) e, de 767 lojas brasileiras d
   ainda é frágil; dá para recoletar as lojas que falharam no DNS e achar mais produtos.
 - Como refazer: `8-treino-ml/montar_lista2.py` (lista), `coletar2.js` (coleta), `avaliar_novo.py` (compara o modelo atual com o retreinado), `final.py` (treino final)
   e `amostras_reais.py` (exemplos para o teste do JavaScript). Testes: `ml/testar_modelo_pagina.js` (40/40) e `ml/testar_modelo_pagina_extensao.js` (133/133).
+
+## v3.19.3: CNPJ do registro.br confirmado vale como prova
+
+- `pontuarConfianca(..., { cnpjDoRegistro })`: com o CNPJ do dono do domínio (registro.br) existente e ativo na Receita, soma o
+  mesmo que um CNPJ válido na página e não entra "Não achamos CNPJ na página". Teste em `ml/testar_loja.js` (mesma nota nos dois casos).
+
+## v3.19.2: CNPJ só no registro.br, sem contradição
+
+- Se a página não mostra o CNPJ e o CNPJ veio do dono do domínio no registro.br, a linha de atenção vira "A página não mostra
+  o CNPJ. Achamos o CNPJ do dono do site pelo registro.br (veja nos pontos a favor), mas toda loja on-line precisa mostrar o
+  CNPJ na própria página." A conta não muda. Teste em `ml/testar_loja.js`.
+
+## v3.19.1: sites oficiais conhecidos
+
+- `CONHECIDOS` ganhou endereços oficiais conferidos fora do .gov.br: tesourodireto.com.br (registrado pela B3, CNPJ
+  09.346.601/0001-25, desde 2003), b3.com.br, bancos (bb, nubank, itau, bradesco, santander, caixa), correios, mercadopago,
+  grandes lojas, picpay, paypal, netflix. Vale para subdomínios (portalinvestidor.tesourodireto.com.br), nunca para
+  imitações (tesourodireto-reserva.com.br). A verificação completa (`investigar`) dá 100% para site conhecido, como o aplicativo.
+- Ponto em aberto: um site legítimo que não está na lista e tem "gov.br" no título ou num cabeçalho (como o botão
+  "Entrar com gov.br") e pede senha ainda pode ser tratado como imitação do governo.
 
 ## v3.19.0: sites internacionais explicam que estão fora do nosso controle
 

@@ -1,7 +1,7 @@
 # É Golpe? · tudo o que foi produzido
 
 Extensão do Chrome que avisa sobre golpes, feita para o Hackathon "Negócios em Transformação" (UniSenac, Senac, Sebrae).
-Versão da extensão neste pacote: **3.19.1**.
+Versão da extensão neste pacote: **3.19.4**.
 
 ## O que tem em cada pasta
 
@@ -36,9 +36,26 @@ Veja [`CONTINUAR.md`](CONTINUAR.md): como baixar, instalar, rodar os testes e as
 4. Na primeira vez abre a tela de boas-vindas: escolha a acessibilidade e, se quiser, a pessoa de confiança.
 5. Recarregue as abas abertas. O popup tem botões para testar os avisos.
 
-## Novidades da 3.19.1
+## Novidades da 3.19.4
 
 - A IA que lê a página foi **retreinada com mais dados reais** (páginas de produto e carrinho de lojas, e golpes atuais). Nas páginas novas, o acerto subiu de 0,81 para 0,93 (AUC) e os alarmes falsos caíram de 3,3% para 1,6%.
+
+## Novidades da 3.19.3
+
+- CNPJ achado pelo registro.br e confirmado ativo na Receita Federal vale o mesmo que o CNPJ escrito na página: a nota não
+  cai e a falta dele na página deixa de aparecer como ponto de atenção. A Receita é a prova mais forte (um número no rodapé
+  qualquer um copia). CNPJ inválido escrito na página continua contando contra.
+
+## Novidades da 3.19.2
+
+- Quando a página não mostra o CNPJ, mas achamos o do dono do site no registro.br, o aviso agora diz isso com todas as
+  letras, em vez de "Não achamos CNPJ na página" (que parecia contradizer o "CNPJ conferido" da lista a favor).
+
+## Novidades da 3.19.1
+
+- Sites oficiais que não terminam em .gov.br (Tesouro Direto, B3, bancos, Correios e grandes lojas) entram na lista de
+  sites conhecidos e aparecem com 100%, também na verificação completa. O portal do Tesouro Direto não passava de 80%:
+  pede senha e mostra "Entrar com gov.br", o que ainda podia parecer imitação do governo.
 
 ## Novidades da 3.19.0
 

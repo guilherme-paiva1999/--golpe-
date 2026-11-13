@@ -71,7 +71,7 @@ As capturas de tela ficam em `teste-real/capturas/` (não vão para o GitHub).
   grupo (sócios em comum no quadro societário); senão é ponto de atenção. Escudos do RA: 5 = +10, 4 = +5, 3 = 0, 2 = -5, 1 = -10 (peso mínimo).
 - **O que mostrar** (3.17.1, pedido do Guilherme): padrão "todos" = selo verde nas lojas confiáveis (80%+); escolha na boas-vindas e no popup
   (`mostrar`: todos, suspeitos, total). Só em páginas de compra.
-- **Modelo da página retreinado** (3.19.1): +1.095 páginas (golpes atuais, produto e carrinho). Cuidado com páginas de erro do Chrome nos dados.
+- **Modelo da página retreinado** (3.19.4): +1.095 páginas (golpes atuais, produto e carrinho). Cuidado com páginas de erro do Chrome nos dados.
   Ideia pendente: recoletar as ~350 lojas que falharam no DNS e achar mais páginas de produto (só 66 hoje).
 - **Duas listas (contra/a favor) e confirmações abertas** (3.17.0, pedido do Guilherme): ranking Tranco local, Internet Archive e crt.sh só
   mostram linhas, não mudam a porcentagem. Reclame Aqui é um cartão verde só. Opção de mostrar o aviso também nas lojas confiáveis.
