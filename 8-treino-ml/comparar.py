@@ -25,6 +25,7 @@ X, Y, G, T, BRUTO, cortados = [], [], [], [], [], 0
 for r in fe:
     if r['rotulo'] not in ('golpe', 'real') or not r['x']: continue
     c = col[r['url']]; pg = c.get('pagina') or {}
+    if str(c.get('final') or '').startswith('chrome-error') or pg.get('host') == 'chromewebdata': cortados += 1; continue   # página de erro do Chrome (DNS, conexão): não é o site
     texto = (pg.get('title') or '') + ' \n ' + (pg.get('texto') or '')
     if r['rotulo'] == 'golpe' and (len((pg.get('texto') or '').strip()) < 60 or MORTO.search(pg.get('title') or '') or MORTO.search((pg.get('texto') or '')[:300])):
         cortados += 1; continue                       # golpe que já saiu do ar ou virou outra coisa: rótulo não confiável

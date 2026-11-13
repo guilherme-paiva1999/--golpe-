@@ -180,6 +180,22 @@ node ml/testar_gov_marca.js && node ml/testar_pontuacao.js
 A extensão e o aplicativo passaram a se chamar **Isso é golpe?** (antes: "É Golpe?"), igual aos slides e ao pitch:
 nome no Chrome, popup, boas-vindas, tela de bloqueio, aplicativo, aviso no Reclame Aqui e mensagens para a pessoa de confiança.
 
+## v3.19.1: modelo da página retreinado com páginas de produto e carrinho (mais dados reais)
+
+A IA que lê a página só tinha visto **páginas iniciais** de lojas reais. Coletamos mais 1.095 páginas: 170 golpes atuais ligados ao Brasil (da
+Phishing.Database, só os que ainda estavam no ar) e, de 767 lojas brasileiras do ranking Tranco, a página inicial e, quando achamos, uma página de
+**produto** (66) e o **carrinho** (93). Dados em `8-treino-ml/dados/coleta2.jsonl.gz`.
+- **Teste do modelo antigo em páginas que ele nunca viu:** AUC **0,81** (nos dados antigos o teste dava 0,92). Em páginas reais de produto, 4,6% de
+  alertas falsos; no carrinho, 5,4% (contra 2,6% na página inicial). Ou seja, o modelo antigo era otimista e errava mais justamente onde a loja pede dinheiro.
+- **Modelo retreinado** (1.811 páginas: 360 golpes e 1.451 reais), validação por domínio: AUC **0,93**. Nas páginas novas: AUC **0,93** (o antigo: 0,81),
+  pegando 41% dos golpes com 1,6% de alarme falso (o antigo: 29% com 3,3%). Limiares novos: 0,722 (2% de falso alerta, +15 pontos) e 0,867 (1%, +25 pontos).
+- **Um problema nos dados, achado e corrigido:** 351 das "lojas reais" novas eram a página de erro do Chrome (o DNS desta máquina falhou em muitos
+  endereços) e entraram como "real", derrubando a validação para 0,56. Essas páginas agora são descartadas no treino (`comparar.py`).
+- **Limites:** só 61 golpes novos com texto, e 66 páginas de produto (só 9% das lojas tiveram um produto achado). O número das páginas de produto e de carrinho
+  ainda é frágil; dá para recoletar as lojas que falharam no DNS e achar mais produtos.
+- Como refazer: `8-treino-ml/montar_lista2.py` (lista), `coletar2.js` (coleta), `avaliar_novo.py` (compara o modelo atual com o retreinado), `final.py` (treino final)
+  e `amostras_reais.py` (exemplos para o teste do JavaScript). Testes: `ml/testar_modelo_pagina.js` (40/40) e `ml/testar_modelo_pagina_extensao.js` (133/133).
+
 ## v3.19.0: sites internacionais explicam que estão fora do nosso controle
 
 Pedido do Guilherme (caso LinkedIn, que deu 10%): site de fora do .br tem que dizer que **não está no nosso controle e por quê**, em vez de só mostrar um

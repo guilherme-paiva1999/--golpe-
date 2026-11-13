@@ -27,6 +27,7 @@ const conferir = (nome, cond, extra) => { console.log((cond ? 'OK   ' : 'FALHA '
   const ctx = await chromium.launchPersistentContext(path.join(os.tmpdir(), 'egolpe-e2e-' + Date.now()), {
     executablePath: CHROME, headless: false, ignoreDefaultArgs: ['--disable-extensions'], viewport: { width: 1100, height: 900 },
     args: ['--headless=new', '--enable-unsafe-extension-debugging',
+      '--disable-features=HttpsUpgrades,HttpsFirstBalancedModeAutoEnable,HttpsFirstModeV2ForTypicallySecureUsers',   // Chrome 157 passou a bloquear http://site-publico mapeado para o servidor de teste
       '--host-resolver-rules=MAP *.example 127.0.0.1:18765, MAP intl-teste.com 127.0.0.1:18765']
   });
   let id = null;

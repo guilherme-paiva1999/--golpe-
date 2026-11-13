@@ -3,8 +3,8 @@
    Aprendizado de máquina: classificador da PÁGINA (ml/modelo-pagina.json).
    Regressão logística que lê o texto da página (pedaços de 3 a 5 letras, TF-IDF)
    e 41 características (preços, Pix, formulários, políticas, CNPJ, endereço, letras russas...).
-   Treinada em 1.234 páginas reais (8-treino-ml/). No teste por domínio (o modelo
-   nunca viu o site): AUC 0,92; com 2% de falsos alertas pega cerca de metade dos golpes.
+   Treinada em 1.811 páginas reais (8-treino-ml/; v3.19.1, com páginas de produto e carrinho). No teste por domínio (o modelo
+   nunca viu o site): AUC 0,93; com 2% de falsos alertas pega cerca de metade dos golpes.
    Por isso ele SOMA pontos e nunca decide sozinho.
    O cálculo abaixo reproduz o scikit-learn (TfidfVectorizer char_wb + StandardScaler).
    Teste de paridade: node ml/testar_modelo_pagina.js
