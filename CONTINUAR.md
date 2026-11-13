@@ -1,4 +1,6 @@
-# Como continuar o É Golpe? em outro computador
+# Como continuar o Isso é golpe? em outro computador
+
+> **Este repositório é o único lugar do projeto** (versão 3.20.0). Não existem outras cópias: extensão, aplicativo, apresentação, vídeos, logotipo e treino do modelo estão aqui. O projeto antigo "É Golpe?" (2.x) foi incorporado e removido.
 
 ## 1. Baixar o projeto
 ```
