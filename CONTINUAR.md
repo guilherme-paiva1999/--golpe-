@@ -38,6 +38,7 @@ npm install
 node testar.js
 ```
 As capturas de tela ficam em `teste-real/capturas/` (não vão para o GitHub).
+Teste da atualização das listas (ETag e só a diferença, v3.20; não precisa de internet): `cd teste-real && npm install && node testar_listas.js`.
 
 ## 4. Onde está cada coisa
 | Arquivo | O que faz |
